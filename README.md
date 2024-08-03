@@ -1,3 +1,1 @@
 # app-router-template
-
-## eslint
