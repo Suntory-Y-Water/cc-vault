@@ -11,9 +11,6 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.1.0
         version: 1.1.0(@types/react@18.3.11)(react@18.3.1)
-      app-router-template:
-        specifier: 'link:'
-        version: 'link:'
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
