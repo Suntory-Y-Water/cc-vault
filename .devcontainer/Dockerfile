@@ -2,24 +2,19 @@
 # このイメージには開発に必要な基本的なツールが含まれています
 FROM mcr.microsoft.com/devcontainers/javascript-node:20-bullseye
 
-# pnpmをグローバルにインストール
+# pnpmをグローバルにインストール (rootユーザーで実行)
 RUN npm install -g pnpm
 
-# 作業ディレクトリを設定
+# 作業ディレクトリを設定 
 WORKDIR /workspace
 
-# 非rootユーザーで実行（セキュリティのため）
+# 非rootユーザー 'node' として実行する設定
+# devcontainer.json の remoteUser と合わせる
 USER node
 
-# VS Code拡張機能の設定ディレクトリを作成
-# TODO:
-RUN mkdir -p /home/node/.vscode-server/extensions
-
-# 環境変数を設定
-# TODO:
+# nodeユーザーの環境変数を設定
 ENV PNPM_HOME="/home/node/.local/share/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="${PNPM_HOME}:${PATH}"
 
-# pnpmの設定
-# TODO:
+# nodeユーザーでpnpmの設定 (ホームディレクトリ ~/.pnpm-store は /home/node/.pnpm-store を指す)
 RUN pnpm config set store-dir ~/.pnpm-store
