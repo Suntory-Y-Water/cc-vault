@@ -1,25 +1,21 @@
 {
-  "name": "Next.js TypeScript Dev Container",
+  "name": "TypeScript Dev Container",
   "dockerFile": "Dockerfile",
-
-  // Dockerコンテナの起動設定
   "runArgs": ["--init"],
-
-  // コンテナ内で使用するポート
+  // コンテナ内のワークスペースフォルダを動的に設定
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "forwardPorts": [3000],
 
-  // コンテナ作成時に一度だけ実行するコマンド
-  "postCreateCommand": "pnpm install",
+  // // コンテナ作成時に一度だけ実行するコマンド
+  // "postCreateCommand": "pnpm install",
 
   // VS Codeがコンテナに接続するたびに実行するコマンド
   "postAttachCommand": "echo 'Welcome to your dev container!'",
 
-  // VS Code拡張機能（コンテナ内で自動的にインストール）
-  // TODO: これマウントされるからいらないんじゃないか？
+  // VS Codeの設定
   "customizations": {
     "vscode": {
       "extensions": ["biomejs.biome"],
-      // VS Code設定
       "settings": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "biomejs.biome",
@@ -39,17 +35,16 @@
       }
     }
   },
-
-  // 環境変数
   "remoteEnv": {
     "NODE_ENV": "development"
+    // "API_URL": "${localEnv:API_URL}",
+    // "API_KEY": "${localEnv:API_KEY}"
   },
 
-  // ユーザー設定（非rootユーザーで実行）
+  // ユーザーを非rootユーザーにする
   "remoteUser": "node",
 
-  // 追加機能
-  // TODO:
+  // コンテナにインストールするパッケージ
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
