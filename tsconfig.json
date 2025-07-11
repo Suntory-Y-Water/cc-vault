@@ -31,5 +31,15 @@
     ".next/types/**/*.ts",
     "vitest.config.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "out",
+    "coverage",
+    ".next",
+    "public",
+    "src/__tests__",
+    "src/tests/*.test.ts"
+  ]
 }

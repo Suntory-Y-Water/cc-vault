@@ -52,6 +52,16 @@ const config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        cc: {
+          'main-orange': 'hsl(var(--cc-main-orange))',
+          'main-white': 'hsl(var(--cc-main-white))',
+          'main-black': 'hsl(var(--cc-main-black))',
+          'gray': 'hsl(var(--cc-gray))',
+          'dark-black': 'hsl(var(--cc-dark-black))',
+          'dark-light-black': 'hsl(var(--cc-dark-light-black))',
+          'orange-inactive': 'hsl(var(--cc-orange-inactive))',
+          'orange-hover': 'hsl(var(--cc-orange-hover))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
