@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { siteConfig } from './config/site';
+import { siteConfig } from '@/config/site';
 import { SORT_ORDERS, SITE_NAMES } from '@/types/article';
 
 /**
