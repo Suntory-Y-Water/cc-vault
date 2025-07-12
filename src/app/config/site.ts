@@ -48,7 +48,7 @@ export const pageMetadata = {
   home: {
     title: 'CC-Vault - Claude Code記事キュレーションプラットフォーム',
     description:
-      'Claude Codeに関する最新記事やトレンドをはてなブックマーク、Qiita、Zenn、noteから収集・キュレーション。開発者向けの情報を一箇所で効率的に取得できます。',
+      'Claude Codeに関する最新記事やトレンドをはてなブックマーク、Qiita、Zennから収集・キュレーション。開発者向けの情報を一箇所で効率的に取得できます。',
   },
   weeklyReport: {
     title: 'ウィークリーレポート - CC-Vault',
@@ -73,8 +73,7 @@ export const pageMetadata = {
 export const siteFilterMetadata = {
   all: {
     title: '全サイト',
-    description:
-      'はてなブックマーク、Qiita、Zenn、note、公式ドキュメントからClaude Code関連記事を収集',
+    description: 'Qiita、Zenn、からClaude Code関連記事を収集',
   },
   hatena: {
     title: 'はてなブックマーク',

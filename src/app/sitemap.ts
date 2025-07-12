@@ -13,12 +13,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'hourly' as const,
       priority: 1,
     },
-    {
-      url: `${siteConfig.url}/weekly-report`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
   ];
 
   // 動的ルートの追加
@@ -28,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   for (const order of Object.values(SORT_ORDERS)) {
     for (const site of Object.values(SITE_NAMES)) {
       dynamicRoutes.push({
-        url: `${siteConfig.url}/?order=${order}&site=${site}`,
+        url: `${siteConfig.url}/?order=${order}&amp;site=${site}`,
         lastModified: new Date(),
         changeFrequency: 'hourly' as const,
         priority: 0.7,

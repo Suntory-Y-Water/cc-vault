@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { SiteType, SortOrder } from '@/types/article';
 import { SITE_UI_CONFIGS } from '@/lib/constants';
+import { Button } from '../ui/button';
 
 type Props = {
   activeSite: SiteType;
@@ -31,7 +32,7 @@ export default function SiteFilter({ activeSite, searchParams = {} }: Props) {
               page: '1',
             }).toString()}`}
           >
-            <button
+            <Button
               type='button'
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all cursor-pointer transform hover:scale-105 ${
                 isActive ? config.activeStyle : config.baseStyle
@@ -39,7 +40,7 @@ export default function SiteFilter({ activeSite, searchParams = {} }: Props) {
             >
               <IconComponent className='w-4 h-4' />
               {config.label}
-            </button>
+            </Button>
           </Link>
         );
       })}
