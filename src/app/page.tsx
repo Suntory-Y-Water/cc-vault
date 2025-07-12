@@ -12,6 +12,7 @@ import {
   SITE_NAMES,
 } from '@/types';
 import { notFound } from 'next/navigation';
+import { convertToJstString } from '@/lib/utils';
 
 type PageProps = {
   searchParams: Promise<{
@@ -93,7 +94,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       title: post.title,
       url: `https://zenn.dev${post.path}`,
       author: post.author,
-      publishedAt: post.published_at,
+      publishedAt: convertToJstString(post.published_at),
       site: 'zenn' as const,
       engagement: {
         likes: post.likedCount,
@@ -106,7 +107,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       title: post.title,
       url: post.url,
       author: post.user.name || post.user.id, // ユーザー名が空の場合はIDを使用
-      publishedAt: post.created_at,
+      publishedAt: convertToJstString(post.created_at),
       site: 'qiita' as const,
       engagement: {
         likes: post.likes_count,
