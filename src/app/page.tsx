@@ -1,5 +1,5 @@
-import { fetchExternalData } from '@/lib/fetchers';
-import type { ZennResponse } from '@/types';
+import { fetchHtmlDocument } from '@/lib/fetchers';
+import { getZennTopicsData } from '@/lib/parser';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import MainTabs from '@/components/layout/MainTabs';
@@ -7,6 +7,7 @@ import SiteFilter from '@/components/layout/SiteFilter';
 import ArticleList from '@/components/article/ArticleList';
 import type { Metadata } from 'next';
 import { siteConfig, pageMetadata, siteFilterMetadata } from './config/site';
+import { Article } from '@/types';
 
 type PageProps = {
   searchParams: Promise<{
@@ -57,30 +58,29 @@ export async function generateMetadata({
 export default async function HomePage({ searchParams }: PageProps) {
   const { order = 'latest', site = 'all' } = await searchParams;
 
-  // Zennの記事を取得
-  const zennData = await fetchExternalData<ZennResponse>(
-    `https://zenn.dev/api/articles?username=sui_water&order=${order}`,
-    {
-      revalidate: 60,
-      tags: ['zenn-articles'],
-    },
-  );
+  // Zennのトピックスページから記事を取得
+  const zennOrderParam = order === 'latest' ? 'latest' : 'daily';
+  const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=${zennOrderParam}`;
 
-  const articles = zennData.articles.map((post) => {
+  const document = await fetchHtmlDocument(zennTopicsUrl, {
+    revalidate: 3600,
+    tags: ['zenn-topics'],
+  });
+
+  const zennData = getZennTopicsData({ document });
+
+  const articles: Article[] = zennData.articles.map((post) => {
     return {
       id: post.id.toString(),
       title: post.title,
       url: `https://zenn.dev${post.path}`,
-      author: 'sui_water',
+      author: 'claudecode',
       publishedAt: post.published_at,
       site: 'zenn' as const,
       engagement: {
-        likes: 0,
-        bookmarks: 0,
-        comments: 0,
-        shares: 0,
+        likes: post.likedCount,
+        bookmarks: post.bookmarkedCount,
       },
-      emoji: post.emoji,
     };
   });
 

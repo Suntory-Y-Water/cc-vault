@@ -10,8 +10,6 @@ export type Article = {
   publishedAt: string;
   site: SiteType;
   engagement: EngagementMetrics;
-  description?: string;
-  tags?: string[];
 };
 
 export type EngagementMetrics = {
@@ -43,7 +41,8 @@ export type ZennResponse = {
 export type ZennPost = {
   id: number;
   path: string;
-  emoji: string;
   title: string;
   published_at: string;
+  likedCount: number;
+  bookmarkedCount: number;
 };

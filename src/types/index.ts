@@ -6,3 +6,4 @@ export * from './article';
 export * from './site';
 export * from './api';
 export * from './weekly-report';
+export * from './next-data';
