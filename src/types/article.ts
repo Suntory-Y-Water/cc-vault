@@ -52,6 +52,7 @@ export type ZennPost = {
   id: number;
   path: string;
   title: string;
+  author: string;
   published_at: string;
   likedCount: number;
   bookmarkedCount: number;
@@ -67,4 +68,9 @@ export type QiitaPost = {
   likes_count: number;
   stocks_count: number;
   created_at: string;
+  user: {
+    id: string;
+    // 設定されているけど""な場合がある
+    name: string;
+  };
 };

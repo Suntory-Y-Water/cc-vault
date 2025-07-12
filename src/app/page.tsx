@@ -5,7 +5,15 @@ import SiteFilter from '@/components/layout/SiteFilter';
 import ArticleList from '@/components/article/ArticleList';
 import type { Metadata } from 'next';
 import { siteConfig, pageMetadata, siteFilterMetadata } from './config/site';
-import { Article, QiitaPost, SortOrder, SiteType } from '@/types';
+import {
+  Article,
+  QiitaPost,
+  SortOrder,
+  SiteType,
+  SORT_ORDERS,
+  SITE_NAMES,
+} from '@/types';
+import { notFound } from 'next/navigation';
 
 type PageProps = {
   searchParams: Promise<{
@@ -54,11 +62,31 @@ export async function generateMetadata({
 }
 
 /**
+ * クエリパラメータのバリデーションを行う
+ * @param order - ソート順パラメータ
+ * @param site - サイトフィルターパラメータ
+ */
+function validateSearchParams(order?: string, site?: string) {
+  // orderパラメータのバリデーション
+  if (order && !(order in SORT_ORDERS)) {
+    notFound();
+  }
+
+  // siteパラメータのバリデーション（'all'も許可）
+  if (site && site !== 'all' && !(site in SITE_NAMES)) {
+    notFound();
+  }
+}
+
+/**
  * ホームページコンポーネント
  * クエリパラメータのバリデーションを行い、想定外の値の場合は404ページを表示
  */
 export default async function HomePage({ searchParams }: PageProps) {
   const { order = 'latest', site = 'all' } = await searchParams;
+
+  // クエリパラメータのバリデーション実行
+  validateSearchParams(order, site);
 
   // 並列処理で全データを取得
   const [zennData, qiitaData] = await Promise.all([
@@ -104,8 +132,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       id: `zenn-${post.id}`,
       title: post.title,
       url: `https://zenn.dev${post.path}`,
-      // TODO: 著者がIFにない
-      author: 'claudecode',
+      author: post.author,
       publishedAt: post.published_at,
       site: 'zenn' as const,
       engagement: {
@@ -118,8 +145,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       id: `qiita-${post.id}`,
       title: post.title,
       url: post.url,
-      // TODO: 著者がIFにない
-      author: 'claudecode',
+      author: post.user.name || post.user.id, // ユーザー名が空の場合はIDを使用
       publishedAt: post.created_at,
       site: 'qiita' as const,
       engagement: {
@@ -130,13 +156,13 @@ export default async function HomePage({ searchParams }: PageProps) {
   ];
 
   // クエリパラメータによってフィルタリング
-  const getFilteredArticles = () => {
+  function getFilteredArticles() {
     if (site === 'all') return allArticles;
     return allArticles.filter((article) => article.site === site);
-  };
+  }
 
   // ソート処理
-  const getSortedArticles = (articles: Article[]) => {
+  function getSortedArticles(articles: Article[]) {
     if (order === 'latest') {
       return articles.sort((a, b) => (a.publishedAt > b.publishedAt ? -1 : 1));
     }
@@ -147,8 +173,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       const bEngagement = b.engagement.likes + b.engagement.bookmarks;
       return bEngagement - aEngagement;
     });
-  };
-
+  }
   const filteredArticles = getFilteredArticles();
   const articles = getSortedArticles(filteredArticles);
 
