@@ -4,6 +4,8 @@ import type React from 'react';
 import './globals.css';
 import { siteConfig } from './config/site';
 import StructuredData from '@/components/common/StructuredData';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,7 +22,6 @@ export const metadata: Metadata = {
     'AI',
     'プログラミング',
     'コード生成',
-    'メディアアグリゲーション',
     'キュレーション',
     'はてなブックマーク',
     'Qiita',
@@ -75,7 +76,13 @@ export default function RootLayout({
     <html lang='ja'>
       <body className={inter.className}>
         <StructuredData type='website' />
-        {children}
+        <div className='min-h-screen flex flex-col bg-[#FAF9F5] text-[#141413]'>
+          {/* 背景グラデーション */}
+          <div className='absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-[#141413]/5 via-transparent to-[#E0DFDA]/5' />
+          <Header />
+          <main className='flex-1'>{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   );

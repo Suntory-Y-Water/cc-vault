@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { WeeklyArticle } from '@/types';
 import { notFound } from 'next/navigation';
+import { SITE_CONFIGS } from '@/lib/constants';
 
 type TopArticlesProps = {
   /** 週間人気記事トップ10 */
@@ -31,14 +32,11 @@ export default function TopArticles({ articles, weekLabel }: TopArticlesProps) {
    * サイトバッジの色を取得
    */
   const getSiteBadgeColor = (site: string) => {
-    const colors = {
-      hatena: 'bg-[#00A4DE] text-white',
-      qiita: 'bg-[#55C500] text-white',
-      zenn: 'bg-[#3EA8FF] text-white',
-      note: 'bg-[#41C9B4] text-white',
-      docs: 'bg-[#6B46C1] text-white',
-    };
-    return colors[site as keyof typeof colors] || 'bg-[#E0DFDA] text-[#141413]';
+    const siteConfig = SITE_CONFIGS[site];
+    if (siteConfig) {
+      return `text-white`;
+    }
+    return 'bg-[#E0DFDA] text-[#141413]';
   };
 
   /**
@@ -135,8 +133,14 @@ export default function TopArticles({ articles, weekLabel }: TopArticlesProps) {
 
                   <div className='flex items-center justify-between mb-3'>
                     <div className='flex items-center gap-2'>
-                      <Badge className={getSiteBadgeColor(article.site)}>
-                        {article.site}
+                      <Badge
+                        className={getSiteBadgeColor(article.site)}
+                        style={{
+                          backgroundColor: SITE_CONFIGS[article.site]?.color,
+                        }}
+                      >
+                        {SITE_CONFIGS[article.site]?.displayName ||
+                          article.site}
                       </Badge>
                       <div className='flex items-center gap-3 text-sm text-[#141413] opacity-70'>
                         <div className='flex items-center gap-1'>

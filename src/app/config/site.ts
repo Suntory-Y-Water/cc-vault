@@ -19,7 +19,8 @@ export type SiteConfig = {
   email?: string;
 };
 
-const url = process.env.NEXT_PUBLIC_APP_URL || 'https://cc-vault.com';
+// TODO: URL
+const url = process.env.APP_URL || 'https://cc-valut.com';
 
 /**
  * CC-Vaultサイト設定
@@ -27,7 +28,7 @@ const url = process.env.NEXT_PUBLIC_APP_URL || 'https://cc-vault.com';
 export const siteConfig: SiteConfig = {
   name: 'CC-Vault',
   description:
-    'Claude Codeに特化したメディアアグリゲーションプラットフォーム。複数の記事プラットフォームからClaude Code関連記事を収集・分析し、トレンドや人気記事をキュレーションして提供します。',
+    'Claude Codeに特化した情報提供プラットフォーム。複数の記事プラットフォームからClaude Code関連記事を収集・分析し、トレンドや人気記事をキュレーションして提供します。',
   url: url,
   ogImage: `${url}/opengraph-image.png`,
   links: {

@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { siteConfig } from './config/site';
+import { SORT_ORDERS, SITE_NAMES } from '@/types/article';
 
 /**
  * サイトマップ生成
@@ -24,11 +25,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const dynamicRoutes = [];
 
   // 新着・トレンド × サイトフィルター の組み合わせ
-  const orders = ['latest', 'trending'];
-  const sites = ['all', 'hatena', 'qiita', 'zenn', 'note', 'docs'];
-
-  for (const order of orders) {
-    for (const site of sites) {
+  for (const order of Object.values(SORT_ORDERS)) {
+    for (const site of Object.values(SITE_NAMES)) {
       dynamicRoutes.push({
         url: `${siteConfig.url}/?order=${order}&site=${site}`,
         lastModified: new Date(),

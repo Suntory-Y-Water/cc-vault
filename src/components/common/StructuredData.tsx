@@ -101,7 +101,7 @@ export default function StructuredData({
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: article.title,
-      description: article.description || '',
+      description: article.title,
       url: article.url,
       datePublished: article.publishedAt,
       dateModified: article.publishedAt,

@@ -2,8 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SITE_CONFIGS } from '@/lib/constants';
 import type { Article } from '@/types';
-import { Heart, Bookmark } from 'lucide-react';
-import Link from 'next/link';
+import { Heart, Bookmark, ArrowUpRight } from 'lucide-react';
 
 type ArticleCardProps = {
   article: Article;
@@ -28,7 +27,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   };
 
   return (
-    <Card className='bg-[#FAF9F5] border-[#E0DFDA] hover:shadow-lg transition-shadow duration-200'>
+    <Card className='bg-[#FAF9F5] border-[#DB8163] hover:shadow-lg transition-shadow duration-200'>
       <CardContent className='p-6'>
         <div className='flex items-start justify-between'>
           <div className='flex-1'>
@@ -49,7 +48,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
               </span>
             </div>
 
-            {/* 記事タイトル（2行クランプ） */}
+            {/* 記事タイトル（２行クランプ） */}
             <h2 className='text-lg font-semibold text-[#141413] mb-3 line-clamp-2 leading-6'>
               {article.title}
             </h2>
@@ -76,14 +75,15 @@ export default function ArticleCard({ article }: ArticleCardProps) {
 
           {/* 続きを読むリンク */}
           <div className='ml-4 flex-shrink-0'>
-            <Link
+            <a
               href={article.url}
               target='_blank'
               rel='noopener noreferrer'
-              className='inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-[#DB8163] border border-[#DB8163] rounded-md hover:bg-[#DB8163] hover:text-white transition-colors duration-200'
+              className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#DB8163] border border-[#DB8163] rounded-md hover:bg-[#DB8163] hover:text-white transition-colors duration-200'
             >
-              続きを読む
-            </Link>
+              読む
+              <ArrowUpRight className='w-4 h-4' />
+            </a>
           </div>
         </div>
       </CardContent>

@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SortOrder, SORT_ORDERS } from '@/types/article';
 
 type Props = {
-  order: 'latest' | 'trending';
+  order: SortOrder;
   searchParams?: {
     site?: string;
     page?: string;
@@ -14,7 +15,7 @@ type Props = {
  * 新着・トレンドタブの切り替え機能を提供
  */
 export default function MainTabs({ order, searchParams = {} }: Props) {
-  const currentTab = order === 'latest' ? 'new' : 'trending';
+  const currentTab = order === SORT_ORDERS.latest ? 'new' : 'trending';
 
   return (
     <Tabs value={currentTab}>
@@ -22,7 +23,7 @@ export default function MainTabs({ order, searchParams = {} }: Props) {
         <Link
           href={`?${new URLSearchParams({
             ...searchParams,
-            order: 'latest',
+            order: SORT_ORDERS.latest,
             page: '1',
           }).toString()}`}
         >
@@ -36,7 +37,7 @@ export default function MainTabs({ order, searchParams = {} }: Props) {
         <Link
           href={`?${new URLSearchParams({
             ...searchParams,
-            order: 'trending',
+            order: SORT_ORDERS.trending,
             page: '1',
           }).toString()}`}
         >
