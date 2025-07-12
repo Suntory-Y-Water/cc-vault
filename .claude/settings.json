@@ -21,7 +21,9 @@
       "mcp__playwright__browser_take_screenshot",
       "mcp__ide__getDiagnostics",
       "mcp__playwright__browser_type",
-      "Bash(npx vitest run:*)"
+      "Bash(npx vitest run:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)"
     ],
     "deny": [
       "Bash(sudo:*)",

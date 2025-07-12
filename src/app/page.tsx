@@ -1,98 +1,191 @@
-import { fetchExternalData } from '@/lib/fetchers';
-import type { ZennResponse } from '@/types';
+import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers';
+import { getZennTopicsData } from '@/lib/parser';
+import MainTabs from '@/components/layout/MainTabs';
+import SiteFilter from '@/components/layout/SiteFilter';
+import ArticleList from '@/components/article/ArticleList';
+import type { Metadata } from 'next';
+import { siteConfig, pageMetadata, siteFilterMetadata } from './config/site';
+import { Article, QiitaPost, SortOrder, SiteType } from '@/types';
 
 type PageProps = {
   searchParams: Promise<{
-    order?: 'latest' | 'trending';
-    site?: 'all' | 'hatena' | 'qiita' | 'zenn' | 'note' | 'docs';
+    order?: SortOrder;
+    site?: SiteType | 'all';
     page?: string;
   }>;
 };
 
-export default async function HomePage({ searchParams }: PageProps) {
-  const { order = 'latest', site = 'all', page = '1' } = await searchParams;
+/**
+ * ホームページのメタデータ生成
+ */
+export async function generateMetadata({
+  searchParams,
+}: PageProps): Promise<Metadata> {
+  const { order = 'latest', site = 'all' } = await searchParams;
 
-  // Zennの記事を取得
-  const zennData = await fetchExternalData<ZennResponse>(
-    `https://zenn.dev/api/articles?username=sui_water&order=${order}`,
-    {
-      revalidate: 60,
-      tags: ['zenn-articles'],
+  const isLatest = order === 'latest';
+  const siteFilter = siteFilterMetadata[site];
+
+  const title = isLatest
+    ? `${pageMetadata.latest.title} - ${siteFilter.title}`
+    : `${pageMetadata.trending.title} - ${siteFilter.title}`;
+
+  const description = isLatest
+    ? `${pageMetadata.latest.description} - ${siteFilter.description}`
+    : `${pageMetadata.trending.description} - ${siteFilter.description}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteConfig.url}/?order=${order}&site=${site}`,
+      type: 'website',
     },
-  );
+    twitter: {
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `${siteConfig.url}/?order=${order}&site=${site}`,
+    },
+  };
+}
 
-  const articles = zennData.articles.map((post) => {
-    return {
-      id: post.id.toString(),
+/**
+ * ホームページコンポーネント
+ * クエリパラメータのバリデーションを行い、想定外の値の場合は404ページを表示
+ */
+export default async function HomePage({ searchParams }: PageProps) {
+  const { order = 'latest', site = 'all' } = await searchParams;
+
+  // 並列処理で全データを取得
+  const [zennData, qiitaData] = await Promise.all([
+    // Zennのトピックスページから記事を取得
+    (async () => {
+      const zennOrderParam = order === 'latest' ? 'latest' : 'daily';
+      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=${zennOrderParam}`;
+
+      const document = await fetchHtmlDocument(zennTopicsUrl, {
+        revalidate: 3600,
+        tags: ['zenn-topics'],
+      });
+
+      return getZennTopicsData({ document });
+    })(),
+
+    // QiitaのAPIから記事を取得
+    (async () => {
+      // Qiitaは新着順のみサポート（APIの制限）
+      const qiitaQuery =
+        order === 'latest' ? 'tag:claudecode' : 'tag:claudecode stocks:>0'; // トレンド時はストック数でフィルタ
+
+      const qiitaData = await fetchExternalData<QiitaPost[]>(
+        `https://qiita.com/api/v2/items?query=${encodeURIComponent(qiitaQuery)}`,
+        {
+          revalidate: 3600,
+          tags: ['qiita-articles'],
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.QIITA_ACCESS_TOKEN}`,
+          },
+        },
+      );
+
+      return qiitaData;
+    })(),
+  ]);
+
+  // 全記事を統合
+  const allArticles: Article[] = [
+    // Zennの記事
+    ...zennData.articles.map((post) => ({
+      id: `zenn-${post.id}`,
       title: post.title,
       url: `https://zenn.dev${post.path}`,
-      author: 'sui_water',
+      // TODO: 著者がIFにない
+      author: 'claudecode',
       publishedAt: post.published_at,
       site: 'zenn' as const,
       engagement: {
-        likes: 0,
-        bookmarks: 0,
-        comments: 0,
-        shares: 0,
+        likes: post.likedCount,
+        bookmarks: post.bookmarkedCount,
       },
-      emoji: post.emoji,
-    };
-  });
+    })),
+    // Qiitaの記事
+    ...qiitaData.map((post) => ({
+      id: `qiita-${post.id}`,
+      title: post.title,
+      url: post.url,
+      // TODO: 著者がIFにない
+      author: 'claudecode',
+      publishedAt: post.created_at,
+      site: 'qiita' as const,
+      engagement: {
+        likes: post.likes_count,
+        bookmarks: post.stocks_count,
+      },
+    })),
+  ];
+
+  // クエリパラメータによってフィルタリング
+  const getFilteredArticles = () => {
+    if (site === 'all') return allArticles;
+    return allArticles.filter((article) => article.site === site);
+  };
+
+  // ソート処理
+  const getSortedArticles = (articles: Article[]) => {
+    if (order === 'latest') {
+      return articles.sort((a, b) => (a.publishedAt > b.publishedAt ? -1 : 1));
+    }
+
+    // トレンド順: エンゲージメント重視
+    return articles.sort((a, b) => {
+      const aEngagement = a.engagement.likes + a.engagement.bookmarks;
+      const bEngagement = b.engagement.likes + b.engagement.bookmarks;
+      return bEngagement - aEngagement;
+    });
+  };
+
+  const filteredArticles = getFilteredArticles();
+  const articles = getSortedArticles(filteredArticles);
 
   return (
-    <main className='container mx-auto px-4 py-8'>
-      <h1 className='text-3xl font-bold text-gray-800 mb-8'>CC-Vault</h1>
-
-      <div className='mb-6'>
-        <p className='text-gray-600'>
-          現在の表示: {site === 'all' ? '全サイト' : site} /{' '}
-          {order === 'latest' ? '新着順' : 'トレンド順'}
+    <div className='max-w-[80rem] mx-auto px-4 py-8'>
+      <div className='pt-6 pb-8'>
+        <h1 className='text-4xl md:text-6xl font-extrabold tracking-tight text-[#141413]'>
+          CC-Vault
+        </h1>
+        <p className='mt-5 text-lg text-[#7D4A38]'>
+          Claude Code中心の技術トレンドをまとめてチェック
         </p>
       </div>
 
-      <div className='grid gap-4'>
-        {articles.map((article) => (
-          <div
-            key={article.id}
-            className='border rounded-lg p-4 hover:shadow-md transition-shadow'
-          >
-            <div className='flex items-start justify-between'>
-              <div className='flex-1'>
-                <div className='flex items-center gap-2 mb-2'>
-                  <span className='text-xl'>{article.emoji}</span>
-                  <span className='text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded'>
-                    Zenn
-                  </span>
-                </div>
-                <h2 className='text-xl font-semibold text-gray-800 mb-2'>
-                  {article.title}
-                </h2>
-                <div className='flex items-center gap-4 text-sm text-gray-600'>
-                  <span>著者: {article.author}</span>
-                  <span>
-                    公開日:{' '}
-                    {new Date(article.publishedAt).toLocaleDateString('ja-JP')}
-                  </span>
-                </div>
-              </div>
-              <a
-                href={article.url}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='text-blue-600 hover:text-blue-800 underline'
-              >
-                続きを読む
-              </a>
-            </div>
-          </div>
-        ))}
+      {/* フィルターボタン */}
+      <div className='flex flex-wrap gap-2 mb-8'>
+        <SiteFilter activeSite={site} searchParams={{ order }} />
       </div>
 
-      {articles.length === 0 && (
-        <div className='text-center text-gray-600 py-8'>
-          <p>記事が見つかりませんでした。</p>
+      {/* タブ */}
+      <div>
+        <MainTabs order={order} />
+
+        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
+          {/* 初期開発ではウィークリーレポート非表示 */}
+          {/* <Link href='/weekly-report'>
+            <Button
+              variant='outline'
+              className='border-[#DB8163] text-[#DB8163] hover:bg-[#DB8163] hover:text-white transition-colors font-medium'
+            >
+              ウィークリーレポート
+            </Button>
+          </Link> */}
         </div>
-      )}
-    </main>
+
+        <ArticleList articles={articles} />
+      </div>
+    </div>
   );
 }

@@ -8,7 +8,6 @@ export type SiteConfig = {
   displayName: string;
   color: string;
   url: string;
-  apiEndpoint?: string;
 };
 
 export type SiteStats = {
@@ -17,11 +16,3 @@ export type SiteStats = {
   totalEngagement: number;
   lastUpdated: string;
 };
-
-export type SiteFilterOption =
-  | 'all'
-  | 'hatena'
-  | 'qiita'
-  | 'zenn'
-  | 'note'
-  | 'docs';

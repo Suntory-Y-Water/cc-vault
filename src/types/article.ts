@@ -2,6 +2,33 @@
  * 記事関連の型定義
  */
 
+/**
+ * サイト名の定数定義
+ */
+export const SITE_NAMES = {
+  all: 'all',
+  qiita: 'qiita',
+  zenn: 'zenn',
+} as const;
+
+/**
+ * ソート順の定数定義
+ */
+export const SORT_ORDERS = {
+  latest: 'latest',
+  trending: 'trending',
+} as const;
+
+/**
+ * サイト名の型定義
+ */
+export type SiteType = keyof typeof SITE_NAMES;
+
+/**
+ * ソート順の型定義
+ */
+export type SortOrder = keyof typeof SORT_ORDERS;
+
 export type Article = {
   id: string;
   title: string;
@@ -10,32 +37,11 @@ export type Article = {
   publishedAt: string;
   site: SiteType;
   engagement: EngagementMetrics;
-  description?: string;
-  tags?: string[];
 };
 
-export type EngagementMetrics = {
+type EngagementMetrics = {
   likes: number;
   bookmarks: number;
-  comments: number;
-  shares: number;
-};
-
-export type SiteType = 'hatena' | 'qiita' | 'zenn' | 'note' | 'docs';
-
-export type SortOrder = 'latest' | 'trending';
-
-export type ArticleFilters = {
-  order: SortOrder;
-  site: SiteType | 'all';
-  page: number;
-};
-
-export type ArticleResponse = {
-  articles: Article[];
-  totalCount: number;
-  hasNext: boolean;
-  currentPage: number;
 };
 
 export type ZennResponse = {
@@ -45,7 +51,20 @@ export type ZennResponse = {
 export type ZennPost = {
   id: number;
   path: string;
-  emoji: string;
   title: string;
   published_at: string;
+  likedCount: number;
+  bookmarkedCount: number;
+};
+
+/**
+ * QiitaAPIの記事データ
+ */
+export type QiitaPost = {
+  id: string;
+  title: string;
+  url: string;
+  likes_count: number;
+  stocks_count: number;
+  created_at: string;
 };
