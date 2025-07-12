@@ -15,7 +15,7 @@ export async function fetchExternalData<T>(
   options?: RequestInit & FetchOptions,
 ): Promise<T> {
   const {
-    cache = 'no-store',
+    cache = 'default',
     revalidate = 3600,
     tags = [],
     ...fetchOptions

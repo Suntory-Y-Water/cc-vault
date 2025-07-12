@@ -17,8 +17,6 @@ export type Article = {
 export type EngagementMetrics = {
   likes: number;
   bookmarks: number;
-  comments: number;
-  shares: number;
 };
 
 export type SiteType = 'hatena' | 'qiita' | 'zenn' | 'note' | 'docs';

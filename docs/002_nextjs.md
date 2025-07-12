@@ -102,29 +102,62 @@ import Script from "next/script";
 - `loading.tsx`でローディング状態を管理
 - Suspense を使用して細かい粒度でローディングを制御
 
-## 6. 型安全性
+# 本プロジェクトのNext.jsルール
 
-### TypeScript
+本プロジェクトではクライアントComponentを使用せず、URLにクエリパラメータを付与してフィルタリングやボタンの切り替えを行う
 
-- 厳格な型チェックを有効化
+```tsx
+// 良い例: クエリパラメータから非同期処理で値を受け取るServerComponent
+type PageProps = {
+  searchParams: Promise<{
+    order?: 'latest' | 'trending';
+    site?: 'all' | 'hatena' | 'qiita' | 'zenn' | 'note' | 'docs';
+    page?: string;
+  }>;
+};
 
-```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "forceConsistentCasingInFileNames": true
-  }
+export default async function HomePage({ searchParams }: PageProps) {
+  const { order = 'latest', site = 'all' } = await searchParams;
+  // たくさんのコード...
+}
+
+// 悪い例: クライアントComponentを使用して、useRouter()状態を変更
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback } from 'react';
+import Navigation, { NavigationState } from '@/components/layout/Navigation';
+
+/**
+ * クライアント側でナビゲーション状態を管理するラッパーコンポーネント
+ */
+export default function ClientNavigationWrapper() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleStateChange = useCallback(
+    (state: NavigationState) => {
+      const params = new URLSearchParams(searchParams);
+
+      // タブの状態をorderパラメータに変換
+      params.set('order', state.activeTab === 'new' ? 'latest' : 'trending');
+
+      // サイトフィルターの状態をsiteパラメータに変換
+      params.set('site', state.activeSite);
+
+      router.push(`?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
+
+  return <Navigation onStateChange={handleStateChange} />;
 }
 ```
 
-## 7. セキュリティ
+## なぜクライアントComponentを使ってはいけないのか
 
-### 環境変数
+- Next.jsの強みであるServerComponentによる高速レンダリングを活かせない
 
-- 機密情報は`.env`に保存
-- 公開する環境変数は`NEXT_PUBLIC_`プレフィックスを使用
+## その他の特記事項
 
-### CSP (Content Security Policy)
-
-- 適切な CSP ヘッダーを設定
-- `next.config.js`でセキュリティヘッダーを構成
+型定義は`type`を使う
