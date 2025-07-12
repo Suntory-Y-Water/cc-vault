@@ -3,8 +3,6 @@ import { getZennTopicsData } from '@/lib/parser';
 import MainTabs from '@/components/layout/MainTabs';
 import SiteFilter from '@/components/layout/SiteFilter';
 import ArticleList from '@/components/article/ArticleList';
-import type { Metadata } from 'next';
-import { siteConfig, pageMetadata, siteFilterMetadata } from './config/site';
 import {
   Article,
   QiitaPost,
@@ -22,44 +20,6 @@ type PageProps = {
     page?: string;
   }>;
 };
-
-/**
- * ホームページのメタデータ生成
- */
-export async function generateMetadata({
-  searchParams,
-}: PageProps): Promise<Metadata> {
-  const { order = 'latest', site = 'all' } = await searchParams;
-
-  const isLatest = order === 'latest';
-  const siteFilter = siteFilterMetadata[site];
-
-  const title = isLatest
-    ? `${pageMetadata.latest.title} - ${siteFilter.title}`
-    : `${pageMetadata.trending.title} - ${siteFilter.title}`;
-
-  const description = isLatest
-    ? `${pageMetadata.latest.description} - ${siteFilter.description}`
-    : `${pageMetadata.trending.description} - ${siteFilter.description}`;
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `${siteConfig.url}/?order=${order}&site=${site}`,
-      type: 'website',
-    },
-    twitter: {
-      title,
-      description,
-    },
-    alternates: {
-      canonical: `${siteConfig.url}/?order=${order}&site=${site}`,
-    },
-  };
-}
 
 /**
  * クエリパラメータのバリデーションを行う

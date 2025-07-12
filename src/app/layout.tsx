@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import type React from 'react';
 import './globals.css';
-import { siteConfig } from './config/site';
+import { siteConfig } from '@/config/site';
 import StructuredData from '@/components/common/StructuredData';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
