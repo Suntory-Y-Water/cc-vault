@@ -1,60 +1,19 @@
 import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers';
 import { getZennTopicsData } from '@/lib/parser';
-import MainTabs from '@/components/layout/MainTabs';
-import SiteFilter from '@/components/layout/SiteFilter';
-import ArticleList from '@/components/article/ArticleList';
-import {
-  Article,
-  QiitaPost,
-  SortOrder,
-  SiteType,
-  SORT_ORDERS,
-  SITE_NAMES,
-} from '@/types';
-import { notFound } from 'next/navigation';
+import { Article, QiitaPost } from '@/types';
 import { convertToJstString } from '@/lib/utils';
-
-type PageProps = {
-  searchParams: Promise<{
-    order?: SortOrder;
-    site?: SiteType | 'all';
-    page?: string;
-  }>;
-};
+import ArticleContainer from '@/components/ArticleContainer';
 
 /**
- * クエリパラメータのバリデーションを行う
- * @param order - ソート順パラメータ
- * @param site - サイトフィルターパラメータ
+ * ホームページコンポーネント (Server Component)
+ * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
-function validateSearchParams(order?: string, site?: string) {
-  // orderパラメータのバリデーション
-  if (order && !(order in SORT_ORDERS)) {
-    notFound();
-  }
-
-  // siteパラメータのバリデーション（'all'も許可）
-  if (site && site !== 'all' && !(site in SITE_NAMES)) {
-    notFound();
-  }
-}
-
-/**
- * ホームページコンポーネント
- * クエリパラメータのバリデーションを行い、想定外の値の場合は404ページを表示
- */
-export default async function HomePage({ searchParams }: PageProps) {
-  const { order = 'latest', site = 'all' } = await searchParams;
-
-  // クエリパラメータのバリデーション実行
-  validateSearchParams(order, site);
-
+export default async function HomePage() {
   // 並列処理で全データを取得
   const [zennData, qiitaData] = await Promise.all([
     // Zennのトピックスページから記事を取得
     (async () => {
-      const zennOrderParam = order === 'latest' ? 'latest' : 'daily';
-      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=${zennOrderParam}`;
+      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
 
       const document = await fetchHtmlDocument(zennTopicsUrl, {
         revalidate: 3600,
@@ -66,12 +25,8 @@ export default async function HomePage({ searchParams }: PageProps) {
 
     // QiitaのAPIから記事を取得
     (async () => {
-      // Qiitaは新着順のみサポート（APIの制限）
-      const qiitaQuery =
-        order === 'latest' ? 'tag:claudecode' : 'tag:claudecode stocks:>0'; // トレンド時はストック数でフィルタ
-
       const qiitaData = await fetchExternalData<QiitaPost[]>(
-        `https://qiita.com/api/v2/items?query=${encodeURIComponent(qiitaQuery)}`,
+        `https://qiita.com/api/v2/items?query=${encodeURIComponent('tag:claudecode')}`,
         {
           revalidate: 3600,
           tags: ['qiita-articles'],
@@ -116,28 +71,6 @@ export default async function HomePage({ searchParams }: PageProps) {
     })),
   ];
 
-  // クエリパラメータによってフィルタリング
-  function getFilteredArticles() {
-    if (site === 'all') return allArticles;
-    return allArticles.filter((article) => article.site === site);
-  }
-
-  // ソート処理
-  function getSortedArticles(articles: Article[]) {
-    if (order === 'latest') {
-      return articles.sort((a, b) => (a.publishedAt > b.publishedAt ? -1 : 1));
-    }
-
-    // トレンド順: エンゲージメント重視
-    return articles.sort((a, b) => {
-      const aEngagement = a.engagement.likes + a.engagement.bookmarks;
-      const bEngagement = b.engagement.likes + b.engagement.bookmarks;
-      return bEngagement - aEngagement;
-    });
-  }
-  const filteredArticles = getFilteredArticles();
-  const articles = getSortedArticles(filteredArticles);
-
   return (
     <div className='max-w-[80rem] mx-auto px-4 py-8'>
       <div className='pt-6 pb-8'>
@@ -149,29 +82,7 @@ export default async function HomePage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      {/* フィルターボタン */}
-      <div className='flex flex-wrap gap-2 mb-8'>
-        <SiteFilter activeSite={site} searchParams={{ order }} />
-      </div>
-
-      {/* タブ */}
-      <div>
-        <MainTabs order={order} />
-
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6'>
-          {/* 初期開発ではウィークリーレポート非表示 */}
-          {/* <Link href='/weekly-report'>
-            <Button
-              variant='outline'
-              className='border-[#DB8163] text-[#DB8163] hover:bg-[#DB8163] hover:text-white transition-colors font-medium'
-            >
-              ウィークリーレポート
-            </Button>
-          </Link> */}
-        </div>
-
-        <ArticleList articles={articles} />
-      </div>
+      <ArticleContainer articles={allArticles} />
     </div>
   );
 }
