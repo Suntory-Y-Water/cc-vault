@@ -6,7 +6,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "ignore": ["cloudflare-env.d.ts"]
   },
   "formatter": {
     "attributePosition": "auto",
@@ -35,7 +36,8 @@
       "complexity": {
         "noForEach": "off"
       }
-    }
+    },
+    "ignore": ["**/*.test.tsx", "**/*.test.ts"]
   },
   "overrides": [
     {

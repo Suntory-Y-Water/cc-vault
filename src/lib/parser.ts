@@ -2,15 +2,18 @@ import { ZennArticle, ZennTopics, ZennResponse } from '@/types';
 
 /**
  * Next.jsのNEXT_DATAを解析する
+ * @param htmlString - HTML文字列
+ * @returns 解析されたNEXT_DATAオブジェクト
  */
 function parseNextData<T extends ZennArticle | ZennTopics>({
-  document,
-}: { document: Document }) {
-  const nextDataText = document.querySelector('#__NEXT_DATA__')?.textContent;
-  if (!nextDataText) {
+  htmlString,
+}: { htmlString: string }) {
+  const nextDataMatch = htmlString.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!nextDataMatch || !nextDataMatch[1]) {
     throw new Error('NEXT_DATAタグが見つかりません');
   }
 
+  const nextDataText = nextDataMatch[1].trim();
   try {
     return JSON.parse(nextDataText) as T;
   } catch (error) {
@@ -20,15 +23,15 @@ function parseNextData<T extends ZennArticle | ZennTopics>({
 
 /**
  * Zennのトピックスページから記事データを取得する
- * @param document - HTMLドキュメント
+ * @param htmlString - HTML文字列
  * @returns Zennの記事データ
  */
 export function getZennTopicsData({
-  document,
-}: { document: Document }): ZennResponse {
+  htmlString,
+}: { htmlString: string }): ZennResponse {
   try {
     // ZennTopics型としてNEXT_DATAを解析
-    const nextData = parseNextData<ZennTopics>({ document });
+    const nextData = parseNextData<ZennTopics>({ htmlString });
 
     // 記事データを抽出して変換
     const articles = nextData.props.pageProps.articles.map((article) => ({

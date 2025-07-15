@@ -15,12 +15,12 @@ export default async function HomePage() {
     (async () => {
       const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
 
-      const document = await fetchHtmlDocument(zennTopicsUrl, {
+      const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
         revalidate: 3600,
         tags: ['zenn-topics'],
       });
 
-      return getZennTopicsData({ document });
+      return getZennTopicsData({ htmlString });
     })(),
 
     // QiitaのAPIから記事を取得
