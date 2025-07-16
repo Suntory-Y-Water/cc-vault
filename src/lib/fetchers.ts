@@ -54,7 +54,7 @@ export async function fetchHtmlDocument(
   options?: RequestInit & FetchOptions,
 ): Promise<string> {
   const {
-    cache = 'default',
+    cache = 'force-cache',
     revalidate = 3600,
     tags = [],
     ...fetchOptions
