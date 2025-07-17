@@ -3,7 +3,6 @@
  */
 
 import type { FetchOptions } from '@/types';
-import { JSDOM } from 'jsdom';
 
 /**
  * 汎用fetch関数 - 外部APIからデータを取得
@@ -45,17 +44,17 @@ export async function fetchExternalData<T>(
 }
 
 /**
- * HTMLページを取得してDocumentオブジェクトを返す
+ * HTMLページを取得してHTML文字列を返す
  * @param url - ページURL
  * @param options - fetch オプション
- * @returns Promise<Document> - パース済みのHTMLドキュメント
+ * @returns Promise<string> - HTML文字列
  */
 export async function fetchHtmlDocument(
   url: string,
   options?: RequestInit & FetchOptions,
-): Promise<Document> {
+): Promise<string> {
   const {
-    cache = 'default',
+    cache = 'force-cache',
     revalidate = 3600,
     tags = [],
     ...fetchOptions
@@ -83,8 +82,7 @@ export async function fetchHtmlDocument(
     }
 
     const html = await response.text();
-    const dom = new JSDOM(html);
-    return dom.window.document;
+    return html;
   } catch (error) {
     console.error('HTML fetch error:', error);
     throw error;

