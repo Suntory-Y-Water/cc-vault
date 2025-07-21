@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": "./custom-worker.ts",
-  "name": "cc-valut",
+  "main": ".open-next/worker.js",
+  "name": "cc-vault",
   "compatibility_date": "2025-07-15",
   "compatibility_flags": [
     // Enable Node.js API
@@ -21,6 +21,10 @@
   "dev": {
     "port": 3000
   },
+  "vars": {
+    "APP_URL": "https://cc-vault.ayasnppk00.workers.dev"
+  },
+  "workers_dev": true,
   "d1_databases": [
     {
       "binding": "DB",
@@ -29,7 +33,21 @@
       "migrations_dir": "migrations"
     }
   ],
-  "triggers": {
-    "crons": ["0 * * * *"]
+  "env": {
+    "staging": {
+      "name": "cc-vault-staging",
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "cc-vault-db-staging",
+          "database_id": "6b6f9fe2-a90a-4a96-808c-866f3314004f",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vars": {
+        "APP_URL": "https://cc-vault-staging.ayasnppk00.workers.dev"
+      }
+    }
   }
 }

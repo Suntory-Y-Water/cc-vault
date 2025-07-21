@@ -20,7 +20,7 @@ export type SiteConfig = {
 };
 
 // TODO: こういったときの設定どうするか、CloudflareがENVで環境ごとにURL変える場合のアクセス法
-const url = process.env.APP_URL || 'https://cc-valut.ayasnppk00.workers.dev';
+const url = process.env.APP_URL || 'https://cc-vault.ayasnppk00.workers.dev';
 
 /**
  * CC-Vaultサイト設定
