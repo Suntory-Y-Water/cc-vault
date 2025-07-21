@@ -7,6 +7,8 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { HATENA_CLAUDE_CODE_VARIANTS, EXCLUDE_DOMAINS } from '@/lib/constants';
 import { getArticlesFromD1 } from '@/lib/cloudflare';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * ホームページコンポーネント
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
@@ -43,8 +45,7 @@ export default async function HomePage() {
             const hatenaRecentUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?target=tag&date_range=m&safe=on&users=3&sort=recent`;
 
             const htmlString = await fetchHtmlDocument(hatenaRecentUrl, {
-              revalidate: 3600,
-              tags: [`hatena-recent-${keyword}`],
+              cache: 'no-store',
             });
 
             return getHatenaBookmarkData({ htmlString });
@@ -62,8 +63,7 @@ export default async function HomePage() {
             const hatenaPopularUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?users=3&target=tag&sort=popular&date_range=m&safe=on`;
 
             const htmlString = await fetchHtmlDocument(hatenaPopularUrl, {
-              revalidate: 3600,
-              tags: [`hatena-popular-${keyword}`],
+              cache: 'no-store',
             });
 
             return getHatenaBookmarkData({ htmlString });
