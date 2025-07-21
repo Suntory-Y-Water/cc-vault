@@ -17,7 +17,11 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "db:create": "wrangler d1 create cc-vault-db",
+    "db:migrate": "wrangler d1 migrations apply cc-vault-db",
+    "db:migrate:local": "wrangler d1 migrations apply cc-vault-db --local",
+    "db:console": "wrangler d1 execute cc-vault-db --command"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.5.1",

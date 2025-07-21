@@ -20,5 +20,13 @@
   },
   "dev": {
     "port": 3000
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cc-vault-db",
+      "database_id": "e39a1dc8-23fe-4303-b01d-7818b308915c",
+      "migrations_dir": "migrations"
+    }
+  ]
 }
