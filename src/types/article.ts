@@ -9,6 +9,7 @@ export const SITE_NAMES = {
   all: 'all',
   qiita: 'qiita',
   zenn: 'zenn',
+  hatena: 'hatena',
 } as const;
 
 /**
@@ -74,3 +75,4 @@ export type QiitaPost = {
     name: string;
   };
 };
+

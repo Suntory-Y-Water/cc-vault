@@ -1,50 +1,87 @@
 import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers';
-import { getZennTopicsData } from '@/lib/parser';
+import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser';
 import { Article, QiitaPost } from '@/types';
 import { convertToJstString } from '@/lib/utils';
-import ArticleContainer from '@/components/ArticleContainer';
-import { redirect } from 'next/navigation';
+import ArticleContainer from '@/components/article/ArticleContainer';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { HATENA_CLAUDE_CODE_VARIANTS, EXCLUDE_DOMAINS } from '@/lib/constants';
 
 /**
- * ホームページコンポーネント (Server Component)
+ * ホームページコンポーネント
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
 export default async function HomePage() {
-  const url =
-    process.env.REDIRECT_API_YRL || 'https://cc-valut.ayasnppk00.workers.dev';
-
-  redirect(url);
+  const { env } = getCloudflareContext();
   // 並列処理で全データを取得
-  const [zennData, qiitaData] = await Promise.all([
-    // Zennのトピックスページから記事を取得
-    (async () => {
-      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
+  const [zennData, qiitaData, hatenaRecentData, hatenaPopularData] =
+    await Promise.all([
+      // Zennのトピックスページから記事を取得
+      (async () => {
+        const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
 
-      const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
-        revalidate: 3600,
-        tags: ['zenn-topics'],
-      });
-
-      return getZennTopicsData({ htmlString });
-    })(),
-
-    // QiitaのAPIから記事を取得
-    (async () => {
-      const qiitaData = await fetchExternalData<QiitaPost[]>(
-        `https://qiita.com/api/v2/items?query=${encodeURIComponent('tag:claudecode')}`,
-        {
+        const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
           revalidate: 3600,
-          tags: ['qiita-articles'],
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.QIITA_ACCESS_TOKEN}`,
-          },
-        },
-      );
+          tags: ['zenn-topics'],
+        });
 
-      return qiitaData;
-    })(),
-  ]);
+        return getZennTopicsData({ htmlString });
+      })(),
+
+      // QiitaのAPIから記事を取得
+      (async () => {
+        const qiitaData = await fetchExternalData<QiitaPost[]>(
+          `https://qiita.com/api/v2/items?query=${encodeURIComponent('tag:claudecode')}`,
+          {
+            revalidate: 3600,
+            tags: ['qiita-articles'],
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
+            },
+          },
+        );
+
+        return qiitaData;
+      })(),
+
+      // はてなブックマーク新着順から記事を取得（全キーワード）
+      (async () => {
+        const hatenaRecentPromises = HATENA_CLAUDE_CODE_VARIANTS.map(
+          async (keyword) => {
+            const hatenaRecentUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?target=tag&date_range=m&safe=on&users=3&sort=recent`;
+
+            const htmlString = await fetchHtmlDocument(hatenaRecentUrl, {
+              revalidate: 3600,
+              tags: [`hatena-recent-${keyword}`],
+            });
+
+            return getHatenaBookmarkData({ htmlString });
+          },
+        );
+
+        const results = await Promise.all(hatenaRecentPromises);
+        return results.flat();
+      })(),
+
+      // はてなブックマーク人気順から記事を取得（全キーワード）
+      (async () => {
+        const hatenaPopularPromises = HATENA_CLAUDE_CODE_VARIANTS.map(
+          async (keyword) => {
+            const hatenaPopularUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?users=3&target=tag&sort=popular&date_range=m&safe=on`;
+
+            const htmlString = await fetchHtmlDocument(hatenaPopularUrl, {
+              revalidate: 3600,
+              tags: [`hatena-popular-${keyword}`],
+            });
+
+            return getHatenaBookmarkData({ htmlString });
+          },
+        );
+
+        const results = await Promise.all(hatenaPopularPromises);
+        return results.flat();
+      })(),
+    ]);
 
   // 全記事を統合
   const allArticles: Article[] = [
@@ -72,6 +109,28 @@ export default async function HomePage() {
       engagement: {
         likes: post.likes_count,
         bookmarks: post.stocks_count,
+      },
+    })),
+    // はてなブックマークの記事（新着順と人気順を統合、重複除去、Zenn/Qiita除外）
+    ...Array.from(
+      new Map(
+        [...hatenaRecentData, ...hatenaPopularData]
+          .filter(
+            (post) =>
+              !EXCLUDE_DOMAINS.some((domain) => post.url.startsWith(domain)),
+          )
+          .map((post) => [post.url, post]),
+      ).values(),
+    ).map((post) => ({
+      id: post.id,
+      title: post.title,
+      url: post.url,
+      author: post.author,
+      publishedAt: post.publishedAt,
+      site: 'hatena' as const,
+      engagement: {
+        likes: 0, // はてなにはいいねがないので0を設定
+        bookmarks: post.bookmarkCount,
       },
     })),
   ];

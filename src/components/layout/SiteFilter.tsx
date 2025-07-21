@@ -10,7 +10,7 @@ type Props = {
 };
 
 /**
- * サイトフィルターコンポーネント (Client Component)
+ * サイトフィルターコンポーネント
  * 各サイトでの記事フィルタリング機能を提供
  */
 export default function SiteFilter({ activeSite, onSiteChange }: Props) {

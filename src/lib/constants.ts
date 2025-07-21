@@ -3,7 +3,7 @@
  */
 
 import type { SiteConfig } from '@/types';
-import { Globe, Zap, Book } from 'lucide-react';
+import { Globe, Zap, Book, Bookmark } from 'lucide-react';
 
 /**
  * サイト設定
@@ -22,6 +22,13 @@ export const SITE_CONFIGS: Record<string, SiteConfig> = {
     displayName: 'Zenn',
     color: '#3EA8FF',
     url: 'https://zenn.dev',
+  },
+  hatena: {
+    id: 'hatena',
+    name: 'hatena',
+    displayName: 'はてな',
+    color: '#025db8',
+    url: 'https://b.hatena.ne.jp',
   },
 } as const;
 
@@ -50,4 +57,31 @@ export const SITE_UI_CONFIGS = {
       'border border-[#E0DFDA] bg-[#E0DFDA]/30 text-[#7D4A38] hover:bg-[#E0DFDA]/50 hover:border-[#E0DFDA]/80',
     activeStyle: 'bg-[#DB8163] text-white border-transparent',
   },
+  hatena: {
+    label: 'はてな',
+    icon: Bookmark,
+    baseStyle:
+      'border border-[#E0DFDA] bg-[#E0DFDA]/30 text-[#7D4A38] hover:bg-[#E0DFDA]/50 hover:border-[#E0DFDA]/80',
+    activeStyle: 'bg-[#DB8163] text-white border-transparent',
+  },
 } as const;
+
+/**
+ * はてなブログのClaude Code表記揺れパターン
+ */
+export const HATENA_CLAUDE_CODE_VARIANTS = [
+  'claudecode',
+  '"claudecode"',
+  'claude code',
+  '"claude code"',
+  'claude-code',
+  '"claude-code"',
+] as const;
+
+/**
+ * ZennとQiitaのドメインパターン（はてなデータから除外用）
+ */
+export const EXCLUDE_DOMAINS = [
+  'https://zenn.dev/',
+  'https://qiita.com/',
+] as const;
