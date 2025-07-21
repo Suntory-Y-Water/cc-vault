@@ -120,19 +120,3 @@ export default async function HomePage() {
       },
     })),
   ];
-
-  return (
-    <div className='max-w-[80rem] mx-auto px-4 py-8'>
-      <div className='pt-6 pb-8'>
-        <h1 className='text-4xl md:text-6xl font-extrabold tracking-tight text-[#141413]'>
-          CC-Vault
-        </h1>
-        <p className='mt-5 text-lg text-[#7D4A38]'>
-          Claude Code中心の技術トレンドをまとめてチェック
-        </p>
-      </div>
-
-      <ArticleContainer articles={allArticles} />
-    </div>
-  );
-}
