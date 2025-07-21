@@ -1,25 +1,31 @@
 import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers';
-import { getHatenaBookmarkData } from '@/lib/parser';
+import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser';
 import { Article, QiitaPost } from '@/types';
 import { convertToJstString } from '@/lib/utils';
 import ArticleContainer from '@/components/article/ArticleContainer';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { HATENA_CLAUDE_CODE_VARIANTS, EXCLUDE_DOMAINS } from '@/lib/constants';
-import { getArticlesFromD1 } from '@/lib/cloudflare';
-
-export const dynamic = 'force-dynamic';
 
 /**
  * ホームページコンポーネント
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
 export default async function HomePage() {
-  const { env } = await getCloudflareContext({ async: true });
+  const { env } = getCloudflareContext();
   // 並列処理で全データを取得
-  const [dbArticles, qiitaData, hatenaRecentData, hatenaPopularData] =
+  const [zennData, qiitaData, hatenaRecentData, hatenaPopularData] =
     await Promise.all([
-      // D1データベースから記事を取得
-      getArticlesFromD1(env.DB),
+      // Zennのトピックスページから記事を取得
+      (async () => {
+        const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
+
+        const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
+          revalidate: 3600,
+          tags: ['zenn-topics'],
+        });
+
+        return getZennTopicsData({ htmlString });
+      })(),
 
       // QiitaのAPIから記事を取得
       (async () => {
@@ -45,7 +51,8 @@ export default async function HomePage() {
             const hatenaRecentUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?target=tag&date_range=m&safe=on&users=3&sort=recent`;
 
             const htmlString = await fetchHtmlDocument(hatenaRecentUrl, {
-              cache: 'no-store',
+              revalidate: 3600,
+              tags: [`hatena-recent-${keyword}`],
             });
 
             return getHatenaBookmarkData({ htmlString });
@@ -63,7 +70,8 @@ export default async function HomePage() {
             const hatenaPopularUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?users=3&target=tag&sort=popular&date_range=m&safe=on`;
 
             const htmlString = await fetchHtmlDocument(hatenaPopularUrl, {
-              cache: 'no-store',
+              revalidate: 3600,
+              tags: [`hatena-popular-${keyword}`],
             });
 
             return getHatenaBookmarkData({ htmlString });
@@ -77,8 +85,19 @@ export default async function HomePage() {
 
   // 全記事を統合
   const allArticles: Article[] = [
-    // D1から取得した記事
-    ...dbArticles,
+    // Zennの記事
+    ...zennData.articles.map((post) => ({
+      id: `zenn-${post.id}`,
+      title: post.title,
+      url: `https://zenn.dev${post.path}`,
+      author: post.author,
+      publishedAt: convertToJstString(post.published_at),
+      site: 'zenn' as const,
+      engagement: {
+        likes: post.likedCount,
+        bookmarks: post.bookmarkedCount,
+      },
+    })),
     // Qiitaの記事
     ...qiitaData.map((post) => ({
       id: `qiita-${post.id}`,
