@@ -23,7 +23,11 @@
       "mcp__playwright__browser_type",
       "Bash(npx vitest run:*)",
       "Bash(mkdir:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(pnpm exec biome format:*)",
+      "Bash(pnpm add:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)"
     ],
     "deny": [
       "Bash(sudo:*)",
@@ -49,6 +53,30 @@
       "Bash(mysql:*)",
       "Bash(mongod:*)",
       "mcp__supabase__execute_sql"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/hook_stop_words.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/hook_pre_commands.sh"
+          }
+        ]
+      }
     ]
   }
 }

@@ -11,7 +11,7 @@ import { HATENA_CLAUDE_CODE_VARIANTS, EXCLUDE_DOMAINS } from '@/lib/constants';
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
 export default async function HomePage() {
-  const { env } = getCloudflareContext();
+  const { env } = await getCloudflareContext({ async: true });
   // 並列処理で全データを取得
   const [zennData, qiitaData, hatenaRecentData, hatenaPopularData] =
     await Promise.all([
