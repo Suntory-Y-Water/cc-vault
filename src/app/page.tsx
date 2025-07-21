@@ -1,14 +1,138 @@
-import { redirect } from 'next/navigation';
+import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers';
+import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser';
+import { Article, QiitaPost } from '@/types';
+import { convertToJstString } from '@/lib/utils';
+import ArticleContainer from '@/components/article/ArticleContainer';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { EXCLUDE_DOMAINS } from '@/lib/constants';
 
 /**
  * ホームページコンポーネント
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
 export default async function HomePage() {
-  redirect('https://cc-vault.ayasnppk00.workers.dev');
+  const { env } = await getCloudflareContext({ async: true });
+  // 並列処理で全データを取得
+  const [zennData, qiitaData, hatenaRecentData, hatenaPopularData] =
+    await Promise.all([
+      // Zennのトピックスページから記事を取得
+      (async () => {
+        const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
+
+        const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
+          revalidate: 3600,
+          tags: ['zenn-topics'],
+        });
+
+        return getZennTopicsData({ htmlString });
+      })(),
+
+      // QiitaのAPIから記事を取得
+      (async () => {
+        const qiitaData = await fetchExternalData<QiitaPost[]>(
+          `https://qiita.com/api/v2/items?query=${encodeURIComponent('tag:claudecode')}`,
+          {
+            revalidate: 3600,
+            tags: ['qiita-articles'],
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
+            },
+          },
+        );
+
+        return qiitaData;
+      })(),
+
+      // はてなブックマーク新着順から記事を取得
+      (async () => {
+        const hatenaRecentUrl = `https://b.hatena.ne.jp/q/claudecode?target=tag&date_range=m&safe=on&users=3&sort=recent`;
+
+        const htmlString = await fetchHtmlDocument(hatenaRecentUrl, {
+          revalidate: 3600,
+          tags: ['hatena-recent-claudecode'],
+        });
+
+        return getHatenaBookmarkData({ htmlString });
+      })(),
+
+      // はてなブックマーク人気順から記事を取得
+      (async () => {
+        const hatenaPopularUrl = `https://b.hatena.ne.jp/q/claudecode?users=3&target=tag&sort=popular&date_range=m&safe=on`;
+
+        const htmlString = await fetchHtmlDocument(hatenaPopularUrl, {
+          revalidate: 3600,
+          tags: ['hatena-popular-claudecode'],
+        });
+
+        return getHatenaBookmarkData({ htmlString });
+      })(),
+    ]);
+
+  // 全記事を統合
+  const allArticles: Article[] = [
+    // Zennの記事
+    ...zennData.articles.map((post) => ({
+      id: `zenn-${post.id}`,
+      title: post.title,
+      url: `https://zenn.dev${post.path}`,
+      author: post.author,
+      publishedAt: convertToJstString(post.published_at),
+      site: 'zenn' as const,
+      engagement: {
+        likes: post.likedCount,
+        bookmarks: post.bookmarkedCount,
+      },
+    })),
+    // Qiitaの記事
+    ...qiitaData.map((post) => ({
+      id: `qiita-${post.id}`,
+      title: post.title,
+      url: post.url,
+      author: post.user.name || post.user.id, // ユーザー名が空の場合はIDを使用
+      publishedAt: convertToJstString(post.created_at),
+      site: 'qiita' as const,
+      engagement: {
+        likes: post.likes_count,
+        bookmarks: post.stocks_count,
+      },
+    })),
+    // はてなブックマークの記事（新着順と人気順を統合、重複除去、Zenn/Qiita除外）
+    ...Array.from(
+      new Map(
+        [...hatenaRecentData, ...hatenaPopularData]
+          .filter(
+            (post) =>
+              !EXCLUDE_DOMAINS.some((domain) => post.url.startsWith(domain)),
+          )
+          .map((post) => [post.url, post]),
+      ).values(),
+    ).map((post) => ({
+      id: post.id,
+      title: post.title,
+      url: post.url,
+      author: post.author,
+      publishedAt: post.publishedAt,
+      site: 'hatena' as const,
+      engagement: {
+        likes: 0, // はてなにはいいねがないので0を設定
+        bookmarks: post.bookmarkCount,
+      },
+    })),
+  ];
+
   return (
     <div className='max-w-[80rem] mx-auto px-4 py-8'>
-      このページはredirectしました。
+      <div className='pt-6 pb-8'>
+        <h1 className='text-4xl md:text-6xl font-extrabold tracking-tight text-[#141413]'>
+          CC-Vault
+        </h1>
+        <p className='mt-5 text-lg text-[#7D4A38]'>
+          Claude Code中心の技術トレンドをまとめてチェック
+        </p>
+      </div>
+
+      <ArticleContainer articles={allArticles} />
     </div>
   );
 }
