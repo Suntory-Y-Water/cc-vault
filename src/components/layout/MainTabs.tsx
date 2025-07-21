@@ -9,7 +9,7 @@ type Props = {
 };
 
 /**
- * メインタブコンポーネント (Client Component)
+ * メインタブコンポーネント
  * 新着・トレンドタブの切り替え機能を提供
  */
 export default function MainTabs({ order, onOrderChange }: Props) {

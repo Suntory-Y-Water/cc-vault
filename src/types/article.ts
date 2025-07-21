@@ -9,6 +9,7 @@ export const SITE_NAMES = {
   all: 'all',
   qiita: 'qiita',
   zenn: 'zenn',
+  hatena: 'hatena',
 } as const;
 
 /**
@@ -73,4 +74,20 @@ export type QiitaPost = {
     // 設定されているけど""な場合がある
     name: string;
   };
+};
+
+/**
+ * D1データベースのarticlesテーブルの行型定義
+ */
+export type ArticleRow = {
+  id: string;
+  title: string;
+  url: string;
+  author: string;
+  published_at: string;
+  site: string;
+  likes: number;
+  bookmarks: number;
+  created_at: string;
+  updated_at: string;
 };

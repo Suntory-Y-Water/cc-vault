@@ -23,7 +23,11 @@
       "mcp__playwright__browser_type",
       "Bash(npx vitest run:*)",
       "Bash(mkdir:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(pnpm exec biome format:*)",
+      "Bash(pnpm add:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)"
     ],
     "deny": [
       "Bash(sudo:*)",

@@ -11,7 +11,7 @@ type Props = {
 };
 
 /**
- * 記事フィルター管理コンポーネント (Client Component)
+ * 記事フィルター管理コンポーネント
  * 記事のフィルタリングとソート機能を提供
  */
 export default function ArticleContainer({ articles }: Props) {
@@ -19,14 +19,15 @@ export default function ArticleContainer({ articles }: Props) {
   const [selectedOrder, setSelectedOrder] = useState<SortOrder>('latest');
 
   const filteredArticles = useMemo(() => {
-
     if (selectedSite !== 'all') {
-      articles = articles.filter(article => article.site === selectedSite);
+      articles = articles.filter((article) => article.site === selectedSite);
     }
 
     articles = [...articles].sort((a, b) => {
       if (selectedOrder === 'latest') {
-        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+        return (
+          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        );
       }
       const aScore = a.engagement.likes + a.engagement.bookmarks;
       const bScore = b.engagement.likes + b.engagement.bookmarks;
@@ -39,17 +40,11 @@ export default function ArticleContainer({ articles }: Props) {
   return (
     <div>
       <div className='flex flex-wrap gap-2 mb-8'>
-        <SiteFilter 
-          activeSite={selectedSite} 
-          onSiteChange={setSelectedSite}
-        />
+        <SiteFilter activeSite={selectedSite} onSiteChange={setSelectedSite} />
       </div>
 
       <div>
-        <MainTabs 
-          order={selectedOrder}
-          onOrderChange={setSelectedOrder}
-        />
+        <MainTabs order={selectedOrder} onOrderChange={setSelectedOrder} />
 
         <ArticleList articles={filteredArticles} />
       </div>

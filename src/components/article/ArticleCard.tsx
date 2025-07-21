@@ -62,10 +62,13 @@ export default function ArticleCard({ article }: ArticleCardProps) {
           {/* エンゲージメント指標と読むボタン */}
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-4 text-sm text-[#141413] opacity-70'>
-              <div className='flex items-center gap-1'>
-                <Heart className='w-4 h-4' />
-                <span>{article.engagement.likes}</span>
-              </div>
+              {/* はてなサイト以外の場合のみいいねを表示 */}
+              {article.site !== 'hatena' && (
+                <div className='flex items-center gap-1'>
+                  <Heart className='w-4 h-4' />
+                  <span>{article.engagement.likes}</span>
+                </div>
+              )}
               <div className='flex items-center gap-1'>
                 <Bookmark className='w-4 h-4' />
                 <span>{article.engagement.bookmarks}</span>
