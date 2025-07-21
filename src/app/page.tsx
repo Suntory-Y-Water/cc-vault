@@ -4,7 +4,7 @@ import { Article, QiitaPost } from '@/types';
 import { convertToJstString } from '@/lib/utils';
 import ArticleContainer from '@/components/article/ArticleContainer';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { HATENA_CLAUDE_CODE_VARIANTS, EXCLUDE_DOMAINS } from '@/lib/constants';
+import { EXCLUDE_DOMAINS } from '@/lib/constants';
 
 /**
  * ホームページコンポーネント
@@ -44,42 +44,28 @@ export default async function HomePage() {
         return qiitaData;
       })(),
 
-      // はてなブックマーク新着順から記事を取得（全キーワード）
+      // はてなブックマーク新着順から記事を取得
       (async () => {
-        const hatenaRecentPromises = HATENA_CLAUDE_CODE_VARIANTS.map(
-          async (keyword) => {
-            const hatenaRecentUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?target=tag&date_range=m&safe=on&users=3&sort=recent`;
+        const hatenaRecentUrl = `https://b.hatena.ne.jp/q/claudecode?target=tag&date_range=m&safe=on&users=3&sort=recent`;
 
-            const htmlString = await fetchHtmlDocument(hatenaRecentUrl, {
-              revalidate: 3600,
-              tags: [`hatena-recent-${keyword}`],
-            });
+        const htmlString = await fetchHtmlDocument(hatenaRecentUrl, {
+          revalidate: 3600,
+          tags: ['hatena-recent-claudecode'],
+        });
 
-            return getHatenaBookmarkData({ htmlString });
-          },
-        );
-
-        const results = await Promise.all(hatenaRecentPromises);
-        return results.flat();
+        return getHatenaBookmarkData({ htmlString });
       })(),
 
-      // はてなブックマーク人気順から記事を取得（全キーワード）
+      // はてなブックマーク人気順から記事を取得
       (async () => {
-        const hatenaPopularPromises = HATENA_CLAUDE_CODE_VARIANTS.map(
-          async (keyword) => {
-            const hatenaPopularUrl = `https://b.hatena.ne.jp/q/${encodeURIComponent(keyword)}?users=3&target=tag&sort=popular&date_range=m&safe=on`;
+        const hatenaPopularUrl = `https://b.hatena.ne.jp/q/claudecode?users=3&target=tag&sort=popular&date_range=m&safe=on`;
 
-            const htmlString = await fetchHtmlDocument(hatenaPopularUrl, {
-              revalidate: 3600,
-              tags: [`hatena-popular-${keyword}`],
-            });
+        const htmlString = await fetchHtmlDocument(hatenaPopularUrl, {
+          revalidate: 3600,
+          tags: ['hatena-popular-claudecode'],
+        });
 
-            return getHatenaBookmarkData({ htmlString });
-          },
-        );
-
-        const results = await Promise.all(hatenaPopularPromises);
-        return results.flat();
+        return getHatenaBookmarkData({ htmlString });
       })(),
     ]);
 

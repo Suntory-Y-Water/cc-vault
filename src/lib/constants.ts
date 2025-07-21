@@ -66,17 +66,6 @@ export const SITE_UI_CONFIGS = {
   },
 } as const;
 
-/**
- * はてなブログのClaude Code表記揺れパターン
- */
-export const HATENA_CLAUDE_CODE_VARIANTS = [
-  'claudecode',
-  '"claudecode"',
-  'claude code',
-  '"claude code"',
-  'claude-code',
-  '"claude-code"',
-] as const;
 
 /**
  * ZennとQiitaのドメインパターン（はてなデータから除外用）
