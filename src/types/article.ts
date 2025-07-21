@@ -76,3 +76,18 @@ export type QiitaPost = {
   };
 };
 
+/**
+ * D1データベースのarticlesテーブルの行型定義
+ */
+export type ArticleRow = {
+  id: string;
+  title: string;
+  url: string;
+  author: string;
+  published_at: string;
+  site: string;
+  likes: number;
+  bookmarks: number;
+  created_at: string;
+  updated_at: string;
+};

@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
+  "main": "./custom-worker.ts",
   "name": "cc-valut",
   "compatibility_date": "2025-07-15",
   "compatibility_flags": [
@@ -28,5 +28,8 @@
       "database_id": "e39a1dc8-23fe-4303-b01d-7818b308915c",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "triggers": {
+    "crons": ["0 * * * *"]
+  }
 }

@@ -1,5 +1,5 @@
 import { ZennArticle, ZennTopics, ZennResponse } from '@/types';
-import * as cheerio from 'cheerio';
+import { parseHTML } from 'linkedom';
 
 /**
  * Next.jsのNEXT_DATAを解析する
@@ -62,7 +62,7 @@ export function getZennTopicsData({
  */
 export function getHatenaBookmarkData({ htmlString }: { htmlString: string }) {
   try {
-    const $ = cheerio.load(htmlString);
+    const { document } = parseHTML(htmlString);
     const articles: {
       id: string;
       title: string;
@@ -73,28 +73,28 @@ export function getHatenaBookmarkData({ htmlString }: { htmlString: string }) {
     }[] = [];
 
     // li.bookmark-item要素を取得
-    $('li.bookmark-item').each((_, element) => {
-      const $element = $(element);
+    const bookmarkItems = document.querySelectorAll('li.bookmark-item');
 
+    for (const element of bookmarkItems) {
       // タイトルとURLを取得
-      const titleLink = $element.find('.centerarticle-entry-title a');
-      const title = titleLink.text().trim();
-      const url = titleLink.attr('href');
+      const titleLink = element.querySelector('.centerarticle-entry-title a');
+      const title = titleLink?.textContent?.trim() || '';
+      const url = titleLink?.getAttribute('href') || '';
 
       // 著者情報（サイト情報）を取得
-      const siteLink = $element.find(
+      const siteLink = element.querySelector(
         '.centerarticle-entry-data a[title*="新着エントリー"]',
       );
-      const author = siteLink.text().trim();
+      const author = siteLink?.textContent?.trim() || '';
 
       // ブックマーク数を取得
-      const usersLink = $element.find('.centerarticle-users a');
-      const usersText = usersLink.text().trim();
+      const usersLink = element.querySelector('.centerarticle-users a');
+      const usersText = usersLink?.textContent?.trim() || '';
       const bookmarkCount = Number.parseInt(usersText.replace(/\D/g, '')) || 0;
 
       // 公開日を取得
-      const dateElement = $element.find('.entry-contents-date');
-      const publishedAt = dateElement.text().trim();
+      const dateElement = element.querySelector('.entry-contents-date');
+      const publishedAt = dateElement?.textContent?.trim() || '';
 
       if (title && url) {
         articles.push({
@@ -106,7 +106,7 @@ export function getHatenaBookmarkData({ htmlString }: { htmlString: string }) {
           bookmarkCount,
         });
       }
-    });
+    }
 
     return articles;
   } catch (error) {
