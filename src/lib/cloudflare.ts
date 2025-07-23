@@ -8,28 +8,27 @@ import { Article, ArticleRow } from '@/types';
 export async function getArticlesFromD1(db: D1Database): Promise<Article[]> {
   try {
     const stmt = db.prepare(`
-      SELECT id, title, url, author, published_at, likes, bookmarks, created_at, updated_at, site
+      SELECT id, title, url, author, published_at, likes, bookmarks, site
       FROM articles 
       ORDER BY published_at DESC
-      LIMIT 100
     `);
 
-    const result = await stmt.all<ArticleRow>();
+    const { results } = await stmt.all<ArticleRow>();
 
-    if (!result.results) {
+    if (results.length === 0) {
       return [];
     }
 
-    return result.results.map((row) => ({
+    return results.map((row) => ({
       id: row.id,
       title: row.title,
       url: row.url,
       author: row.author,
       publishedAt: row.published_at,
-      site: row.site as 'zenn' | 'qiita' | 'hatena',
+      site: row.site,
       engagement: {
-        likes: row.likes || 0,
-        bookmarks: row.bookmarks || 0,
+        likes: row.likes,
+        bookmarks: row.bookmarks,
       },
     }));
   } catch (error) {

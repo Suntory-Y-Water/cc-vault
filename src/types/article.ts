@@ -85,9 +85,7 @@ export type ArticleRow = {
   url: string;
   author: string;
   published_at: string;
-  site: string;
+  site: SiteType;
   likes: number;
   bookmarks: number;
-  created_at: string;
-  updated_at: string;
 };

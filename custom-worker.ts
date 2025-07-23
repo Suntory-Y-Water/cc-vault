@@ -1,24 +1,20 @@
-import { ZennResponse } from '@/types/article.js';
+import { ArticleRow, QiitaPost } from '@/types/article.js';
 // @ts-ignore `.open-next/worker.ts` is generated at build time
 import { default as handler } from './.open-next/worker.js';
 import { convertToJstString } from '@/lib/utils.js';
-import { fetchHtmlDocument } from '@/lib/fetchers.js';
-import { getZennTopicsData } from '@/lib/parser.js';
+import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers.js';
+import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser.js';
 
 /**
- * ZennデータをD1データベースに保存する
- * @param params - 保存パラメータ
- * @param params.db - D1データベースインスタンス
- * @param params.articles - 保存する記事データ配列
+ * 記事データをarticlesテーブルに保存する
  */
-async function saveZennArticlesToDB(params: {
+async function saveArticlesToDB(params: {
   db: D1Database;
-  articles: ZennResponse['articles'];
+  articles: ArticleRow[];
 }): Promise<void> {
   const { db, articles } = params;
   for (const article of articles) {
     try {
-      // 重複チェック＆挿入
       const stmt = db.prepare(`
         INSERT OR REPLACE INTO articles (
           id, title, url, author, published_at, site, likes, bookmarks, created_at, updated_at
@@ -27,14 +23,14 @@ async function saveZennArticlesToDB(params: {
 
       await stmt
         .bind(
-          `zenn-${article.id}`,
+          article.id,
           article.title,
-          `https://zenn.dev${article.path}`,
+          article.url,
           article.author,
-          convertToJstString(article.published_at),
-          'zenn',
-          article.likedCount,
-          article.bookmarkedCount,
+          article.published_at,
+          article.site,
+          article.likes,
+          article.bookmarks,
         )
         .run();
     } catch (error) {
@@ -52,7 +48,7 @@ export default {
 
   /**
    * スケジュール処理ハンドラー
-   * 定期的にZennデータを取得してD1データベースに保存する
+   * 定期的に全てのデータを取得してD1データベースに保存する
    */
   async scheduled(
     _controller: ScheduledController,
@@ -61,29 +57,107 @@ export default {
   ) {
     try {
       console.log('スケジュールタスクが実行されました');
-      // Zennトピックスページから記事を取得（page.tsxと同じ実装）
-      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
 
-      // ローカル環境で動かすとき
-      // Next.jsのキャッシュは使用できないためno-storeを使用
-      const htmlString = await fetchHtmlDocument(zennTopicsUrl, {
+      const allArticles: ArticleRow[] = [];
+
+      // Zennデータ取得
+      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
+      const zennHtml = await fetchHtmlDocument(zennTopicsUrl, {
         cache: 'no-store',
       });
+      const zennData = getZennTopicsData({ htmlString: zennHtml });
 
-      // ZennのHTMLパースロジック（実際の実装）
-      const zennData = getZennTopicsData({ htmlString });
+      zennData.articles.forEach((article) => {
+        allArticles.push({
+          id: `zenn-${article.id}`,
+          title: article.title,
+          url: `https://zenn.dev${article.path}`,
+          author: article.author,
+          published_at: convertToJstString(article.published_at),
+          site: 'zenn',
+          likes: article.likedCount,
+          bookmarks: article.bookmarkedCount,
+        });
+      });
+
+      // Qiitaデータ取得
+      const qiitaUrl =
+        'https://qiita.com/api/v2/items?query=claudecode&per_page=20&page=1';
+      const qiitaData = await fetchExternalData<QiitaPost[]>(qiitaUrl, {
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
+        },
+      });
+
+      qiitaData.forEach((article) => {
+        allArticles.push({
+          id: `qiita-${article.id}`,
+          title: article.title,
+          url: article.url,
+          author: article.user.id,
+          published_at: convertToJstString(article.created_at),
+          site: 'qiita',
+          likes: article.likes_count,
+          bookmarks: article.stocks_count,
+        });
+      });
+
+      // はてなブックマーク新着順
+      const hatenaRecentUrl = `https://b.hatena.ne.jp/q/claudecode?target=tag&date_range=m&safe=on&users=3&sort=recent`;
+      const hatenaRecentHtml = await fetchHtmlDocument(hatenaRecentUrl, {
+        cache: 'no-store',
+      });
+      const hatenaRecentData = getHatenaBookmarkData({
+        htmlString: hatenaRecentHtml,
+      });
+
+      hatenaRecentData.forEach((article) => {
+        allArticles.push({
+          id: article.id,
+          title: article.title,
+          url: article.url,
+          author: article.author,
+          published_at: article.publishedAt,
+          site: 'hatena',
+          likes: 0, // はてなブックマークはlikesがないので0固定
+          bookmarks: article.bookmarkCount,
+        });
+      });
+
+      // はてなブックマーク人気順
+      const hatenaPopularUrl = `https://b.hatena.ne.jp/q/claudecode?users=3&target=tag&sort=popular&date_range=m&safe=on`;
+      const hatenaPopularHtml = await fetchHtmlDocument(hatenaPopularUrl, {
+        cache: 'no-store',
+      });
+      const hatenaPopularData = getHatenaBookmarkData({
+        htmlString: hatenaPopularHtml,
+      });
+
+      hatenaPopularData.forEach((article) => {
+        allArticles.push({
+          id: `${article.id}-popular`,
+          title: article.title,
+          url: article.url,
+          author: article.author,
+          published_at: article.publishedAt,
+          site: 'hatena',
+          likes: 0,
+          bookmarks: article.bookmarkCount,
+        });
+      });
 
       // D1データベースに保存
-      if (zennData.articles.length > 0) {
-        await saveZennArticlesToDB({ db: env.DB, articles: zennData.articles });
-        console.log('記事をデータベースに保存しました');
-      } else {
-        console.log('保存する記事がありませんでした');
+      if (allArticles.length > 0) {
+        await saveArticlesToDB({ db: env.DB, articles: allArticles });
+        console.log(
+          `${allArticles.length}件の記事をデータベースに保存しました`,
+        );
       }
+      console.log('スケジュールタスクが完了しました');
     } catch (error) {
       console.error('スケジュールタスクが失敗しました:', error);
-
-      // エラーを再スローして失敗を明確にする
       throw error;
     }
   },
