@@ -4,10 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:cf": "pnpm run build:op && pnpm run dev",
+    "dev:cf": "opennextjs-cloudflare build && pnpm run dev",
     "build": "next build",
-    "build:op": "opennextjs-cloudflare build",
-    "schedule": "pnpm run build:op && wrangler dev --test-scheduled",
+    "schedule": "opennextjs-cloudflare build && wrangler dev --test-scheduled",
     "start": "next start",
     "lint": "biome lint ./src",
     "lint:fix": "biome lint --write ./src",
@@ -17,17 +16,12 @@
     "test:cov": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "ai-check": "pnpm run typecheck && pnpm run lint",
-    "preview": "opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare deploy",
-    "deploy:staging": "opennextjs-cloudflare deploy -- --env=staging",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:create": "wrangler d1 create cc-vault-db",
-    "db:create:staging": "wrangler d1 create cc-vault-db-staging",
-    "db:migrate": "wrangler d1 migrations apply cc-vault-db",
-    "db:migrate:staging": "wrangler d1 migrations apply cc-vault-db-staging --env staging",
-    "db:migrate:local": "wrangler d1 migrations apply cc-vault-db --local",
-    "db:console:staging": "wrangler d1 execute cc-vault-db-staging --command --env staging"
+    "db:migrate": "wrangler d1 migrations apply cc-vault-db"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.5.1",

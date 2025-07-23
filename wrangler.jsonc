@@ -35,22 +35,5 @@
       "database_id": "e39a1dc8-23fe-4303-b01d-7818b308915c",
       "migrations_dir": "migrations"
     }
-  ],
-  "env": {
-    "staging": {
-      "name": "cc-vault-staging",
-      "workers_dev": true,
-      "d1_databases": [
-        {
-          "binding": "DB",
-          "database_name": "cc-vault-db-staging",
-          "database_id": "6b6f9fe2-a90a-4a96-808c-866f3314004f",
-          "migrations_dir": "migrations"
-        }
-      ],
-      "vars": {
-        "APP_URL": "https://cc-vault-staging.ayasnppk00.workers.dev"
-      }
-    }
-  }
+  ]
 }
