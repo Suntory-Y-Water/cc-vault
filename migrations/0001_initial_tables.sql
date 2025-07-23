@@ -7,7 +7,7 @@ CREATE TABLE articles (
   url TEXT NOT NULL UNIQUE,
   author TEXT NOT NULL,
   published_at TEXT NOT NULL,
-  site TEXT NOT NULL CHECK (site IN ('qiita', 'zenn', 'hatena')),
+  site TEXT NOT NULL CHECK (site IN ('qiita', 'zenn')),
   likes INTEGER DEFAULT 0,
   bookmarks INTEGER DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
