@@ -90,17 +90,19 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create Weekly Summary Issue
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        env:
+          PROMPT_CONTENT: ${{ steps.read-prompt.outputs.PROMPT_CONTENT }} 
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const startDate = process.env.START_DATE;
             const endDate = process.env.END_DATE;
-            const promptContent = '${{ steps.read-prompt.outputs.PROMPT_CONTENT }}';
+            const promptContent = process.env.PROMPT_CONTENT; 
             
-            const title = '週次記事要約生成: ' + startDate + ' - ' + endDate;
+            const title = `週次記事要約生成: ${startDate} - ${endDate}`;
             
-            const body = promptContent + '\n\n## 処理期間\n- 開始日: ' + startDate + '\n- 終了日: ' + endDate + '\n\n@claude 上記の指示に従って週次記事要約を生成してください。';
+            const body = `${promptContent}\n\n## 処理期間\n- 開始日: ${startDate}\n- 終了日: ${endDate}\n\n@claude 上記の指示に従って週次記事要約を生成してください。`;
 
             const response = await github.rest.issues.create({
               owner: context.repo.owner,
