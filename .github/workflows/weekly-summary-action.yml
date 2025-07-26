@@ -1,8 +1,9 @@
 name: Weekly Article Summary Action
 
 on:
-  issues:
-    types: [opened]
+  issue_comment:
+    types:
+      - created
 
 defaults:
   run:
