@@ -1,4 +1,4 @@
-name: Weekly Article Summary
+name: Weekly Article Summary Trigger
 
 on:
   schedule:
@@ -21,6 +21,7 @@ defaults:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,15 +46,14 @@ jobs:
       - name: Run ghalint
         uses: koki-develop/github-actions-lint/ghalint@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
 
-  generate-weekly-summary:
+  create-weekly-summary-issue:
     needs: [actions-security]
     if: always() && needs.actions-security.result == 'success'
     permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
+      contents: read
+      issues: write
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     env:
       TZ: Asia/Tokyo
     steps:
@@ -61,20 +61,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          
-      - name: Setup pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
-        with:
-          version: '9'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
 
       - name: Set date range
         env:
@@ -94,27 +80,35 @@ jobs:
           echo "END_DATE=${END_DATE}" >> "${GITHUB_ENV}"
           echo "📅 処理期間: ${START_DATE} ～ ${END_DATE}"
 
-      - name: Read prompt from file
+      - name: Read prompt template
         id: read-prompt
         run: |
           PROMPT_CONTENT=$(cat .github/prompts/weekly-summary.md)
-          # 改行を保持するためにEOFデリミタを使用
           {
             echo "PROMPT_CONTENT<<EOF"
             echo "$PROMPT_CONTENT"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Generate Weekly Summary with Claude
-        uses: anthropics/claude-code-action@7c5a98d59d2464ae73f453c3e649f5b813374481 # v0.0.44
+      - name: Create Weekly Summary Issue
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          direct_prompt: ${{ steps.read-prompt.outputs.PROMPT_CONTENT }}
-          max_turns: 5
-          timeout_minutes: 15
-        env:
-          START_DATE: ${{ env.START_DATE }}
-          END_DATE: ${{ env.END_DATE }}
-          CLOUDFLARE_D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_DATABASE_ID: ${{ secrets.CLOUDFLARE_DATABASE_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const startDate = process.env.START_DATE;
+            const endDate = process.env.END_DATE;
+            const promptContent = '${{ steps.read-prompt.outputs.PROMPT_CONTENT }}';
+            
+            const title = '週次記事要約生成: ' + startDate + ' - ' + endDate;
+            
+            const body = promptContent + '\n\n## 処理期間\n- 開始日: ' + startDate + '\n- 終了日: ' + endDate + '\n\n@claude 上記の指示に従って週次記事要約を生成してください。';
+
+            const response = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['weekly-summary', 'claude-action']
+            });
+            
+            console.log('Issue created: ' + response.data.html_url);
