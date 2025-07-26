@@ -51,3 +51,30 @@ export type WeeklyReportPageProps = {
     weekNumber?: string;
   }>;
 };
+
+/**
+ * 週次処理用の記事データ型
+ */
+export type WeeklyProcessingArticle = {
+  id: string;
+  title: string;
+  url: string;
+  author: string;
+  publishedAt: string;
+  content: string;
+  likes: number;
+  bookmarks: number;
+  ranking: number;
+};
+
+/**
+ * 週次処理用のJSON入力型
+ */
+export type WeeklyProcessingInput = {
+  weekRange: {
+    startDate: string;
+    endDate: string;
+    weekNumber: number;
+  };
+  articles: WeeklyProcessingArticle[];
+};

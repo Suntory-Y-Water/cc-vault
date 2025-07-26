@@ -1,0 +1,112 @@
+name: Weekly Article Summary
+
+on:
+  schedule:
+    # 毎週日曜 15:00 UTC (月曜 00:00 JST)
+    - cron: '0 15 * * 0'
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: '開始日 (YYYY-MM-DD)'
+        required: true
+        type: string
+      end_date:
+        description: '終了日 (YYYY-MM-DD)'
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actions-security:
+    permissions:
+      contents: read
+      security-events: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run actionlint
+        uses: koki-develop/github-actions-lint/actionlint@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
+
+      - name: Run ghalint
+        uses: koki-develop/github-actions-lint/ghalint@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
+
+      - name: Run zizmor
+        uses: koki-develop/github-actions-lint/zizmor@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
+        with:
+          github-token: ${{ github.token }}
+          persona: auditor
+
+  generate-weekly-summary:
+    needs: [actions-security]
+    if: always() && needs.actions-security.result == 'success'
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Asia/Tokyo
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          version: '9'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set date range
+        env:
+          START_DATE_INPUT: ${{ github.event.inputs.start_date }}
+          END_DATE_INPUT: ${{ github.event.inputs.end_date }}
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            # 前週の月曜日から日曜日を計算（JST）
+            START_DATE=$(date -d "last monday -7 days" +%Y-%m-%d)
+            END_DATE=$(date -d "${START_DATE} +6 days" +%Y-%m-%d)
+          else
+            START_DATE="${START_DATE_INPUT}"
+            END_DATE="${END_DATE_INPUT}"
+          fi
+          
+          echo "START_DATE=${START_DATE}" >> "${GITHUB_ENV}"
+          echo "END_DATE=${END_DATE}" >> "${GITHUB_ENV}"
+          echo "📅 処理期間: ${START_DATE} ～ ${END_DATE}"
+
+      - name: Generate Weekly Summary with Claude
+        uses: anthropics/claude-code-action@7c5a98d59d2464ae73f453c3e649f5b813374481 # v0.0.44
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt_file: '.github/prompts/weekly-summary.md'
+          max_turns: 5
+          timeout_minutes: 15
+        env:
+          CLOUDFLARE_D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_DATABASE_ID: ${{ secrets.CLOUDFLARE_DATABASE_ID }}

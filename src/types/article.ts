@@ -89,3 +89,14 @@ export type ArticleRow = {
   likes: number;
   bookmarks: number;
 };
+
+/**
+ * D1データベースのarticlesテーブルの行型定義
+ */
+export type ArticleD1Response = {
+  success: boolean;
+  errors?: string[];
+  result: {
+    results: ArticleRow[];
+  }[];
+};
