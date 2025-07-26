@@ -6,7 +6,7 @@ import { parseHTML } from 'linkedom';
  * @param htmlString - HTML文字列
  * @returns 解析されたNEXT_DATAオブジェクト
  */
-function parseNextData<T extends ZennArticle | ZennTopics>({
+export function parseNextData<T extends ZennArticle | ZennTopics>({
   htmlString,
 }: { htmlString: string }) {
   const nextDataMatch = htmlString.match(
@@ -24,6 +24,34 @@ function parseNextData<T extends ZennArticle | ZennTopics>({
   }
 }
 
+/**
+ * HTML文字列をパースして、記事の本文を取得する
+ * code-block-containerクラスを除外して、テキストのみを抽出する
+ */
+export function extractArticleContent({
+  htmlString,
+}: { htmlString: string }): string {
+  const { document } = parseHTML(htmlString);
+
+  // コードブロックを削除
+  const codeBlocks = document.querySelectorAll('.code-block-container');
+  for (const block of codeBlocks) {
+    block.remove();
+  }
+
+  // 全ての子要素からテキストを収集
+  const childNodes = [...document.childNodes];
+  const textContent = childNodes
+    .filter((node) => node.nodeType === 1 || node.nodeType === 3)
+    .map((node) => node.textContent || '')
+    .join('');
+
+  if (!textContent) {
+    throw new Error('テキストコンテンツが取得できませんでした');
+  }
+
+  return textContent.replace(/\s+/g, ' ').trim();
+}
 /**
  * Zennのトピックスページから記事データを取得する
  * @param htmlString - HTML文字列
