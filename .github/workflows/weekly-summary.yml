@@ -51,6 +51,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -93,14 +94,27 @@ jobs:
           echo "END_DATE=${END_DATE}" >> "${GITHUB_ENV}"
           echo "📅 処理期間: ${START_DATE} ～ ${END_DATE}"
 
+      - name: Read prompt from file
+        id: read-prompt
+        run: |
+          PROMPT_CONTENT=$(cat .github/prompts/weekly-summary.md)
+          # 改行を保持するためにEOFデリミタを使用
+          {
+            echo "PROMPT_CONTENT<<EOF"
+            echo "$PROMPT_CONTENT"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Generate Weekly Summary with Claude
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt_file: '.github/prompts/weekly-summary.md'
+          direct_prompt: ${{ steps.read-prompt.outputs.PROMPT_CONTENT }}
           max_turns: 5
           timeout_minutes: 15
         env:
+          START_DATE: ${{ env.START_DATE }}
+          END_DATE: ${{ env.END_DATE }}
           CLOUDFLARE_D1_TOKEN: ${{ secrets.CLOUDFLARE_D1_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_DATABASE_ID: ${{ secrets.CLOUDFLARE_DATABASE_ID }}

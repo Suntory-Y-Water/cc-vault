@@ -214,7 +214,7 @@ export async function main() {
         endDate,
         weekNumber,
       },
-      articles: weeklyProcessingArticles,
+      articles: weeklyProcessingArticles.slice(0, 3), // 上位3件を取得
     };
     console.log('週次記事データの生成に成功しました');
 
