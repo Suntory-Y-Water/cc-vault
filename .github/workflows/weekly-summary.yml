@@ -45,12 +45,6 @@ jobs:
       - name: Run ghalint
         uses: koki-develop/github-actions-lint/ghalint@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
 
-      - name: Run zizmor
-        uses: koki-develop/github-actions-lint/zizmor@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
-        with:
-          github-token: ${{ github.token }}
-          persona: auditor
-
   generate-weekly-summary:
     needs: [actions-security]
     if: always() && needs.actions-security.result == 'success'
