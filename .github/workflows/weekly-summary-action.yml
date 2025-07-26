@@ -9,9 +9,7 @@ defaults:
     shell: bash
 
 permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +23,7 @@ jobs:
       pull-requests: write
       id-token: write
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     env:
       TZ: Asia/Tokyo
     steps:
@@ -50,7 +48,7 @@ jobs:
 
       - name: Extract date range from issue
         id: extract-dates
-        uses: actions/github-script@8c12b6e9ee0c0e7ac75c1fa36877cd2caf2e05f7 # v6.2.0
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
             const issueBody = context.payload.issue.body;
@@ -74,7 +72,7 @@ jobs:
       - name: Generate Weekly Summary with Claude
         uses: anthropics/claude-code-action@7c5a98d59d2464ae73f453c3e649f5b813374481 # v0.0.44
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           direct_prompt: ${{ github.event.issue.body }}
           max_turns: 5
           timeout_minutes: 15
