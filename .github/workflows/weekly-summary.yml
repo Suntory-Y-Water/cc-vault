@@ -106,7 +106,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Generate Weekly Summary with Claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@7c5a98d59d2464ae73f453c3e649f5b813374481 # v0.0.44
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           direct_prompt: ${{ steps.read-prompt.outputs.PROMPT_CONTENT }}
