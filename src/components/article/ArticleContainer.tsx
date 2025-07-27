@@ -1,52 +1,76 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Article, SortOrder, SiteType } from '@/types';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { PaginatedArticles, SortOrder, SiteType } from '@/types';
 import SiteFilter from '@/components/layout/SiteFilter';
 import MainTabs from '@/components/layout/MainTabs';
 import ArticleList from '@/components/article/ArticleList';
 
 type Props = {
-  articles: Article[];
+  paginatedData: PaginatedArticles;
+  initialSite: SiteType;
+  initialOrder: SortOrder;
 };
 
 /**
  * 記事フィルター管理コンポーネント
- * 記事のフィルタリングとソート機能を提供
+ * URL パラメータベースのフィルタリングとソート機能を提供
  */
-export default function ArticleContainer({ articles }: Props) {
-  const [selectedSite, setSelectedSite] = useState<SiteType>('all');
-  const [selectedOrder, setSelectedOrder] = useState<SortOrder>('latest');
+export default function ArticleContainer({
+  paginatedData,
+  initialSite,
+  initialOrder,
+}: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const filteredArticles = useMemo(() => {
-    if (selectedSite !== 'all') {
-      articles = articles.filter((article) => article.site === selectedSite);
+  /**
+   * サイトフィルターの変更処理
+   * @param site - 選択されたサイト
+   */
+  const handleSiteChange = (site: SiteType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (site === 'all') {
+      params.delete('site');
+    } else {
+      params.set('site', site);
     }
+    params.delete('page'); // ページをリセット
+    router.push(`/?${params.toString()}`);
+  };
 
-    articles = [...articles].sort((a, b) => {
-      if (selectedOrder === 'latest') {
-        return (
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        );
-      }
-      const aScore = a.engagement.likes + a.engagement.bookmarks;
-      const bScore = b.engagement.likes + b.engagement.bookmarks;
-      return bScore - aScore;
-    });
-
-    return articles;
-  }, [articles, selectedSite, selectedOrder]);
+  /**
+   * ソート順の変更処理
+   * @param order - 選択されたソート順
+   */
+  const handleOrderChange = (order: SortOrder) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (order === 'latest') {
+      params.delete('order');
+    } else {
+      params.set('order', order);
+    }
+    params.delete('page'); // ページをリセット
+    router.push(`/?${params.toString()}`);
+  };
 
   return (
     <div>
       <div className='flex flex-wrap gap-2 mb-8'>
-        <SiteFilter activeSite={selectedSite} onSiteChange={setSelectedSite} />
+        <SiteFilter activeSite={initialSite} onSiteChange={handleSiteChange} />
       </div>
 
       <div>
-        <MainTabs order={selectedOrder} onOrderChange={setSelectedOrder} />
+        <MainTabs order={initialOrder} onOrderChange={handleOrderChange} />
 
-        <ArticleList articles={filteredArticles} />
+        <ArticleList
+          articles={paginatedData.articles}
+          paginationData={paginatedData}
+          searchParams={{
+            site: initialSite !== 'all' ? initialSite : undefined,
+            order: initialOrder !== 'latest' ? initialOrder : undefined,
+          }}
+        />
       </div>
     </div>
   );

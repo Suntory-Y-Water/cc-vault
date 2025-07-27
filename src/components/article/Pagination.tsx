@@ -24,6 +24,31 @@ export default function Pagination({
   hasPrevious,
   searchParams = {},
 }: PaginationProps) {
+  /**
+   * undefined値を除外したクリーンなsearchParamsを生成
+   * @param additionalParams - 追加パラメータ
+   * @returns クリーンなパラメータオブジェクト
+   */
+  const createCleanParams = (additionalParams: Record<string, string>) => {
+    const cleanParams: Record<string, string> = {};
+
+    // 既存のsearchParamsから undefined でない値のみを追加
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        cleanParams[key] = value;
+      }
+    });
+
+    // 追加パラメータをマージ
+    Object.entries(additionalParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        cleanParams[key] = value;
+      }
+    });
+
+    return cleanParams;
+  };
+
   const generatePageNumbers = () => {
     const pages: number[] = [];
     const maxPagesToShow = 5;
@@ -51,15 +76,14 @@ export default function Pagination({
       {/* 前のページボタン */}
       {hasPrevious ? (
         <Link
-          href={`?${new URLSearchParams({
-            ...searchParams,
-            page: (currentPage - 1).toString(),
-          }).toString()}`}
+          href={`?${new URLSearchParams(
+            createCleanParams({ page: (currentPage - 1).toString() }),
+          ).toString()}`}
         >
           <Button
             variant='outline'
             size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+            className='border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
           >
             <ChevronLeft className='w-4 h-4 mr-1' />
             前へ
@@ -82,10 +106,9 @@ export default function Pagination({
         {pageNumbers.map((pageNumber) => (
           <Link
             key={pageNumber}
-            href={`?${new URLSearchParams({
-              ...searchParams,
-              page: pageNumber.toString(),
-            }).toString()}`}
+            href={`?${new URLSearchParams(
+              createCleanParams({ page: pageNumber.toString() }),
+            ).toString()}`}
           >
             <Button
               variant={currentPage === pageNumber ? 'default' : 'outline'}
@@ -93,7 +116,7 @@ export default function Pagination({
               className={
                 currentPage === pageNumber
                   ? 'bg-[#DB8163] text-white border-[#DB8163] hover:bg-[#D97757]'
-                  : 'border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+                  : 'border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
               }
             >
               {pageNumber}
@@ -105,15 +128,14 @@ export default function Pagination({
       {/* 次のページボタン */}
       {hasNext ? (
         <Link
-          href={`?${new URLSearchParams({
-            ...searchParams,
-            page: (currentPage + 1).toString(),
-          }).toString()}`}
+          href={`?${new URLSearchParams(
+            createCleanParams({ page: (currentPage + 1).toString() }),
+          ).toString()}`}
         >
           <Button
             variant='outline'
             size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+            className='border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
           >
             次へ
             <ChevronRight className='w-4 h-4 ml-1' />

@@ -119,7 +119,7 @@ export default {
           title: article.title,
           url: article.url,
           author: article.author,
-          published_at: article.publishedAt,
+          published_at: convertToJstString(article.publishedAt),
           site: 'hatena',
           likes: 0, // はてなブックマークはlikesがないので0固定
           bookmarks: article.bookmarkCount,
@@ -141,7 +141,7 @@ export default {
           title: article.title,
           url: article.url,
           author: article.author,
-          published_at: article.publishedAt,
+          published_at: convertToJstString(article.publishedAt),
           site: 'hatena',
           likes: 0,
           bookmarks: article.bookmarkCount,
