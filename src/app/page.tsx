@@ -1,19 +1,52 @@
 import ArticleContainer from '@/components/article/ArticleContainer';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { getArticlesFromD1 } from '@/lib/cloudflare';
+import { getArticlesWithPagination } from '@/lib/cloudflare';
+import { SiteType, SortOrder, SITE_NAMES, SORT_ORDERS } from '@/types';
 
 /** 1時間で再検証 */
 export const revalidate = 3600;
+
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 
 /**
  * ホームページコンポーネント
  * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
 
-  // D1データベースからデータを取得
-  const allArticles = await getArticlesFromD1(env.DB);
+  const searchParamsObj = await searchParams;
+
+  // シンプルな型ガードを使用
+  const getValue = (key: string): string | undefined => {
+    const value = searchParamsObj[key];
+    return Array.isArray(value) ? value[0] : value;
+  };
+
+  const page = Number(getValue('page')) || 1;
+  const siteParam = getValue('site');
+  const orderParam = getValue('order');
+
+  // シンプルな型チェック
+  const site =
+    siteParam && Object.keys(SITE_NAMES).includes(siteParam)
+      ? (siteParam as SiteType)
+      : 'all';
+  const order =
+    orderParam && Object.keys(SORT_ORDERS).includes(orderParam)
+      ? (orderParam as SortOrder)
+      : 'latest';
+  const limit = 12; // 1ページあたりの記事数
+
+  // D1データベースからページネーション対応でデータを取得
+  const paginatedData = await getArticlesWithPagination(env.DB, {
+    page,
+    limit,
+    site,
+    order,
+  });
 
   return (
     <div className='max-w-[80rem] mx-auto px-4 py-8'>
@@ -26,7 +59,11 @@ export default async function HomePage() {
         </p>
       </div>
 
-      <ArticleContainer articles={allArticles} />
+      <ArticleContainer
+        paginatedData={paginatedData}
+        initialSite={site}
+        initialOrder={order}
+      />
     </div>
   );
 }

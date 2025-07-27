@@ -100,17 +100,17 @@ export function generateMockWeeklyArticles(
   weekRange: WeekRange,
 ): WeeklyArticle[] {
   // 実際の実装では外部APIからデータを取得
-  // ここではモックデータを返す（2025-06-30～2025-07-06とその前の週のみ）
+  // ここではモックデータを返す（2025-07-14～2025-07-20とその前の週のみ）
 
-  // 2025-06-30から2025-07-06の週（月曜日始まり）
-  if (weekRange.startDate === '2025-06-30') {
+  // 2025-07-14から2025-07-20の週（月曜日始まり）
+  if (weekRange.startDate === '2025-07-14') {
     return [
       {
         id: '1',
         title: 'Next.js 15の新機能について',
         url: 'https://zenn.dev/example/1',
         author: 'developer1',
-        publishedAt: '2025-07-06',
+        publishedAt: '2025-07-20',
         site: 'zenn',
         engagement: {
           likes: 150,
@@ -149,7 +149,7 @@ export function generateMockWeeklyArticles(
         title: 'Vue 3.5の新機能紹介',
         url: 'https://qiita.com/example/4',
         author: 'developer4',
-        publishedAt: '2025-06-30',
+        publishedAt: '2025-07-14',
         site: 'qiita',
         engagement: {
           likes: 90,
@@ -160,66 +160,18 @@ export function generateMockWeeklyArticles(
     ];
   }
 
-  // 2025-06-23から2025-06-29の週（前の週）
-  if (weekRange.startDate === '2025-06-23') {
-    return [
-      {
-        id: '5',
-        title: 'Nuxt 3の新機能紹介',
-        url: 'https://zenn.dev/example/5',
-        author: 'developer5',
-        publishedAt: '2025-06-29',
-        site: 'zenn',
-        engagement: {
-          likes: 110,
-          bookmarks: 60,
-        },
-        weeklyRank: 1,
-      },
-      {
-        id: '6',
-        title: 'Tailwind CSS 4.0の新機能',
-        url: 'https://qiita.com/example/6',
-        author: 'developer6',
-        publishedAt: '2025-06-27',
-        site: 'qiita',
-        engagement: {
-          likes: 85,
-          bookmarks: 40,
-        },
-        weeklyRank: 2,
-      },
-      {
-        id: '7',
-        title: 'Vite 6.0の新機能まとめ',
-        url: 'https://zenn.dev/example/7',
-        author: 'developer7',
-        publishedAt: '2025-06-25',
-        site: 'zenn',
-        engagement: {
-          likes: 75,
-          bookmarks: 35,
-        },
-        weeklyRank: 3,
-      },
-      {
-        id: '8',
-        title: 'Pinia vs Vuex比較',
-        url: 'https://qiita.com/example/8',
-        author: 'developer8',
-        publishedAt: '2025-06-23',
-        site: 'qiita',
-        engagement: {
-          likes: 65,
-          bookmarks: 30,
-        },
-        weeklyRank: 4,
-      },
-    ];
-  }
-
   // その他の週の場合は空の配列を返す
   return [];
+}
+
+/**
+ * 日付文字列から週番号を計算する
+ * @param dateString - YYYY-MM-DD形式の日付文字列
+ * @returns 週番号
+ */
+export function calculateWeekNumber(dateString: string): number {
+  const date = parseISO(dateString);
+  return getWeek(date, { weekStartsOn: 1 });
 }
 
 /**

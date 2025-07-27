@@ -54,7 +54,7 @@ type ArticleDetail = {
   readonly bookmarkedCount: number;
   readonly publishedAt: string;
   readonly path: string;
-  readonly bodyHTML: string;
+  readonly bodyHtml: string;
   readonly ogImageURL: string;
 };
 

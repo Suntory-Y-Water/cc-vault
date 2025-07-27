@@ -89,3 +89,36 @@ export type ArticleRow = {
   likes: number;
   bookmarks: number;
 };
+
+/**
+ * D1データベースのarticlesテーブルの行型定義
+ */
+export type ArticleD1Response = {
+  success: boolean;
+  errors?: string[];
+  result: {
+    results: ArticleRow[];
+  }[];
+};
+
+/**
+ * 記事ページネーション用のパラメータ型定義
+ */
+export type ArticlePaginationParams = {
+  page: number;
+  limit: number;
+  site?: SiteType;
+  order?: SortOrder;
+};
+
+/**
+ * ページネーション結果の型定義
+ */
+export type PaginatedArticles = {
+  articles: Article[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
