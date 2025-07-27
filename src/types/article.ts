@@ -100,3 +100,25 @@ export type ArticleD1Response = {
     results: ArticleRow[];
   }[];
 };
+
+/**
+ * 記事ページネーション用のパラメータ型定義
+ */
+export type ArticlePaginationParams = {
+  page: number;
+  limit: number;
+  site?: SiteType;
+  order?: SortOrder;
+};
+
+/**
+ * ページネーション結果の型定義
+ */
+export type PaginatedArticles = {
+  articles: Article[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+};
