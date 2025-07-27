@@ -65,12 +65,3 @@ export const SITE_UI_CONFIGS = {
     activeStyle: 'bg-[#DB8163] text-white border-transparent',
   },
 } as const;
-
-
-/**
- * ZennとQiitaのドメインパターン（はてなデータから除外用）
- */
-export const EXCLUDE_DOMAINS = [
-  'https://zenn.dev/',
-  'https://qiita.com/',
-] as const;
