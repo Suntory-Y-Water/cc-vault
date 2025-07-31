@@ -38,7 +38,7 @@ export default async function HomePage({ searchParams }: Props) {
     orderParam && Object.keys(SORT_ORDERS).includes(orderParam)
       ? (orderParam as SortOrder)
       : 'latest';
-  const limit = 12; // 1ページあたりの記事数
+  const limit = 24; // 1ページあたりの記事数
 
   // D1データベースからページネーション対応でデータを取得
   const paginatedData = await getArticlesWithPagination(env.DB, {
