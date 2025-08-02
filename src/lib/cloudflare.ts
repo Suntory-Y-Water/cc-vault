@@ -1,4 +1,8 @@
-import { ArticlePaginationParams, PaginatedArticles } from '@/types';
+import {
+  ArticlePaginationParams,
+  ArticleRow,
+  PaginatedArticles,
+} from '@/types';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, desc, count, sql } from 'drizzle-orm';
 import { articles } from '@/config/drizzle/schema';
@@ -82,5 +86,40 @@ export async function getArticlesWithPagination(
   } catch (error) {
     console.error('D1からページネーション記事の取得に失敗しました:', error);
     throw new Error(`D1からページネーション記事の取得に失敗しました: ${error}`);
+  }
+}
+
+/**
+ * 記事データをarticlesテーブルに保存する
+ */
+export async function saveArticlesToDB(params: {
+  db: D1Database;
+  articles: ArticleRow[];
+}): Promise<void> {
+  const { db, articles } = params;
+  for (const article of articles) {
+    try {
+      const stmt = db.prepare(`
+        INSERT OR REPLACE INTO articles (
+          id, title, url, author, published_at, site, likes, bookmarks, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `);
+
+      await stmt
+        .bind(
+          article.id,
+          article.title,
+          article.url,
+          article.author,
+          article.published_at,
+          article.site,
+          article.likes,
+          article.bookmarks,
+        )
+        .run();
+    } catch (error) {
+      console.error(`記事の保存に失敗しました ${article.id}:`, error);
+      throw new Error(`記事の保存に失敗しました ${article.id}: ${error}`);
+    }
   }
 }
