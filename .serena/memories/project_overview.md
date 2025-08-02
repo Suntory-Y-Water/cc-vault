@@ -8,7 +8,7 @@ Claude Code に特化した情報提供プラットフォーム。複数の記�
 - **言語**: TypeScript 5.8.3
 - **UI**: React 19.1.0, Tailwind CSS, Radix UI
 - **デプロイ**: Cloudflare Workers + D1 Database
-- **データベース**: Cloudflare D1 (SQLite ベース)
+- **データベース**: Cloudflare D1 (SQLite ベース) + **Drizzle ORM**
 - **パッケージマネージャー**: pnpm
 - **テスト**: Vitest
 - **リンター/フォーマッター**: Biome
@@ -24,5 +24,6 @@ Claude Code に特化した情報提供プラットフォーム。複数の記�
 ## アーキテクチャ
 - Cloudflare Workers で Next.js アプリを実行
 - スケジュールタスクで記事データを定期収集
+- **Drizzle ORM を使用した型安全なデータベース操作**
 - D1 データベースに記事データを保存
 - サーバーサイドレンダリング対応
