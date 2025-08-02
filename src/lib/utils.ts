@@ -16,3 +16,12 @@ export function convertToJstString(dateString: string): string {
   const zonedDate = toZonedTime(new Date(dateString), timeZone);
   return format(zonedDate, "yyyy-MM-dd'T'HH:mm:ss", { timeZone });
 }
+
+/**
+ * URLがZennまたはQiitaのドメインかどうかを判定する
+ * @param url - 判定対象のURL
+ * @returns ZennまたはQiitaのURLの場合true
+ */
+export function isZennOrQiitaUrl(url: string): boolean {
+  return url.includes('zenn.dev') || url.includes('qiita.com');
+}

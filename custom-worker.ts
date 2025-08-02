@@ -1,7 +1,7 @@
 import { ArticleRow, QiitaPost } from '@/types/article.js';
 // @ts-ignore `.open-next/worker.ts` is generated at build time
 import { default as handler } from './.open-next/worker.js';
-import { convertToJstString } from '@/lib/utils.js';
+import { convertToJstString, isZennOrQiitaUrl } from '@/lib/utils.js';
 import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers.js';
 import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser.js';
 
@@ -114,6 +114,11 @@ export default {
       });
 
       hatenaRecentData.forEach((article) => {
+        // ZennやQiitaのURLは除外（既に個別に取得済みのため）
+        if (isZennOrQiitaUrl(article.url)) {
+          return;
+        }
+
         allArticles.push({
           id: article.id,
           title: article.title,
@@ -136,6 +141,11 @@ export default {
       });
 
       hatenaPopularData.forEach((article) => {
+        // ZennやQiitaのURLは除外（既に個別に取得済みのため）
+        if (isZennOrQiitaUrl(article.url)) {
+          return;
+        }
+
         allArticles.push({
           id: `${article.id}-popular`,
           title: article.title,
