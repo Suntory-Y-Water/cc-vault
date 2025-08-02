@@ -1,40 +1,7 @@
-import {
-  ArticleRow,
-  ArticlePaginationParams,
-  PaginatedArticles,
-} from '@/types';
-
-// SQLクエリテンプレート
-const SQL_QUERIES = {
-  COUNT: `
-    SELECT COUNT(*) as total
-    FROM articles
-  `,
-  SELECT_ARTICLES: `
-    SELECT id, title, url, author, published_at, likes, bookmarks, site
-    FROM articles
-  `,
-} as const;
-
-// ORDER BY句の定義
-const ORDER_CLAUSES = {
-  trending: 'ORDER BY (likes + bookmarks) DESC, published_at DESC',
-  latest: 'ORDER BY published_at DESC',
-} as const;
-
-/**
- * クエリ条件を構築
- */
-function buildQueryConditions(
-  site?: string,
-  order: 'trending' | 'latest' = 'latest',
-) {
-  const whereClause = site && site !== 'all' ? 'WHERE site = ?' : '';
-  const orderClause = ORDER_CLAUSES[order];
-  const bindings = site && site !== 'all' ? [site] : [];
-
-  return { whereClause, orderClause, bindings };
-}
+import { ArticlePaginationParams, PaginatedArticles } from '@/types';
+import { drizzle } from 'drizzle-orm/d1';
+import { eq, desc, count, sql } from 'drizzle-orm';
+import { articles } from '@/config/drizzle/schema';
 
 /**
  * D1データベースからページネーション対応で記事を取得する
@@ -47,32 +14,51 @@ export async function getArticlesWithPagination(
   params: ArticlePaginationParams,
 ): Promise<PaginatedArticles> {
   try {
+    const drizzleDB = drizzle(db);
     const { page, limit, site, order } = params;
     const offset = (page - 1) * limit;
-    const { whereClause, orderClause, bindings } = buildQueryConditions(
-      site,
-      order,
-    );
+
+    // WHERE条件の構築
+    const whereCondition =
+      site && site !== 'all' ? eq(articles.site, site) : undefined;
+
+    // ORDER BY条件の構築
+    const orderCondition =
+      order === 'trending'
+        ? [
+            desc(sql`(${articles.likes} + ${articles.bookmarks})`),
+            desc(articles.publishedAt),
+          ]
+        : [desc(articles.publishedAt)];
 
     // 総件数を取得
-    const countQuery = `${SQL_QUERIES.COUNT} ${whereClause}`.trim();
-    const countStmt = db.prepare(countQuery);
+    const countResult = await drizzleDB
+      .select({ total: count() })
+      .from(articles)
+      .where(whereCondition);
 
-    const countResult = await (bindings.length > 0
-      ? countStmt.bind(...bindings).first<{ total: number }>()
-      : countStmt.first<{ total: number }>());
-
-    const totalCount = countResult?.total || 0;
+    const totalCount = countResult[0]?.total || 0;
     const totalPages = Math.ceil(totalCount / limit);
 
     // 記事データを取得
-    const dataQuery =
-      `${SQL_QUERIES.SELECT_ARTICLES} ${whereClause} ${orderClause} LIMIT ? OFFSET ?`.trim();
-    const dataStmt = db.prepare(dataQuery);
-    const dataBindings = [...bindings, limit, offset];
-    const { results } = await dataStmt.bind(...dataBindings).all<ArticleRow>();
+    const results = await drizzleDB
+      .select({
+        id: articles.id,
+        title: articles.title,
+        url: articles.url,
+        author: articles.author,
+        published_at: articles.publishedAt,
+        likes: articles.likes,
+        bookmarks: articles.bookmarks,
+        site: articles.site,
+      })
+      .from(articles)
+      .where(whereCondition)
+      .orderBy(...orderCondition)
+      .limit(limit)
+      .offset(offset);
 
-    const articles = results.map((row) => ({
+    const articlesData = results.map((row) => ({
       id: row.id,
       title: row.title,
       url: row.url,
@@ -80,13 +66,13 @@ export async function getArticlesWithPagination(
       publishedAt: row.published_at,
       site: row.site,
       engagement: {
-        likes: row.likes,
-        bookmarks: row.bookmarks,
+        likes: row.likes || 0,
+        bookmarks: row.bookmarks || 0,
       },
     }));
 
     return {
-      articles,
+      articles: articlesData,
       totalCount,
       totalPages,
       currentPage: page,

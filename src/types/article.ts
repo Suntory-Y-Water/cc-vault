@@ -5,6 +5,7 @@
 /**
  * サイト名の定数定義
  */
+export const SITE_VALUES = ['qiita', 'zenn', 'hatena'] as const;
 export const SITE_NAMES = {
   all: 'all',
   qiita: 'qiita',
@@ -21,9 +22,9 @@ export const SORT_ORDERS = {
 } as const;
 
 /**
- * サイト名の型定義
+ * サイト名の型定義（DB格納用は実際のサイト名のみ、UI用は"all"を含む）
  */
-export type SiteType = keyof typeof SITE_NAMES;
+export type SiteType = (typeof SITE_VALUES)[number] | 'all'; // "qiita" | "zenn" | "hatena" | "all"
 
 /**
  * ソート順の型定義

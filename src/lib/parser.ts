@@ -1,5 +1,6 @@
 import { ZennArticle, ZennTopics, ZennResponse } from '@/types';
 import { parseHTML } from 'linkedom';
+import { fetchHtmlDocument } from './fetchers';
 
 /**
  * Next.jsのNEXT_DATAを解析する
@@ -111,5 +112,54 @@ export function getHatenaBookmarkData({ htmlString }: { htmlString: string }) {
     return articles;
   } catch (error) {
     throw new Error(`はてなブックマークデータ取得に失敗しました: ${error}`);
+  }
+}
+/**
+ * HTML文字列をパースして、記事の本文を取得する
+ * code-block-containerクラスを除外して、テキストのみを抽出する
+ */
+export function extractArticleContent({
+  htmlString,
+}: { htmlString: string }): string {
+  const { document } = parseHTML(htmlString);
+
+  // コードブロックを削除
+  const codeBlocks = document.querySelectorAll('.code-block-container');
+  for (const block of codeBlocks) {
+    block.remove();
+  }
+
+  // 全ての子要素からテキストを収集
+  const childNodes = [...document.childNodes];
+  const textContent = childNodes
+    .filter((node) => node.nodeType === 1 || node.nodeType === 3)
+    .map((node) => node.textContent || '')
+    .join('');
+
+  if (!textContent) {
+    throw new Error('テキストコンテンツが取得できませんでした');
+  }
+
+  return textContent.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Zenn記事から本文コンテンツを取得する
+ * @param url - Zenn記事のURL
+ * @returns 記事の本文テキスト
+ */
+export async function fetchZennArticleContent(url: string): Promise<string> {
+  try {
+    const htmlString = await fetchHtmlDocument(url, { cache: 'no-store' });
+    const zennData = parseNextData<ZennArticle>({ htmlString });
+
+    const content = extractArticleContent({
+      htmlString: zennData.props.pageProps.article.bodyHtml,
+    });
+
+    return content;
+  } catch (error) {
+    console.error(`記事の本文取得に失敗しました: ${url}`, error);
+    throw new Error(`記事の本文取得に失敗しました: ${error}`);
   }
 }

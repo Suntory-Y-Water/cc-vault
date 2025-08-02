@@ -32,8 +32,8 @@
     {
       "binding": "DB",
       "database_name": "cc-vault-db",
-      "database_id": "e39a1dc8-23fe-4303-b01d-7818b308915c",
-      "migrations_dir": "migrations"
+      "database_id": "3c50a8e0-dd4c-472c-963b-f6f43b298d2b",
+      "migrations_dir": "./src/config/drizzle/migrations"
     }
   ]
 }
