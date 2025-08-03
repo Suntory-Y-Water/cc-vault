@@ -80,6 +80,9 @@ export default async function WeeklyReportPage({
     notFound();
   }
 
+  // データ取得日時点（週終了日をyyyy-mm-dd形式で表示）
+  const snapshotDate = weeklyReport.weekRange.endDate;
+
   return (
     <div className='container mx-auto px-4 py-8'>
       {/* ヘッダー */}
@@ -123,6 +126,9 @@ export default async function WeeklyReportPage({
             トップページ
           </Link>
           をご確認ください。
+        </p>
+        <p className='text-xs'>
+          ※ いいね・ブックマーク数は{snapshotDate}時点のものです。
         </p>
         <p className='text-xs'>
           ※

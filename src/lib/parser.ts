@@ -1,6 +1,12 @@
-import { ZennArticle, ZennTopics, ZennResponse } from '@/types';
+import {
+  ZennArticle,
+  ZennTopics,
+  ZennResponse,
+  HATENA_SITE_DOMAIN,
+} from '@/types';
 import { parseHTML } from 'linkedom';
 import { fetchHtmlDocument } from './fetchers';
+import { normalizeText } from './utils';
 
 /**
  * Next.jsのNEXT_DATAを解析する
@@ -173,7 +179,7 @@ export async function fetchArticleContent(url: string): Promise<string> {
     if (url.includes('zenn.dev')) {
       return await fetchZennArticleContent(url);
     }
-    
+
     // Qiitaやその他のサイトの場合は基本的なHTML取得
     const htmlString = await fetchHtmlDocument(url, { cache: 'no-store' });
     return extractArticleContent({ htmlString });
@@ -181,4 +187,103 @@ export async function fetchArticleContent(url: string): Promise<string> {
     console.error(`記事の本文取得に失敗しました: ${url}`, error);
     throw new Error(`記事の本文取得に失敗しました: ${error}`);
   }
+}
+
+/**
+ * HTML文字列からbodyタグ内の本文テキストを抽出する
+ * ヘッダー、フッター、ナビゲーション、広告などのノイズ要素を除去
+ * @param htmlString - 解析するHTML文字列
+ * @returns クリーンな本文テキスト
+ */
+export function extractContentHTML({
+  htmlString,
+}: { htmlString: string }): string {
+  const { document } = parseHTML(htmlString);
+
+  // 本文領域を優先的に探索
+  const contentElement =
+    document.querySelector('main') ||
+    document.querySelector('article') ||
+    document.querySelector('[role="main"]') ||
+    document.querySelector('body');
+
+  if (!contentElement) {
+    throw new Error('コンテンツ要素が見つかりません');
+  }
+
+  // ノイズ要素を除去
+  const noiseSelectors = [
+    'header, nav, footer, aside, script, style, noscript',
+    '[role="banner"], [role="navigation"], [role="complementary"]',
+    '[class*="ad"], [class*="menu"], [class*="widget"], [class*="social"], [class*="comment"]',
+    '[class*="sidebar"], [class*="breadcrumb"], [class*="pagination"]',
+    '.advertisement, .related, .recommendation',
+  ];
+
+  for (const selector of noiseSelectors) {
+    const elements = contentElement.querySelectorAll(selector);
+    for (const element of elements) {
+      element.remove();
+    }
+  }
+
+  // テキストコンテンツを取得
+  const textContent = contentElement.textContent || '';
+
+  if (!textContent.trim()) {
+    throw new Error('テキストコンテンツが取得できませんでした');
+  }
+
+  // 正規化して返却
+  return normalizeText(textContent);
+}
+
+/**
+ * はてなブログの記事から適切なパースを行う
+ * @domain 特定のドメイン
+ */
+export function parseHatenaBlogContent({
+  domain,
+  htmlString,
+}: { domain: string; htmlString: string }) {
+  if (domain === HATENA_SITE_DOMAIN.NOTE) {
+    // noteのパース、htmlStringは使用しない
+    return;
+  }
+
+  if (domain === HATENA_SITE_DOMAIN.SPEAKERDECK) {
+    // Speaker Deckのパース、引数両方とも使用する
+    const body = getSpeakerDeckContent({
+      htmlString,
+    });
+    return body;
+  }
+
+  // 通常のパース、domainは使用しない
+  const body = extractContentHTML({ htmlString });
+  return body;
+}
+
+/**
+ * Speaker DeckのHTMLから内容を抽出する
+ * @param htmlString - Speaker DeckのHTML文字列
+ * @returns 抽出されたコンテンツ
+ */
+export function getSpeakerDeckContent({ htmlString }: { htmlString: string }) {
+  const { document } = parseHTML(htmlString);
+  // スライドの本文
+  const slides = [...document.querySelectorAll('div.slide-transcript')];
+
+  if (slides.length === 0) {
+    throw new Error('スライドが見つかりません');
+  }
+  const body = slides.map((slide) => {
+    const textContent = slide.textContent?.trim();
+    if (!textContent) {
+      throw new Error('スライドのテキストコンテンツが取得できませんでした');
+    }
+    return normalizeText(textContent);
+  });
+  // スライドのテキストを半角スペースで結合して返す
+  return body.join(' ');
 }

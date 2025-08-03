@@ -56,6 +56,7 @@ export default function TopArticles({
     return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
   };
 
+
   /**
    * ランキング番号のスタイルを取得
    */
