@@ -163,3 +163,22 @@ export async function fetchZennArticleContent(url: string): Promise<string> {
     throw new Error(`記事の本文取得に失敗しました: ${error}`);
   }
 }
+
+/**
+ * 記事URLから本文コンテンツを取得する
+ * サイト別に適切な取得方法を選択
+ */
+export async function fetchArticleContent(url: string): Promise<string> {
+  try {
+    if (url.includes('zenn.dev')) {
+      return await fetchZennArticleContent(url);
+    }
+    
+    // Qiitaやその他のサイトの場合は基本的なHTML取得
+    const htmlString = await fetchHtmlDocument(url, { cache: 'no-store' });
+    return extractArticleContent({ htmlString });
+  } catch (error) {
+    console.error(`記事の本文取得に失敗しました: ${url}`, error);
+    throw new Error(`記事の本文取得に失敗しました: ${error}`);
+  }
+}

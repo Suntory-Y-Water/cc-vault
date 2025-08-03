@@ -22,9 +22,14 @@ export const SORT_ORDERS = {
 } as const;
 
 /**
- * サイト名の型定義（DB格納用は実際のサイト名のみ、UI用は"all"を含む）
+ * DB格納用のサイト名型定義（実際のサイト名のみ）
  */
-export type SiteType = (typeof SITE_VALUES)[number] | 'all'; // "qiita" | "zenn" | "hatena" | "all"
+export type SiteValueType = (typeof SITE_VALUES)[number]; // "qiita" | "zenn" | "hatena"
+
+/**
+ * UI用のサイト名型定義（"all"を含む）
+ */
+export type SiteType = SiteValueType | 'all'; // "qiita" | "zenn" | "hatena" | "all"
 
 /**
  * ソート順の型定義
@@ -86,7 +91,7 @@ export type ArticleRow = {
   url: string;
   author: string;
   published_at: string;
-  site: SiteType;
+  site: SiteValueType;
   likes: number;
   bookmarks: number;
 };
