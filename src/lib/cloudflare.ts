@@ -133,13 +133,11 @@ export async function saveArticlesToDB(params: {
 /**
  * 指定サイトの過去1週間の上位3記事を取得
  */
-export async function fetchTopArticlesBySite({
+export async function fetchTopArticles({
   db,
-  site,
   weekRange,
 }: {
   db: D1Database;
-  site: SiteValueType;
   weekRange: WeekRange;
 }): Promise<ArticleRow[]> {
   try {
@@ -159,7 +157,6 @@ export async function fetchTopArticlesBySite({
       .from(articles)
       .where(
         and(
-          eq(articles.site, site),
           gte(articles.publishedAt, `${weekRange.startDate}T00:00:00`),
           lte(articles.publishedAt, `${weekRange.endDate}T23:59:59`),
         ),
@@ -174,8 +171,7 @@ export async function fetchTopArticlesBySite({
       bookmarks: result.bookmarks ?? 0,
     }));
   } catch (error) {
-    console.error(`${site}の週間上位記事取得に失敗しました:`, error);
-    throw new Error(`${site}の週間上位記事取得に失敗しました: ${error}`);
+    throw new Error(`上位記事取得に失敗しました: ${error}`);
   }
 }
 
@@ -299,6 +295,37 @@ export async function hasWeeklyReportData({
  * @param weekStartDate - 週開始日 (YYYY-MM-DD形式)
  * @returns 画面表示用の記事データ（AI要約とSnapshot値を含む）
  */
+/**
+ * 指定週の全体要約を取得
+ */
+export async function fetchWeeklyOverallSummary({
+  db,
+  weekStartDate,
+}: {
+  db: D1Database;
+  weekStartDate: string;
+}): Promise<string | null> {
+  try {
+    const drizzleDB = drizzle(db);
+
+    const result = await drizzleDB
+      .select({ overallSummary: weeklyReports.overallSummary })
+      .from(weeklyReports)
+      .where(
+        and(
+          eq(weeklyReports.weekStartDate, weekStartDate),
+          eq(weeklyReports.status, 'completed'),
+        ),
+      )
+      .limit(1);
+
+    return result[0]?.overallSummary || null;
+  } catch (error) {
+    console.error('全体要約の取得に失敗しました:', error);
+    return null;
+  }
+}
+
 export async function fetchWeeklyDisplayData({
   db,
   site,

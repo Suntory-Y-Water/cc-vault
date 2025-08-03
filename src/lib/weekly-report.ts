@@ -15,7 +15,11 @@ import {
 } from 'date-fns';
 import type { WeekRange, WeeklyReportGrouped, SiteRanking } from '@/types';
 import { SITE_VALUES } from '@/types/article';
-import { hasWeeklyReportData, fetchWeeklyDisplayData } from './cloudflare';
+import {
+  hasWeeklyReportData,
+  fetchWeeklyDisplayData,
+  fetchWeeklyOverallSummary,
+} from './cloudflare';
 
 /**
  * 指定された日付から週の開始日を取得（月曜日始まり）
@@ -150,11 +154,15 @@ export async function generateWeeklyReportGrouped({
   db: D1Database;
 }): Promise<WeeklyReportGrouped> {
   const weekRange = createWeekRange(new Date(weekStartDate));
-  const siteRankings = await fetchWeeklyReportData({ weekRange, db });
+  const [siteRankings, overallSummary] = await Promise.all([
+    fetchWeeklyReportData({ weekRange, db }),
+    fetchWeeklyOverallSummary({ db, weekStartDate: weekRange.startDate }),
+  ]);
 
   return {
     weekRange,
     siteRankings,
+    overallSummary,
   };
 }
 

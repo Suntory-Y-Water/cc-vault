@@ -57,12 +57,16 @@ ${articleContent}
 /**
  * 週間レポート全体総括用プロンプト
  */
-export function getOverallSummaryPrompt(summaries: Array<{
-  articleId: string;
-  summary: string;
-}>): string {
-  const summaryTexts = summaries.map((s, index) => `${index + 1}. ${s.summary}`).join('\n');
-  
+export function getOverallSummaryPrompt(
+  summaries: Array<{
+    articleId: string;
+    summary: string;
+  }>,
+): string {
+  const summaryTexts = summaries
+    .map((s, index) => `${index + 1}. ${s.summary}`)
+    .join('\n');
+
   return `あなたは Claude Code（Anthropic の CLI ツール）に関する週間技術トレンドを分析するアシスタントです。今週注目された記事群から、週全体のトレンドや傾向を総括してください。
 
 ## タスク

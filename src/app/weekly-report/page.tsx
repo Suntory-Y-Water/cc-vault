@@ -112,16 +112,21 @@ export default async function WeeklyReportPage({
       <TopArticles
         siteRankings={weeklyReport.siteRankings}
         weekLabel={weeklyReport.weekRange.label}
+        overallSummary={weeklyReport.overallSummary}
       />
 
       {/* フッター */}
-      <div className='mt-12 text-center text-sm text-[#141413] opacity-70'>
+      <div className='mt-12 text-center text-sm text-[#141413] opacity-70 space-y-2'>
         <p>
           データは毎週更新されます。最新の情報については
           <Link href='/' className='text-[#DB8163] hover:underline'>
             トップページ
           </Link>
           をご確認ください。
+        </p>
+        <p className='text-xs'>
+          ※
+          AIによる要約は誤りを含むことがあります。正確な情報については元の記事をご確認ください。
         </p>
       </div>
     </div>

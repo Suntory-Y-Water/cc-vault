@@ -58,6 +58,8 @@ export type WeeklyReportGrouped = {
   weekRange: WeekRange;
   /** サイト別ランキング */
   siteRankings: SiteRanking[];
+  /** AI生成全体要約 */
+  overallSummary: string | null;
 };
 
 /**

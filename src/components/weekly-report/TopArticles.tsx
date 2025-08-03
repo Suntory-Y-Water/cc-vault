@@ -16,6 +16,8 @@ type TopArticlesProps = {
   siteRankings: SiteRanking[];
   /** 週の範囲ラベル */
   weekLabel: string;
+  /** AI生成全体要約 */
+  overallSummary: string | null;
 };
 
 /**
@@ -25,6 +27,7 @@ type TopArticlesProps = {
 export default function TopArticles({
   siteRankings,
   weekLabel,
+  overallSummary,
 }: TopArticlesProps) {
   /**
    * サイトバッジの色を取得
@@ -161,6 +164,25 @@ export default function TopArticles({
           <span>{weekLabel}</span>
         </div>
       </div>
+
+      {/* AI生成全体要約セクション */}
+      {overallSummary && (
+        <Card className='border-[#E0DFDA] bg-gradient-to-r from-[#FAF9F5] to-[#F7F6F1]'>
+          <CardContent className='p-6'>
+            <div className='flex items-center gap-3 mb-4'>
+              <Bot className='w-6 h-6 text-[#DB8163]' />
+              <h3 className='text-xl font-bold text-[#141413]'>
+                今週のトレンド要約
+              </h3>
+            </div>
+            <div className='prose prose-slate max-w-none'>
+              <p className='text-[#141413] leading-relaxed text-base'>
+                {overallSummary}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* サイト別セクション */}
       {siteRankings.map(

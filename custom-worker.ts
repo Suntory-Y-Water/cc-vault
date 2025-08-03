@@ -10,7 +10,7 @@ import {
 } from '@/lib/parser.js';
 import {
   saveArticlesToDB,
-  fetchTopArticlesBySite,
+  fetchTopArticles,
   saveWeeklySummaries,
   saveWeeklyReport,
 } from '@/lib/cloudflare.js';
@@ -166,18 +166,17 @@ export default {
         const weekRange = calculatePreviousWeek(executionDateJST);
         console.log(`対象週: ${weekRange.startDate} - ${weekRange.endDate}`);
 
-        // 3. Zennの上位3記事を取得
-        const zennArticles = await fetchTopArticlesBySite({
+        // 3. 各サイトの上位3記事を取得
+        const topArticles = await fetchTopArticles({
           db: env.DB,
-          site: 'zenn',
           weekRange,
         });
-        console.log(`Zenn記事取得: ${zennArticles.length}件`);
+        console.log(`記事取得: ${topArticles.length}件`);
 
         // 4. 各記事の本文取得と要約生成
         const summaries = await generateArticleSummaries({
           env,
-          articles: zennArticles,
+          articles: topArticles,
         });
         console.log(`要約生成完了: ${summaries.length}件`);
 
