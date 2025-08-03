@@ -37,3 +37,43 @@ export const articles = sqliteTable(
     index('idx_articles_engagement').on(table.likes, table.bookmarks),
   ],
 );
+
+/**
+ * 週間記事要約テーブル
+ * 各記事のAI要約と処理実行時点のSnapshot値を格納
+ */
+export const weeklySummaries = sqliteTable(
+  'weekly_summaries',
+  {
+    articleId: text('article_id')
+      .primaryKey()
+      .references(() => articles.id),
+    weekStartDate: text('week_start_date').notNull(), // 'YYYY-MM-DD'
+    summary: text('summary').notNull(),
+    // 処理実行時点のSnapshot値
+    likesSnapshot: integer('likes_snapshot').notNull(),
+    bookmarksSnapshot: integer('bookmarks_snapshot').notNull(),
+    createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => [
+    unique().on(table.articleId, table.weekStartDate),
+    index('idx_weekly_summaries_week').on(table.weekStartDate),
+  ],
+);
+
+/**
+ * 週間レポートテーブル
+ * 週単位の全体総括文章と処理状況を格納
+ */
+export const weeklyReports = sqliteTable(
+  'weekly_reports',
+  {
+    weekStartDate: text('week_start_date').primaryKey(), // ユニークなので主キーとして使用
+    overallSummary: text('overall_summary').notNull(),
+    status: text('status', {
+      enum: ['processing', 'completed', 'failed'],
+    }).notNull(),
+    createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => [index('idx_weekly_reports_status').on(table.status)],
+);
