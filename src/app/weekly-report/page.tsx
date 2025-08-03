@@ -9,7 +9,10 @@ import {
   generateWeeklyReportGrouped,
   getAdjacentWeeks,
   getStartOfWeek,
+  hasWeeklyData,
 } from '@/lib/weekly-report';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { notFound } from 'next/navigation';
 
 /**
  * ウィークリーレポートページのメタデータ生成
@@ -17,6 +20,7 @@ import {
 export async function generateMetadata({
   searchParams,
 }: WeeklyReportPageProps): Promise<Metadata> {
+  const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
@@ -24,6 +28,7 @@ export async function generateMetadata({
 
   const weeklyReport = await generateWeeklyReportGrouped({
     weekStartDate: selectedWeek,
+    db: env.DB,
   });
   const title = `ウィークリーレポート - ${weeklyReport.weekRange.label}`;
   const description = `${weeklyReport.weekRange.label}の週間人気記事サイト別ランキングをご覧ください。`;
@@ -49,6 +54,7 @@ export async function generateMetadata({
 export default async function WeeklyReportPage({
   searchParams,
 }: WeeklyReportPageProps) {
+  const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
@@ -57,8 +63,22 @@ export default async function WeeklyReportPage({
   // 週間レポートデータを生成
   const weeklyReport = await generateWeeklyReportGrouped({
     weekStartDate: selectedWeek,
+    db: env.DB,
   });
   const adjacentWeeks = getAdjacentWeeks(selectedWeek);
+
+  // データ存在チェック
+  const [hasPreviousData, hasNextData] = await Promise.all([
+    hasWeeklyData(adjacentWeeks.previous, env.DB),
+    hasWeeklyData(adjacentWeeks.next, env.DB),
+  ]);
+
+  if (
+    weeklyReport.siteRankings.length === 0 ||
+    weeklyReport.siteRankings.every((ranking) => ranking.articles.length === 0)
+  ) {
+    notFound();
+  }
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -84,6 +104,8 @@ export default async function WeeklyReportPage({
         currentWeek={weeklyReport.weekRange}
         previousWeek={adjacentWeeks.previous}
         nextWeek={adjacentWeeks.next}
+        hasPreviousData={hasPreviousData}
+        hasNextData={hasNextData}
       />
 
       {/* 週間人気記事サイト別ランキング */}

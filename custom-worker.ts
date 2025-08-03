@@ -3,8 +3,23 @@ import { ArticleRow, QiitaPost } from '@/types/article.js';
 import { default as handler } from './.open-next/worker.js';
 import { convertToJstString, isZennOrQiitaUrl } from '@/lib/utils.js';
 import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers.js';
-import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser.js';
-import { saveArticlesToDB } from '@/lib/cloudflare.js';
+import {
+  getZennTopicsData,
+  getHatenaBookmarkData,
+  fetchArticleContent,
+} from '@/lib/parser.js';
+import {
+  saveArticlesToDB,
+  fetchTopArticlesBySite,
+  saveWeeklySummaries,
+  saveWeeklyReport,
+} from '@/lib/cloudflare.js';
+import { convertUTCToJST, calculatePreviousWeek } from '@/lib/weekly-report.js';
+import { createGeminiClient, getGeminiResponse } from '@/lib/gemini.js';
+import {
+  getArticleSummaryPrompt,
+  getOverallSummaryPrompt,
+} from '@/lib/prompts.js';
 
 /**
  * カスタムWorker設定
@@ -136,7 +151,126 @@ export default {
         }
         break;
       }
+
+      /**
+       * 週次レポート生成処理（Zennのみテスト）
+       * 毎週月曜日 JST 00:00 (UTC 15:00 日曜日) に実行
+       */
+      case '0 15 * * 0': {
+        console.log('週次レポート生成処理を開始します');
+
+        // 1. 実行日時をJSTに変換
+        const executionDateJST = convertUTCToJST(new Date());
+
+        // 2. 前週の範囲を計算
+        const weekRange = calculatePreviousWeek(executionDateJST);
+        console.log(`対象週: ${weekRange.startDate} - ${weekRange.endDate}`);
+
+        // 3. Zennの上位3記事を取得
+        const zennArticles = await fetchTopArticlesBySite({
+          db: env.DB,
+          site: 'zenn',
+          weekRange,
+        });
+        console.log(`Zenn記事取得: ${zennArticles.length}件`);
+
+        // 4. 各記事の本文取得と要約生成
+        const summaries = await generateArticleSummaries({
+          env,
+          articles: zennArticles,
+        });
+        console.log(`要約生成完了: ${summaries.length}件`);
+
+        // 5. DBに要約データ保存
+        await saveWeeklySummaries({
+          db: env.DB,
+          summaries,
+          weekStartDate: weekRange.startDate,
+        });
+
+        // 6. 全体総括文章生成
+        const overallSummary = await generateOverallSummary({ env, summaries });
+
+        // 7. 週次レポート保存
+        await saveWeeklyReport({
+          db: env.DB,
+          weekStartDate: weekRange.startDate,
+          overallSummary,
+        });
+
+        console.log('週次レポート生成処理が完了しました');
+        break;
+      }
     }
     console.log('スケジュールタスクが完了しました');
   },
 } satisfies ExportedHandler<CloudflareEnv>;
+
+/**
+ * 記事要約生成処理
+ */
+async function generateArticleSummaries({
+  env,
+  articles,
+}: {
+  env: CloudflareEnv;
+  articles: ArticleRow[];
+}): Promise<
+  {
+    articleId: string;
+    summary: string;
+    likesSnapshot: number;
+    bookmarksSnapshot: number;
+  }[]
+> {
+  const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
+  const summaries: {
+    articleId: string;
+    summary: string;
+    likesSnapshot: number;
+    bookmarksSnapshot: number;
+  }[] = [];
+
+  for (const article of articles) {
+    try {
+      // 記事本文取得
+      const content = await fetchArticleContent(article.url);
+
+      // AI要約生成
+      const prompt = getArticleSummaryPrompt(content);
+      const summary = await getGeminiResponse({ ai: geminiClient, prompt });
+
+      summaries.push({
+        articleId: article.id,
+        summary,
+        likesSnapshot: article.likes,
+        bookmarksSnapshot: article.bookmarks,
+      });
+    } catch (error) {
+      console.error(`記事要約生成に失敗しました: ${article.id}`, error);
+      // エラーが発生した記事はスキップして続行
+    }
+  }
+
+  return summaries;
+}
+
+/**
+ * 全体総括文章生成処理
+ */
+async function generateOverallSummary({
+  env,
+  summaries,
+}: {
+  env: CloudflareEnv;
+  summaries: {
+    articleId: string;
+    summary: string;
+    likesSnapshot: number;
+    bookmarksSnapshot: number;
+  }[];
+}): Promise<string> {
+  const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
+  const prompt = getOverallSummaryPrompt(summaries);
+  return await getGeminiResponse({ ai: geminiClient, prompt });
+}

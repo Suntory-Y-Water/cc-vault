@@ -26,6 +26,8 @@ export type WeekRange = {
 export type WeeklyArticle = Article & {
   /** 週間でのランキング順位 */
   weeklyRank: number;
+  /** AI生成要約 */
+  summary: string;
 };
 
 /**

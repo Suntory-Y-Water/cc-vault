@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { WeekRange } from '@/types';
-import { isFutureWeek, hasWeeklyData } from '@/lib/weekly-report';
+import { isFutureWeek } from '@/lib/weekly-report';
 
 type WeekNavigationProps = {
   /** 現在の週の範囲 */
@@ -11,6 +11,10 @@ type WeekNavigationProps = {
   previousWeek: WeekRange;
   /** 次の週の範囲 */
   nextWeek: WeekRange;
+  /** 前の週のデータが存在するか */
+  hasPreviousData: boolean;
+  /** 次の週のデータが存在するか */
+  hasNextData: boolean;
 };
 
 /**
@@ -21,11 +25,13 @@ export default function WeekNavigation({
   currentWeek,
   previousWeek,
   nextWeek,
+  hasPreviousData,
+  hasNextData,
 }: WeekNavigationProps) {
   return (
     <div className='flex items-center justify-between mb-6'>
       {/* 前の週ボタン */}
-      {!hasWeeklyData(previousWeek) ? (
+      {!hasPreviousData ? (
         <Button
           variant='outline'
           size='sm'
@@ -59,7 +65,7 @@ export default function WeekNavigation({
       </div>
 
       {/* 次の週ボタン */}
-      {isFutureWeek(nextWeek.startDate) || !hasWeeklyData(nextWeek) ? (
+      {isFutureWeek(nextWeek.startDate) || !hasNextData ? (
         <Button
           variant='outline'
           size='sm'
