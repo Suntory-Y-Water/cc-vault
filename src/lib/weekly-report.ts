@@ -9,7 +9,6 @@ import {
   getWeek,
   getYear,
   isAfter,
-  isSameDay,
   parseISO,
   format,
 } from 'date-fns';
@@ -31,14 +30,14 @@ export function getStartOfWeek(date: Date): Date {
 /**
  * 指定された日付から週の終了日を取得（月曜日始まり）
  */
-export function getEndOfWeek(date: Date): Date {
+function getEndOfWeek(date: Date): Date {
   return endOfWeek(date, { weekStartsOn: 1 });
 }
 
 /**
  * 週の範囲を生成
  */
-export function createWeekRange(startDate: Date): WeekRange {
+function createWeekRange(startDate: Date): WeekRange {
   const start = getStartOfWeek(startDate);
   const end = getEndOfWeek(startDate);
 
@@ -77,16 +76,6 @@ export function getAdjacentWeeks(currentWeek: string): {
   };
 }
 
-/**
- * 現在の週が最新の週かどうかを判定
- */
-export function isCurrentWeek(weekStartDate: string): boolean {
-  const today = new Date();
-  const currentWeekStart = getStartOfWeek(today);
-  const targetWeekStart = parseISO(weekStartDate);
-
-  return isSameDay(currentWeekStart, targetWeekStart);
-}
 
 /**
  * 指定された週が未来の週かどうかを判定
@@ -103,7 +92,7 @@ export function isFutureWeek(weekStartDate: string): boolean {
  * 週間レポートのデータを取得（サイト別に整理済み）
  * weeklySummariesテーブルとarticlesテーブルのINNER JOINで画面表示用データを取得
  */
-export async function fetchWeeklyReportData({
+async function fetchWeeklyReportData({
   weekRange,
   db,
 }: {
