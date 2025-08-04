@@ -2,6 +2,7 @@ import {
   ArticlePaginationParams,
   ArticleRow,
   PaginatedArticles,
+  SITE_VALUES,
 } from '@/types';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, desc, count, sql, and, gte, lte } from 'drizzle-orm';
@@ -131,7 +132,7 @@ export async function saveArticlesToDB(params: {
 }
 
 /**
- * 指定サイトの過去1週間の上位3記事を取得
+ * 各サイトごとの過去1週間の上位3記事を取得（計9記事）
  */
 export async function fetchTopArticles({
   db,
@@ -142,34 +143,42 @@ export async function fetchTopArticles({
 }): Promise<ArticleRow[]> {
   try {
     const drizzleDB = drizzle(db);
+    const allTopArticles: ArticleRow[] = [];
 
-    const results = await drizzleDB
-      .select({
-        id: articles.id,
-        title: articles.title,
-        url: articles.url,
-        author: articles.author,
-        published_at: articles.publishedAt,
-        site: articles.site,
-        likes: articles.likes,
-        bookmarks: articles.bookmarks,
-      })
-      .from(articles)
-      .where(
-        and(
-          gte(articles.publishedAt, `${weekRange.startDate}T00:00:00`),
-          lte(articles.publishedAt, `${weekRange.endDate}T23:59:59`),
-        ),
-      )
-      .orderBy(desc(sql`(${articles.likes} + ${articles.bookmarks})`))
-      .limit(3);
+    for (const site of SITE_VALUES) {
+      const results = await drizzleDB
+        .select({
+          id: articles.id,
+          title: articles.title,
+          url: articles.url,
+          author: articles.author,
+          published_at: articles.publishedAt,
+          site: articles.site,
+          likes: articles.likes,
+          bookmarks: articles.bookmarks,
+        })
+        .from(articles)
+        .where(
+          and(
+            eq(articles.site, site),
+            gte(articles.publishedAt, `${weekRange.startDate}T00:00:00`),
+            lte(articles.publishedAt, `${weekRange.endDate}T23:59:59`),
+          ),
+        )
+        .orderBy(desc(sql`(${articles.likes} + ${articles.bookmarks})`))
+        .limit(3);
 
-    // null値をデフォルト値で置き換える
-    return results.map((result) => ({
-      ...result,
-      likes: result.likes ?? 0,
-      bookmarks: result.bookmarks ?? 0,
-    }));
+      // null値をデフォルト値で置き換えて配列に追加
+      const siteArticles = results.map((result) => ({
+        ...result,
+        likes: result.likes ?? 0,
+        bookmarks: result.bookmarks ?? 0,
+      }));
+
+      allTopArticles.push(...siteArticles);
+    }
+
+    return allTopArticles;
   } catch (error) {
     throw new Error(`上位記事取得に失敗しました: ${error}`);
   }

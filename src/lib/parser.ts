@@ -3,10 +3,17 @@ import {
   ZennTopics,
   ZennResponse,
   HATENA_SITE_DOMAIN,
+  NoteArticle,
+  QiitaPost,
 } from '@/types';
 import { parseHTML } from 'linkedom';
-import { fetchHtmlDocument } from './fetchers';
-import { normalizeText } from './utils';
+import { fetchExternalData, fetchHtmlDocument } from './fetchers';
+import {
+  convertNoteUrlToApiUrl,
+  convertQiitaUrlToApiUrl,
+  getDomainFromUrl,
+  normalizeText,
+} from './utils';
 
 /**
  * Next.jsのNEXT_DATAを解析する
@@ -180,9 +187,19 @@ export async function fetchArticleContent(url: string): Promise<string> {
       return await fetchZennArticleContent(url);
     }
 
-    // Qiitaやその他のサイトの場合は基本的なHTML取得
+    if (url.includes('qiita.com')) {
+      // QiitaのAPIから記事内容を取得
+      const qiitaApiUrl = convertQiitaUrlToApiUrl(url);
+      const qiitaData = await fetchExternalData<QiitaPost>(qiitaApiUrl, {
+        cache: 'no-store',
+      });
+      const body = normalizeText(qiitaData.body);
+      return body;
+    }
+
+    // はてなブックマーク経由の記事（note.com、speakerdeckなど）の場合
     const htmlString = await fetchHtmlDocument(url, { cache: 'no-store' });
-    return extractArticleContent({ htmlString });
+    return await parseHatenaBookmarkContent({ url, htmlString });
   } catch (error) {
     console.error(`記事の本文取得に失敗しました: ${url}`, error);
     throw new Error(`記事の本文取得に失敗しました: ${error}`);
@@ -239,16 +256,20 @@ export function extractContentHTML({
 }
 
 /**
- * はてなブログの記事から適切なパースを行う
+ * はてなブックマークの記事から適切なパースを行う
  * @domain 特定のドメイン
  */
-export function parseHatenaBlogContent({
-  domain,
+export async function parseHatenaBookmarkContent({
+  url,
   htmlString,
-}: { domain: string; htmlString: string }) {
+}: { url: string; htmlString: string }) {
+  const domain = getDomainFromUrl(url);
   if (domain === HATENA_SITE_DOMAIN.NOTE) {
-    // noteのパース、htmlStringは使用しない
-    return;
+    const noteApiUrl = convertNoteUrlToApiUrl(url);
+    const noteData = await fetchExternalData<NoteArticle>(noteApiUrl, {
+      cache: 'no-store',
+    });
+    return noteData.data.body;
   }
 
   if (domain === HATENA_SITE_DOMAIN.SPEAKERDECK) {
