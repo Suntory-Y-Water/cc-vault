@@ -6,7 +6,7 @@ cc-vault/
 ├── .github/          # GitHub Actions設定
 ├── .husky/           # Git hooks設定
 ├── .serena/          # Serena設定
-├── migrations/       # D1データベースマイグレーション
+├── scripts/          # ユーティリティスクリプト
 ├── public/           # 静的ファイル
 ├── src/              # ソースコード
 └── docs/             # ドキュメント
@@ -35,20 +35,28 @@ src/
 │   ├── utils.ts      # 共通ユーティリティ
 │   ├── fetchers.ts   # データ取得関数
 │   ├── parser.ts     # HTMLパース関数
-│   ├── cloudflare.ts # Cloudflare D1関連
+│   ├── prompts.ts    # AIプロンプト生成関数
+│   ├── cloudflare.ts # Cloudflare D1関連（Drizzle ORM使用）
 │   └── constants.ts  # 定数定義
 ├── types/            # TypeScript型定義
 │   ├── article.ts    # 記事関連型
 │   ├── api.ts        # API関連型
 │   ├── site.ts       # サイト設定型
 │   └── next-data.ts  # Next.jsデータ型
-└── config/           # 設定ファイル
-    └── site.ts       # サイト設定
+├── config/           # 設定ファイル
+│   ├── site.ts       # サイト設定
+│   └── drizzle/      # Drizzle ORM設定
+│       ├── schema.ts # データベーススキーマ定義
+│       └── migrations/ # マイグレーションファイル
+└── scripts/          # ユーティリティスクリプト
+    ├── migrate.ts    # マイグレーション実行スクリプト
+    └── backup-production.ts # 本番データバックアップスクリプト
 ```
 
 ## 主要ファイル
 - **custom-worker.ts**: Cloudflare Workers設定・スケジュールタスク
 - **wrangler.jsonc**: Cloudflare Workers設定
+- **drizzle.config.ts**: Drizzle ORM設定
 - **next.config.ts**: Next.js設定
 - **biome.json**: Biome設定
 - **package.json**: 依存関係・スクリプト
@@ -56,11 +64,14 @@ src/
 
 ## データベース
 - **D1 Database**: Cloudflare D1（SQLiteベース）
+- **ORM**: Drizzle ORM（型安全なクエリ）
 - **テーブル**: articles（記事データ）
-- **マイグレーション**: migrations/ ディレクトリで管理
+- **マイグレーション**: src/config/drizzle/migrations/ で管理
+- **スキーマ**: src/config/drizzle/schema.ts で定義
 
 ## 設定ファイル
 - **biome.json**: リンター・フォーマッター
 - **tailwind.config.ts**: Tailwind CSS
 - **vitest.config.mts**: テスト設定
 - **postcss.config.mjs**: PostCSS設定
+- **drizzle.config.ts**: Drizzle ORM設定

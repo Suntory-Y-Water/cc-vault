@@ -28,6 +28,8 @@
     "db:backup:prod": "tsx scripts/backup-production.ts"
   },
   "dependencies": {
+    "@google/genai": "^1.12.0",
+    "@libsql/client": "^0.15.10",
     "@opennextjs/cloudflare": "^1.6.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",

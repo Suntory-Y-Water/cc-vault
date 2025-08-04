@@ -2,7 +2,7 @@
  * サイト設定の型定義とサイト固有の設定値
  */
 
-export type SiteConfig = {
+type SiteConfig = {
   name: string;
   description: string;
   url: string;

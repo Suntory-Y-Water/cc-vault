@@ -3,41 +3,23 @@ import { ArticleRow, QiitaPost } from '@/types/article.js';
 import { default as handler } from './.open-next/worker.js';
 import { convertToJstString, isZennOrQiitaUrl } from '@/lib/utils.js';
 import { fetchHtmlDocument, fetchExternalData } from '@/lib/fetchers.js';
-import { getZennTopicsData, getHatenaBookmarkData } from '@/lib/parser.js';
-
-/**
- * 記事データをarticlesテーブルに保存する
- */
-async function saveArticlesToDB(params: {
-  db: D1Database;
-  articles: ArticleRow[];
-}): Promise<void> {
-  const { db, articles } = params;
-  for (const article of articles) {
-    try {
-      const stmt = db.prepare(`
-        INSERT OR REPLACE INTO articles (
-          id, title, url, author, published_at, site, likes, bookmarks, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-      `);
-
-      await stmt
-        .bind(
-          article.id,
-          article.title,
-          article.url,
-          article.author,
-          article.published_at,
-          article.site,
-          article.likes,
-          article.bookmarks,
-        )
-        .run();
-    } catch (error) {
-      console.error(`記事の保存に失敗しました ${article.id}:`, error);
-    }
-  }
-}
+import {
+  getZennTopicsData,
+  getHatenaBookmarkData,
+  fetchArticleContent,
+} from '@/lib/parser.js';
+import {
+  saveArticlesToDB,
+  fetchTopArticles,
+  saveWeeklySummaries,
+  saveWeeklyReport,
+} from '@/lib/cloudflare.js';
+import { convertUTCToJST, calculatePreviousWeek } from '@/lib/weekly-report.js';
+import { createGeminiClient, getGeminiResponse } from '@/lib/gemini.js';
+import {
+  getArticleSummaryPrompt,
+  getOverallSummaryPrompt,
+} from '@/lib/prompts.js';
 
 /**
  * カスタムWorker設定
@@ -51,124 +33,243 @@ export default {
    * 定期的に全てのデータを取得してD1データベースに保存する
    */
   async scheduled(
-    _controller: ScheduledController,
+    controller: ScheduledController,
     env: CloudflareEnv,
     _ctx: ExecutionContext,
   ) {
-    try {
-      console.log('スケジュールタスクが実行されました');
+    console.log('スケジュールタスクが実行されました');
+    switch (controller.cron) {
+      /**
+       * 定時記事更新処理
+       */
+      case '0 23,0-14 * * *': {
+        const allArticles: ArticleRow[] = [];
 
-      const allArticles: ArticleRow[] = [];
-
-      // Zennデータ取得
-      const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
-      const zennHtml = await fetchHtmlDocument(zennTopicsUrl, {
-        cache: 'no-store',
-      });
-      const zennData = getZennTopicsData({ htmlString: zennHtml });
-
-      zennData.articles.forEach((article) => {
-        allArticles.push({
-          id: `zenn-${article.id}`,
-          title: article.title,
-          url: `https://zenn.dev${article.path}`,
-          author: article.author,
-          published_at: convertToJstString(article.published_at),
-          site: 'zenn',
-          likes: article.likedCount,
-          bookmarks: article.bookmarkedCount,
+        // Zennデータ取得
+        const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
+        const zennHtml = await fetchHtmlDocument(zennTopicsUrl, {
+          cache: 'no-store',
         });
-      });
+        const zennData = getZennTopicsData({ htmlString: zennHtml });
 
-      // Qiitaデータ取得
-      const qiitaUrl =
-        'https://qiita.com/api/v2/items?query=claudecode&per_page=20&page=1';
-      const qiitaData = await fetchExternalData<QiitaPost[]>(qiitaUrl, {
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
-        },
-      });
-
-      qiitaData.forEach((article) => {
-        allArticles.push({
-          id: `qiita-${article.id}`,
-          title: article.title,
-          url: article.url,
-          author: article.user.id,
-          published_at: convertToJstString(article.created_at),
-          site: 'qiita',
-          likes: article.likes_count,
-          bookmarks: article.stocks_count,
-        });
-      });
-
-      // はてなブックマーク新着順
-      const hatenaRecentUrl = `https://b.hatena.ne.jp/q/claudecode?target=tag&date_range=m&safe=on&users=3&sort=recent`;
-      const hatenaRecentHtml = await fetchHtmlDocument(hatenaRecentUrl, {
-        cache: 'no-store',
-      });
-      const hatenaRecentData = getHatenaBookmarkData({
-        htmlString: hatenaRecentHtml,
-      });
-
-      hatenaRecentData.forEach((article) => {
-        // ZennやQiitaのURLは除外（既に個別に取得済みのため）
-        if (isZennOrQiitaUrl(article.url)) {
-          return;
+        for (const article of zennData.articles) {
+          allArticles.push({
+            id: `zenn-${article.id}`,
+            title: article.title,
+            url: `https://zenn.dev${article.path}`,
+            author: article.author,
+            published_at: convertToJstString(article.published_at),
+            site: 'zenn',
+            likes: article.likedCount,
+            bookmarks: article.bookmarkedCount,
+          });
         }
 
-        allArticles.push({
-          id: article.id,
-          title: article.title,
-          url: article.url,
-          author: article.author,
-          published_at: convertToJstString(article.publishedAt),
-          site: 'hatena',
-          likes: 0, // はてなブックマークはlikesがないので0固定
-          bookmarks: article.bookmarkCount,
+        // Qiitaデータ取得
+        const qiitaUrl =
+          'https://qiita.com/api/v2/items?query=claudecode&per_page=20&page=1';
+        const qiitaData = await fetchExternalData<QiitaPost[]>(qiitaUrl, {
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
+          },
         });
-      });
 
-      // はてなブックマーク人気順
-      const hatenaPopularUrl = `https://b.hatena.ne.jp/q/claudecode?users=3&target=tag&sort=popular&date_range=m&safe=on`;
-      const hatenaPopularHtml = await fetchHtmlDocument(hatenaPopularUrl, {
-        cache: 'no-store',
-      });
-      const hatenaPopularData = getHatenaBookmarkData({
-        htmlString: hatenaPopularHtml,
-      });
-
-      hatenaPopularData.forEach((article) => {
-        // ZennやQiitaのURLは除外（既に個別に取得済みのため）
-        if (isZennOrQiitaUrl(article.url)) {
-          return;
+        for (const article of qiitaData) {
+          allArticles.push({
+            id: `qiita-${article.id}`,
+            title: article.title,
+            url: article.url,
+            author: article.user.id,
+            published_at: convertToJstString(article.created_at),
+            site: 'qiita',
+            likes: article.likes_count,
+            bookmarks: article.stocks_count,
+          });
         }
 
-        allArticles.push({
-          id: `${article.id}-popular`,
-          title: article.title,
-          url: article.url,
-          author: article.author,
-          published_at: convertToJstString(article.publishedAt),
-          site: 'hatena',
-          likes: 0,
-          bookmarks: article.bookmarkCount,
+        // はてなブックマーク新着順
+        const hatenaRecentUrl = `https://b.hatena.ne.jp/q/claudecode?target=tag&date_range=m&safe=on&users=3&sort=recent`;
+        const hatenaRecentHtml = await fetchHtmlDocument(hatenaRecentUrl, {
+          cache: 'no-store',
         });
-      });
+        const hatenaRecentData = getHatenaBookmarkData({
+          htmlString: hatenaRecentHtml,
+        });
 
-      // D1データベースに保存
-      if (allArticles.length > 0) {
-        await saveArticlesToDB({ db: env.DB, articles: allArticles });
-        console.log(
-          `${allArticles.length}件の記事をデータベースに保存しました`,
-        );
+        for (const article of hatenaRecentData) {
+          // ZennやQiitaのURLは個別に取得済みのため次のループへ
+          if (isZennOrQiitaUrl(article.url)) {
+            continue;
+          }
+
+          allArticles.push({
+            id: article.id,
+            title: article.title,
+            url: article.url,
+            author: article.author,
+            published_at: convertToJstString(article.publishedAt),
+            site: 'hatena',
+            likes: 0, // はてなブックマークはlikesがないので0固定
+            bookmarks: article.bookmarkCount,
+          });
+        }
+
+        // はてなブックマーク人気順
+        const hatenaPopularUrl = `https://b.hatena.ne.jp/q/claudecode?users=3&target=tag&sort=popular&date_range=m&safe=on`;
+        const hatenaPopularHtml = await fetchHtmlDocument(hatenaPopularUrl, {
+          cache: 'no-store',
+        });
+        const hatenaPopularData = getHatenaBookmarkData({
+          htmlString: hatenaPopularHtml,
+        });
+
+        for (const article of hatenaPopularData) {
+          // ZennやQiitaのURLは個別に取得済みのため次のループへ
+          if (isZennOrQiitaUrl(article.url)) {
+            continue;
+          }
+          allArticles.push({
+            id: `${article.id}-popular`,
+            title: article.title,
+            url: article.url,
+            author: article.author,
+            published_at: convertToJstString(article.publishedAt),
+            site: 'hatena',
+            likes: 0,
+            bookmarks: article.bookmarkCount,
+          });
+        }
+
+        // D1データベースに保存
+        if (allArticles.length > 0) {
+          await saveArticlesToDB({ db: env.DB, articles: allArticles });
+          console.log(
+            `${allArticles.length}件の記事をデータベースに保存しました`,
+          );
+        }
+        break;
       }
-      console.log('スケジュールタスクが完了しました');
-    } catch (error) {
-      console.error('スケジュールタスクが失敗しました:', error);
-      throw error;
+
+      /**
+       * 週次レポート生成処理
+       * 毎週月曜日 JST 00:00 (UTC 15:00 日曜日) に実行
+       */
+      case '0 15 * * 0': {
+        console.log('週次レポート生成処理を開始します');
+
+        // 1. 実行日時をJSTに変換
+        const executionDateJST = convertUTCToJST(new Date());
+
+        // 2. 前週の範囲を計算
+        const weekRange = calculatePreviousWeek(executionDateJST);
+        console.log(`対象週: ${weekRange.startDate} - ${weekRange.endDate}`);
+
+        // 3. 各サイトの上位3記事を取得
+        const topArticles = await fetchTopArticles({
+          db: env.DB,
+          weekRange,
+        });
+        console.log(`記事取得: ${topArticles.length}件`);
+
+        // 4. 各記事の本文取得と要約生成
+        const summaries = await generateArticleSummaries({
+          env,
+          articles: topArticles,
+        });
+        console.log(`要約生成完了: ${summaries.length}件`);
+
+        // 5. DBに要約データ保存
+        await saveWeeklySummaries({
+          db: env.DB,
+          summaries,
+          weekStartDate: weekRange.startDate,
+        });
+
+        // 6. 全体総括文章生成
+        const overallSummary = await generateOverallSummary({ env, summaries });
+
+        // 7. 週次レポート保存
+        await saveWeeklyReport({
+          db: env.DB,
+          weekStartDate: weekRange.startDate,
+          overallSummary,
+        });
+
+        console.log('週次レポート生成処理が完了しました');
+        break;
+      }
     }
+    console.log('スケジュールタスクが完了しました');
   },
 } satisfies ExportedHandler<CloudflareEnv>;
+
+/**
+ * 記事要約生成処理
+ */
+async function generateArticleSummaries({
+  env,
+  articles,
+}: {
+  env: CloudflareEnv;
+  articles: ArticleRow[];
+}): Promise<
+  {
+    articleId: string;
+    summary: string;
+    likesSnapshot: number;
+    bookmarksSnapshot: number;
+  }[]
+> {
+  const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
+  const summaries: {
+    articleId: string;
+    summary: string;
+    likesSnapshot: number;
+    bookmarksSnapshot: number;
+  }[] = [];
+
+  for (const article of articles) {
+    try {
+      // 記事本文取得
+      const content = await fetchArticleContent(article.url);
+
+      // AI要約生成
+      const prompt = getArticleSummaryPrompt(content);
+      const summary = await getGeminiResponse({ ai: geminiClient, prompt });
+
+      summaries.push({
+        articleId: article.id,
+        summary,
+        likesSnapshot: article.likes,
+        bookmarksSnapshot: article.bookmarks,
+      });
+    } catch (error) {
+      console.error(`記事要約生成に失敗しました: ${article.id}`, error);
+      // エラーが発生した記事はスキップして続行
+    }
+  }
+
+  return summaries;
+}
+
+/**
+ * 全体総括文章生成処理
+ */
+async function generateOverallSummary({
+  env,
+  summaries,
+}: {
+  env: CloudflareEnv;
+  summaries: {
+    articleId: string;
+    summary: string;
+    likesSnapshot: number;
+    bookmarksSnapshot: number;
+  }[];
+}): Promise<string> {
+  const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
+  const prompt = getOverallSummaryPrompt(summaries);
+  return await getGeminiResponse({ ai: geminiClient, prompt });
+}

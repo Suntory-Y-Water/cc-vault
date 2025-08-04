@@ -25,7 +25,8 @@
     "APP_URL": "https://cc-vault.ayasnppk00.workers.dev"
   },
   "triggers": {
-    "crons": ["0 23,0-14 * * *"]
+    // 記事取得と週次のウィークリーレポート
+    "crons": ["0 23,0-14 * * *", "0 15 * * 0"]
   },
   "workers_dev": true,
   "d1_databases": [

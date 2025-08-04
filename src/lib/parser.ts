@@ -1,6 +1,19 @@
-import { ZennArticle, ZennTopics, ZennResponse } from '@/types';
+import {
+  ZennArticle,
+  ZennTopics,
+  ZennResponse,
+  HATENA_SITE_DOMAIN,
+  NoteArticle,
+  QiitaPost,
+} from '@/types';
 import { parseHTML } from 'linkedom';
-import { fetchHtmlDocument } from './fetchers';
+import { fetchExternalData, fetchHtmlDocument } from './fetchers';
+import {
+  convertNoteUrlToApiUrl,
+  convertQiitaUrlToApiUrl,
+  getDomainFromUrl,
+  normalizeText,
+} from './utils';
 
 /**
  * Next.jsのNEXT_DATAを解析する
@@ -162,4 +175,136 @@ export async function fetchZennArticleContent(url: string): Promise<string> {
     console.error(`記事の本文取得に失敗しました: ${url}`, error);
     throw new Error(`記事の本文取得に失敗しました: ${error}`);
   }
+}
+
+/**
+ * 記事URLから本文コンテンツを取得する
+ * サイト別に適切な取得方法を選択
+ */
+export async function fetchArticleContent(url: string): Promise<string> {
+  try {
+    if (url.includes('zenn.dev')) {
+      return await fetchZennArticleContent(url);
+    }
+
+    if (url.includes('qiita.com')) {
+      // QiitaのAPIから記事内容を取得
+      const qiitaApiUrl = convertQiitaUrlToApiUrl(url);
+      const qiitaData = await fetchExternalData<QiitaPost>(qiitaApiUrl, {
+        cache: 'no-store',
+      });
+      const body = normalizeText(qiitaData.body);
+      return body;
+    }
+
+    // はてなブックマーク経由の記事（note.com、speakerdeckなど）の場合
+    const htmlString = await fetchHtmlDocument(url, { cache: 'no-store' });
+    return await parseHatenaBookmarkContent({ url, htmlString });
+  } catch (error) {
+    console.error(`記事の本文取得に失敗しました: ${url}`, error);
+    throw new Error(`記事の本文取得に失敗しました: ${error}`);
+  }
+}
+
+/**
+ * HTML文字列からbodyタグ内の本文テキストを抽出する
+ * ヘッダー、フッター、ナビゲーション、広告などのノイズ要素を除去
+ * @param htmlString - 解析するHTML文字列
+ * @returns クリーンな本文テキスト
+ */
+export function extractContentHTML({
+  htmlString,
+}: { htmlString: string }): string {
+  const { document } = parseHTML(htmlString);
+
+  // 本文領域を優先的に探索
+  const contentElement =
+    document.querySelector('main') ||
+    document.querySelector('article') ||
+    document.querySelector('[role="main"]') ||
+    document.querySelector('body');
+
+  if (!contentElement) {
+    throw new Error('コンテンツ要素が見つかりません');
+  }
+
+  // ノイズ要素を除去
+  const noiseSelectors = [
+    'header, nav, footer, aside, script, style, noscript',
+    '[role="banner"], [role="navigation"], [role="complementary"]',
+    '[class*="ad"], [class*="menu"], [class*="widget"], [class*="social"], [class*="comment"]',
+    '[class*="sidebar"], [class*="breadcrumb"], [class*="pagination"]',
+    '.advertisement, .related, .recommendation',
+  ];
+
+  for (const selector of noiseSelectors) {
+    const elements = contentElement.querySelectorAll(selector);
+    for (const element of elements) {
+      element.remove();
+    }
+  }
+
+  // テキストコンテンツを取得
+  const textContent = contentElement.textContent || '';
+
+  if (!textContent.trim()) {
+    throw new Error('テキストコンテンツが取得できませんでした');
+  }
+
+  // 正規化して返却
+  return normalizeText(textContent);
+}
+
+/**
+ * はてなブックマークの記事から適切なパースを行う
+ * @domain 特定のドメイン
+ */
+export async function parseHatenaBookmarkContent({
+  url,
+  htmlString,
+}: { url: string; htmlString: string }) {
+  const domain = getDomainFromUrl(url);
+  if (domain === HATENA_SITE_DOMAIN.NOTE) {
+    const noteApiUrl = convertNoteUrlToApiUrl(url);
+    const noteData = await fetchExternalData<NoteArticle>(noteApiUrl, {
+      cache: 'no-store',
+    });
+    return noteData.data.body;
+  }
+
+  if (domain === HATENA_SITE_DOMAIN.SPEAKERDECK) {
+    // Speaker Deckのパース、引数両方とも使用する
+    const body = getSpeakerDeckContent({
+      htmlString,
+    });
+    return body;
+  }
+
+  // 通常のパース、domainは使用しない
+  const body = extractContentHTML({ htmlString });
+  return body;
+}
+
+/**
+ * Speaker DeckのHTMLから内容を抽出する
+ * @param htmlString - Speaker DeckのHTML文字列
+ * @returns 抽出されたコンテンツ
+ */
+export function getSpeakerDeckContent({ htmlString }: { htmlString: string }) {
+  const { document } = parseHTML(htmlString);
+  // スライドの本文
+  const slides = [...document.querySelectorAll('div.slide-transcript')];
+
+  if (slides.length === 0) {
+    throw new Error('スライドが見つかりません');
+  }
+  const body = slides.map((slide) => {
+    const textContent = slide.textContent?.trim();
+    if (!textContent) {
+      throw new Error('スライドのテキストコンテンツが取得できませんでした');
+    }
+    return normalizeText(textContent);
+  });
+  // スライドのテキストを半角スペースで結合して返す
+  return body.join(' ');
 }

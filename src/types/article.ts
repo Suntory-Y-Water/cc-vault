@@ -14,6 +14,14 @@ export const SITE_NAMES = {
 } as const;
 
 /**
+ * はてなブックマークで個別に情報を取得するサイトの定義
+ */
+export const HATENA_SITE_DOMAIN = {
+  NOTE: 'note.com',
+  SPEAKERDECK: 'speakerdeck.com',
+} as const;
+
+/**
  * ソート順の定数定義
  */
 export const SORT_ORDERS = {
@@ -22,9 +30,14 @@ export const SORT_ORDERS = {
 } as const;
 
 /**
- * サイト名の型定義（DB格納用は実際のサイト名のみ、UI用は"all"を含む）
+ * DB格納用のサイト名型定義（実際のサイト名のみ）
  */
-export type SiteType = (typeof SITE_VALUES)[number] | 'all'; // "qiita" | "zenn" | "hatena" | "all"
+export type SiteValueType = (typeof SITE_VALUES)[number]; // "qiita" | "zenn" | "hatena"
+
+/**
+ * UI用のサイト名型定義（"all"を含む）
+ */
+export type SiteType = SiteValueType | 'all'; // "qiita" | "zenn" | "hatena" | "all"
 
 /**
  * ソート順の型定義
@@ -75,6 +88,7 @@ export type QiitaPost = {
     // 設定されているけど""な場合がある
     name: string;
   };
+  body: string; // 本文はMarkdown形式
 };
 
 /**
@@ -86,7 +100,7 @@ export type ArticleRow = {
   url: string;
   author: string;
   published_at: string;
-  site: SiteType;
+  site: SiteValueType;
   likes: number;
   bookmarks: number;
 };
@@ -122,4 +136,17 @@ export type PaginatedArticles = {
   currentPage: number;
   hasNext: boolean;
   hasPrevious: boolean;
+};
+
+/**
+ * noteの記事データ型定義
+ */
+export type NoteArticle = {
+  readonly data: Data;
+};
+
+type Data = {
+  readonly key: string;
+  readonly name: string;
+  readonly body: string;
 };
