@@ -56,7 +56,6 @@ export default function TopArticles({
     return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
   };
 
-
   /**
    * ランキング番号のスタイルを取得
    */
@@ -123,10 +122,12 @@ export default function TopArticles({
                     {SITE_CONFIGS[article.site]?.displayName || article.site}
                   </Badge>
                   <div className='flex items-center gap-3 text-sm text-[#141413] opacity-70'>
-                    <div className='flex items-center gap-1'>
-                      <Heart className='w-4 h-4' />
-                      <span>{article.engagement.likes}</span>
-                    </div>
+                    {article.engagement.likes > 0 && (
+                      <div className='flex items-center gap-1'>
+                        <Heart className='w-4 h-4' />
+                        <span>{article.engagement.likes}</span>
+                      </div>
+                    )}
                     <div className='flex items-center gap-1'>
                       <Bookmark className='w-4 h-4' />
                       <span>{article.engagement.bookmarks}</span>
