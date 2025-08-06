@@ -24,10 +24,7 @@ export async function generateMetadata({
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
 
-  // 無効な日付の場合は404にリダイレクト
-  // if (week && !isValidDateString(week)) {
-  // notFound();
-  //}
+  // TODO: 2025-06-31みたいな無効な日付の場合は404にリダイレクト
 
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
