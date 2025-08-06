@@ -79,6 +79,7 @@ export default function Pagination({
           href={`?${new URLSearchParams(
             createCleanParams({ page: '1' }),
           ).toString()}`}
+          prefetch={true}
         >
           <Button
             variant='outline'
@@ -105,6 +106,7 @@ export default function Pagination({
           href={`?${new URLSearchParams(
             createCleanParams({ page: (currentPage - 1).toString() }),
           ).toString()}`}
+          prefetch={true}
         >
           <Button
             variant='outline'
@@ -133,6 +135,7 @@ export default function Pagination({
             href={`?${new URLSearchParams(
               createCleanParams({ page: pageNumber.toString() }),
             ).toString()}`}
+            prefetch={true}
           >
             <Button
               variant={currentPage === pageNumber ? 'default' : 'outline'}
@@ -155,6 +158,7 @@ export default function Pagination({
           href={`?${new URLSearchParams(
             createCleanParams({ page: (currentPage + 1).toString() }),
           ).toString()}`}
+          prefetch={true}
         >
           <Button
             variant='outline'
@@ -181,6 +185,7 @@ export default function Pagination({
           href={`?${new URLSearchParams(
             createCleanParams({ page: totalPages.toString() }),
           ).toString()}`}
+          prefetch={true}
         >
           <Button
             variant='outline'

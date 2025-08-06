@@ -1,21 +1,80 @@
-# CC-Vault 開発コマンド
+# 推奨コマンド一覧
 
-## 開発・実行コマンド
+## 開発コマンド
+
+### 起動・ビルド
 ```bash
-# 開発サーバー起動（Turbopack 使用）
+# 開発サーバー起動（Turbopack使用）
 pnpm run dev
 
-# Cloudflare環境での開発
+# Cloudflare Workers環境での開発
 pnpm run dev:cf
 
-# 本番ビルド
+# プロダクションビルド
 pnpm run build
 
-# 本番サーバー起動
+# プロダクションサーバー起動
 pnpm run start
 
 # プレビュー（Cloudflare環境）
 pnpm run preview
+```
+
+### コード品質チェック
+```bash
+# 型チェック + リント実行（AI推奨コマンド）
+pnpm run ai-check
+
+# 型チェックのみ
+pnpm run typecheck
+
+# リント実行
+pnpm run lint
+
+# リント + 自動修正
+pnpm run lint:fix
+
+# コードフォーマット
+pnpm run format
+```
+
+### テスト
+```bash
+# テスト実行（ウォッチモード）
+pnpm run test
+
+# カバレッジ付きテスト実行
+pnpm run test:cov
+```
+
+### データベース
+```bash
+# マイグレーション生成
+pnpm run db:generate
+
+# データベースにスキーマを適用
+pnpm run db:push
+
+# Drizzle Studio起動（GUI）
+pnpm run db:studio
+
+# ローカルマイグレーション実行
+pnpm run db:local
+
+# 全てのローカルマイグレーション実行
+pnpm run db:local:all
+
+# 本番データベースバックアップ
+pnpm run db:backup:prod
+```
+
+### Cloudflare Workers
+```bash
+# 型定義生成
+pnpm run typegen
+
+# スケジュールテスト
+pnpm run schedule
 
 # デプロイ
 pnpm run deploy
@@ -24,68 +83,25 @@ pnpm run deploy
 pnpm run upload
 ```
 
-## 品質管理コマンド
+### Git・品質管理
 ```bash
-# 型チェック
-pnpm run typecheck
+# Huskyセットアップ
+pnpm run prepare
 
-# リント
-pnpm run lint
-
-# リント修正
-pnpm run lint:fix
-
-# フォーマット
-pnpm run format
-
-# AI チェック（型チェック + リント）
-pnpm run ai-check
+# 手動でlint-staged実行
+npx lint-staged
 ```
 
-## テストコマンド
-```bash
-# テスト実行
-pnpm run test
+## 開発フロー
+1. `pnpm run dev` で開発サーバー起動
+2. コード変更後 `pnpm run ai-check` で品質チェック
+3. テスト作成・実行: `pnpm run test`
+4. コミット前に自動でlint-stagedが実行される
+5. デプロイ: `pnpm run deploy`
 
-# テスト（カバレッジ付き）
-pnpm run test:cov
-```
-
-## データベースコマンド
-```bash
-# D1データベース作成
-pnpm run db:create
-
-# マイグレーション実行
-pnpm run db:migrate
-
-# Cloudflare型定義生成
-pnpm run typegen
-```
-
-## スケジュールテスト
-```bash
-# スケジュールタスクのテスト
-pnpm run schedule
-```
-
-## システムコマンド（Linux）
-```bash
-# ファイル一覧
-ls -la
-
-# ディレクトリ移動
-cd <directory>
-
-# 検索
-grep -r "pattern" src/
-
-# ファイル検索
-find . -name "*.ts" -type f
-
-# Git操作
-git status
-git add .
-git commit -m "message"
-git push
-```
+## よく使う Linux コマンド
+- `ls` - ファイル一覧
+- `cd` - ディレクトリ移動  
+- `grep` - テキスト検索
+- `find` - ファイル検索
+- `git` - バージョン管理

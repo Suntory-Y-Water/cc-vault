@@ -1,10 +1,14 @@
-import ArticleContainer from '@/components/article/ArticleContainer';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getArticlesWithPagination } from '@/lib/cloudflare';
 import { SiteType, SortOrder, SITE_NAMES, SORT_ORDERS } from '@/types';
+import SiteFilter from '@/components/layout/SiteFilter';
+import MainTabs from '@/components/layout/MainTabs';
+import ArticleList from '@/components/article/ArticleList';
+import Pagination from '@/components/article/Pagination';
 
 /** 1時間で再検証 */
 export const revalidate = 3600;
+export const fetchCache = 'default-cache';
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -12,31 +16,32 @@ type Props = {
 
 /**
  * ホームページコンポーネント
- * データ取得をサーバーサイドで実行し、結果をClient Componentに渡す
  */
 export default async function HomePage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
 
-  const searchParamsObj = await searchParams;
+  // 公式推奨: 分割代入とデフォルト値を使用
+  const {
+    page: pageParam = '1',
+    site: siteParam,
+    order: orderParam,
+  } = await searchParams;
 
-  // シンプルな型ガードを使用
-  const getValue = (key: string): string | undefined => {
-    const value = searchParamsObj[key];
-    return Array.isArray(value) ? value[0] : value;
-  };
+  // 配列の場合は最初の値を使用
+  const pageValue = Array.isArray(pageParam) ? pageParam[0] : pageParam;
+  const siteValue = Array.isArray(siteParam) ? siteParam[0] : siteParam;
+  const orderValue = Array.isArray(orderParam) ? orderParam[0] : orderParam;
 
-  const page = Number(getValue('page')) || 1;
-  const siteParam = getValue('site');
-  const orderParam = getValue('order');
+  const page = Number(pageValue) || 1;
 
-  // シンプルな型チェック
+  // 型安全なバリデーション
   const site =
-    siteParam && Object.keys(SITE_NAMES).includes(siteParam)
-      ? (siteParam as SiteType)
+    siteValue && Object.keys(SITE_NAMES).includes(siteValue)
+      ? (siteValue as SiteType)
       : 'all';
   const order =
-    orderParam && Object.keys(SORT_ORDERS).includes(orderParam)
-      ? (orderParam as SortOrder)
+    orderValue && Object.keys(SORT_ORDERS).includes(orderValue)
+      ? (orderValue as SortOrder)
       : 'latest';
   const limit = 24; // 1ページあたりの記事数
 
@@ -59,11 +64,31 @@ export default async function HomePage({ searchParams }: Props) {
         </p>
       </div>
 
-      <ArticleContainer
-        paginatedData={paginatedData}
-        initialSite={site}
-        initialOrder={order}
-      />
+      {/* サイトフィルター */}
+      <div className='flex flex-wrap gap-2 mb-8'>
+        <SiteFilter activeSite={site} currentSearchParams={{ site, order }} />
+      </div>
+
+      {/* メインコンテンツ */}
+      <div>
+        <MainTabs order={order} currentSearchParams={{ site, order }} />
+
+        <ArticleList articles={paginatedData.articles} />
+
+        {/* ページネーション */}
+        {paginatedData.totalPages > 1 && (
+          <Pagination
+            currentPage={paginatedData.currentPage}
+            totalPages={paginatedData.totalPages}
+            hasNext={paginatedData.hasNext}
+            hasPrevious={paginatedData.hasPrevious}
+            searchParams={{
+              site: site !== 'all' ? site : undefined,
+              order: order !== 'latest' ? order : undefined,
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }
