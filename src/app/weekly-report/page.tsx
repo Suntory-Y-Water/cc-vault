@@ -25,9 +25,9 @@ export async function generateMetadata({
   const { week } = await searchParams;
 
   // 無効な日付の場合は404にリダイレクト
-  if (week && !isValidDateString(week)) {
-    notFound();
-  }
+  // if (week && !isValidDateString(week)) {
+  // notFound();
+  //}
 
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
