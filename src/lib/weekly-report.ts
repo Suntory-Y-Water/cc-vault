@@ -11,6 +11,7 @@ import {
   isAfter,
   parseISO,
   format,
+  isValid,
 } from 'date-fns';
 import type { WeekRange, WeeklyReportGrouped, SiteRanking } from '@/types';
 import { SITE_VALUES } from '@/types/article';
@@ -32,6 +33,23 @@ export function getStartOfWeek(date: Date): Date {
  */
 function getEndOfWeek(date: Date): Date {
   return endOfWeek(date, { weekStartsOn: 1 });
+}
+
+/**
+ * 日付文字列の有効性を検証
+ * @param dateString - 検証対象の日付文字列（YYYY-MM-DD形式）
+ * @returns 有効な日付の場合はtrue
+ */
+export function isValidDateString(dateString: string): boolean {
+  // 基本的なフォーマットチェック（YYYY-MM-DD）
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateString)) {
+    return false;
+  }
+
+  // parseISOで解析した結果が有効な日付かチェック
+  const parsedDate = parseISO(dateString);
+  return isValid(parsedDate);
 }
 
 /**
@@ -75,7 +93,6 @@ export function getAdjacentWeeks(currentWeek: string): {
     next: createWeekRange(nextWeekStart),
   };
 }
-
 
 /**
  * 指定された週が未来の週かどうかを判定

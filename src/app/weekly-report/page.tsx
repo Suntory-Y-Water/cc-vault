@@ -10,6 +10,7 @@ import {
   getAdjacentWeeks,
   getStartOfWeek,
   hasWeeklyData,
+  isValidDateString,
 } from '@/lib/weekly-report';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
@@ -22,6 +23,12 @@ export async function generateMetadata({
 }: WeeklyReportPageProps): Promise<Metadata> {
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
+
+  // 無効な日付の場合は404にリダイレクト
+  if (week && !isValidDateString(week)) {
+    notFound();
+  }
+
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
   const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
@@ -56,6 +63,12 @@ export default async function WeeklyReportPage({
 }: WeeklyReportPageProps) {
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
+
+  // 無効な日付の場合は404にリダイレクト
+  if (week && !isValidDateString(week)) {
+    notFound();
+  }
+
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
   const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
