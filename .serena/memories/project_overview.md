@@ -1,29 +1,49 @@
-# CC-Vault プロジェクト概要
+# プロジェクト概要
+
+## プロジェクト名
+cc-vault
 
 ## プロジェクトの目的
-Claude Code に特化した情報提供プラットフォーム。複数の記事プラットフォーム（Qiita、Zenn、はてなブックマーク）から Claude Code 関連記事を収集・分析し、トレンドや人気記事をキュレーションして提供する Web アプリケーション。
+技術記事のキュレーションと分析を行うWebアプリケーション。Zenn、Qiita、Hatena BookmarkなどのWebサイトから技術記事を収集・分析し、ユーザーに価値のある情報を提供する。
+
+## 主な機能
+- 記事の収集・分析・表示
+- 週次レポートの生成
+- AI（Gemini）を使った記事要約とレポート作成
+- ページネーション、ソート、フィルタリング機能
+- レスポンシブデザイン（Tailwind CSS）
 
 ## 技術スタック
+### フロントエンド
 - **フレームワーク**: Next.js 15.3.0 (App Router)
-- **言語**: TypeScript 5.8.3
-- **UI**: React 19.1.0, Tailwind CSS, Radix UI
-- **デプロイ**: Cloudflare Workers + D1 Database
-- **データベース**: Cloudflare D1 (SQLite ベース) + **Drizzle ORM**
-- **パッケージマネージャー**: pnpm
-- **テスト**: Vitest
+- **言語**: TypeScript (ES2017)
+- **UI**: React 19.1.0, Radix UI, Tailwind CSS
+- **スタイリング**: Tailwind CSS, class-variance-authority
+
+### バックエンド
+- **ランタイム**: Cloudflare Workers (OpenNext.js Cloudflare)
+- **データベース**: LibSQL (Turso)
+- **ORM**: Drizzle ORM
+- **AI**: Google Gemini API
+
+### 開発ツール
 - **リンター/フォーマッター**: Biome
-- **Git フック**: Husky
+- **テスト**: Vitest, Testing Library, Happy DOM
+- **型チェック**: TypeScript
+- **Git Hooks**: Husky, lint-staged
+- **デプロイ**: Cloudflare Workers
 
-## 主要機能
-- 記事の自動収集（スケジュール実行）
-- 記事の表示・ソート・ページネーション
-- サイト別フィルタリング
-- レスポンシブデザイン
-- SEO 対応（構造化データ、sitemap など）
+## プロジェクト構造
+```
+src/
+├── app/          # Next.js App Router ページ
+├── components/   # Reactコンポーネント
+├── lib/          # ビジネスロジック・ユーティリティ
+├── types/        # TypeScript型定義
+└── config/       # 設定ファイル・データベーススキーマ
+```
 
-## アーキテクチャ
-- Cloudflare Workers で Next.js アプリを実行
-- スケジュールタスクで記事データを定期収集
-- **Drizzle ORM を使用した型安全なデータベース操作**
-- D1 データベースに記事データを保存
-- サーバーサイドレンダリング対応
+## 開発・デプロイ環境
+- **プラットフォーム**: Cloudflare Workers
+- **Node.jsバージョン**: ES2017対応
+- **パッケージマネージャー**: pnpm

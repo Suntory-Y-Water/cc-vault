@@ -47,8 +47,8 @@ export default function ArticleCard({ article }: ArticleCardProps) {
             </span>
           </div>
 
-          {/* 記事タイトル（２行クランプ） */}
-          <h2 className='text-lg font-semibold text-[#141413] mb-3 line-clamp-2 leading-6'>
+          {/* 記事タイトル */}
+          <h2 className='text-lg font-semibold text-[#141413] mb-3 line-clamp-3 leading-6'>
             {article.title}
           </h2>
 
