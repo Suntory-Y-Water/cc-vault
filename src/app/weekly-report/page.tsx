@@ -10,6 +10,7 @@ import {
   getAdjacentWeeks,
   getStartOfWeek,
   hasWeeklyData,
+  isValidDateString,
 } from '@/lib/weekly-report';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
@@ -22,6 +23,12 @@ export async function generateMetadata({
 }: WeeklyReportPageProps): Promise<Metadata> {
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
+
+  // 無効な日付の場合は404にリダイレクト
+  if (week && !isValidDateString(week)) {
+    notFound();
+  }
+
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
   const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
@@ -56,6 +63,12 @@ export default async function WeeklyReportPage({
 }: WeeklyReportPageProps) {
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
+
+  // 無効な日付の場合は404にリダイレクト
+  if (week && !isValidDateString(week)) {
+    notFound();
+  }
+
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
   const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
@@ -86,20 +99,24 @@ export default async function WeeklyReportPage({
   return (
     <div className='container mx-auto px-4 py-8'>
       {/* ヘッダー */}
-      <div className='flex items-center gap-4 mb-6'>
-        <Link href='/'>
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
-          >
-            <ArrowLeft className='w-4 h-4 mr-1' />
-            ホームに戻る
-          </Button>
-        </Link>
-        <h1 className='text-3xl font-bold text-[#141413]'>
-          ウィークリーレポート
-        </h1>
+      <div className='mb-6'>
+        <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
+          <div className='order-2 sm:order-1'>
+            <Link href='/'>
+              <Button
+                variant='outline'
+                size='sm'
+                className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+              >
+                <ArrowLeft className='w-4 h-4 mr-1' />
+                ホームに戻る
+              </Button>
+            </Link>
+          </div>
+          <h1 className='text-2xl sm:text-3xl font-bold text-[#141413] order-1 sm:order-2'>
+            ウィークリーレポート
+          </h1>
+        </div>
       </div>
 
       {/* 週間ナビゲーション */}
