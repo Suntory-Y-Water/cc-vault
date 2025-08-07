@@ -13,6 +13,7 @@ import {
 } from '@/lib/weekly-report';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
+import { toZonedTime } from 'date-fns-tz';
 
 /**
  * ウィークリーレポートページのprops
@@ -36,7 +37,7 @@ export async function generateMetadata({
     notFound();
   }
 
-  const today = new Date();
+  const today = toZonedTime(new Date(), 'Asia/Tokyo');
   const currentWeekStart = getStartOfWeek(today);
   const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
 
@@ -74,7 +75,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
     notFound();
   }
 
-  const today = new Date();
+  const today = toZonedTime(new Date(), 'Asia/Tokyo');
   const currentWeekStart = getStartOfWeek(today);
   const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
 

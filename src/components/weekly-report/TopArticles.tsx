@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { WeeklyArticle, SiteRanking } from '@/types';
 import { SITE_CONFIGS } from '@/lib/constants';
+import { toZonedTime } from 'date-fns-tz';
 
 type TopArticlesProps = {
   /** サイト別ランキングデータ */
@@ -45,7 +46,7 @@ export default function TopArticles({
    */
   const formatRelativeDate = (dateString: string) => {
     const date = new Date(dateString);
-    const now = new Date();
+    const now = toZonedTime(new Date(), 'Asia/Tokyo');
     const diffInDays = Math.floor(
       (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
     );

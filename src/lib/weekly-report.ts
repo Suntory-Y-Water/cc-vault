@@ -13,6 +13,7 @@ import {
   format,
   isValid,
 } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import type { WeekRange, WeeklyReportGrouped, SiteRanking } from '@/types';
 import { SITE_VALUES } from '@/types/article';
 import {
@@ -98,7 +99,7 @@ export function getAdjacentWeeks(currentWeek: string): {
  * 指定された週が未来の週かどうかを判定
  */
 export function isFutureWeek(weekStartDate: string): boolean {
-  const today = new Date();
+  const today = toZonedTime(new Date(), 'Asia/Tokyo');
   const currentWeekStart = getStartOfWeek(today);
   const targetWeekStart = parseISO(weekStartDate);
 
