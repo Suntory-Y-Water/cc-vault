@@ -61,13 +61,3 @@ export type WeeklyReportGrouped = {
   /** AI生成全体要約 */
   overallSummary: string | null;
 };
-
-/**
- * ウィークリーレポートページのprops
- */
-export type WeeklyReportPageProps = {
-  searchParams: Promise<{
-    /** 週の指定（yyyy-mm-dd形式の開始日） */
-    week?: string;
-  }>;
-};

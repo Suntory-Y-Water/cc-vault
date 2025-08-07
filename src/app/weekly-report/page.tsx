@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import WeekNavigation from '@/components/weekly-report/WeekNavigation';
 import TopArticles from '@/components/weekly-report/TopArticles';
-import type { WeeklyReportPageProps } from '@/types';
 import {
   generateWeeklyReportGrouped,
   getAdjacentWeeks,
@@ -16,15 +15,26 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
 
 /**
+ * ウィークリーレポートページのprops
+ */
+type Props = {
+  /** 週の指定（yyyy-mm-dd形式の開始日） */
+  searchParams: Promise<{ week?: string }>;
+};
+
+/**
  * ウィークリーレポートページのメタデータ生成
  */
 export async function generateMetadata({
   searchParams,
-}: WeeklyReportPageProps): Promise<Metadata> {
+}: Props): Promise<Metadata> {
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
 
-  // TODO: 2025-06-31みたいな無効な日付の場合は404にリダイレクト
+  // 無効な日付の場合は404にリダイレクト
+  if (week && !isValidDateString(week)) {
+    notFound();
+  }
 
   const today = new Date();
   const currentWeekStart = getStartOfWeek(today);
@@ -35,7 +45,7 @@ export async function generateMetadata({
     db: env.DB,
   });
   const title = `ウィークリーレポート - ${weeklyReport.weekRange.label}`;
-  const description = `${weeklyReport.weekRange.label}の週間人気記事サイト別ランキングをご覧ください。`;
+  const description = `${weeklyReport.weekRange.startDate}週の週間人気記事サイト別ランキングをご覧ください。`;
 
   return {
     title,
@@ -55,9 +65,7 @@ export async function generateMetadata({
 /**
  * ウィークリーレポートページ
  */
-export default async function WeeklyReportPage({
-  searchParams,
-}: WeeklyReportPageProps) {
+export default async function WeeklyReportPage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
   const { week } = await searchParams;
 
@@ -76,6 +84,15 @@ export default async function WeeklyReportPage({
     db: env.DB,
   });
   const adjacentWeeks = getAdjacentWeeks(selectedWeek);
+  console.log(`選択された週: ${selectedWeek}`);
+  console.log(`前の週: ${JSON.stringify(adjacentWeeks.previous, null, 2)}`);
+  console.log(`次の週: ${JSON.stringify(adjacentWeeks.next, null, 2)}`);
+  console.log(
+    `現在の週範囲: ${JSON.stringify(weeklyReport.weekRange, null, 2)}`,
+  );
+  console.log(
+    `全体サマリー: ${JSON.stringify(weeklyReport.overallSummary, null, 2)}`,
+  );
 
   // データ存在チェック
   const [hasPreviousData, hasNextData] = await Promise.all([
