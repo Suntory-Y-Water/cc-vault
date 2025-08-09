@@ -14,7 +14,10 @@ import {
   saveWeeklySummaries,
   saveWeeklyReport,
 } from '@/lib/cloudflare.js';
-import { convertUTCToJST, calculatePreviousWeek } from '@/lib/weekly-report.js';
+import {
+  calculatePreviousWeek,
+  getCurrentJSTDate,
+} from '@/lib/weekly-report.js';
 import { createGeminiClient, getGeminiResponse } from '@/lib/gemini.js';
 import {
   getArticleSummaryPrompt,
@@ -131,7 +134,7 @@ export default {
             continue;
           }
           allArticles.push({
-            id: `${article.id}-popular`,
+            id: article.id,
             title: article.title,
             url: article.url,
             author: article.author,
@@ -142,11 +145,17 @@ export default {
           });
         }
 
+        // 登録前にURLをユニークにする
+        const uniqueArticles = allArticles.filter(
+          (article, index, self) =>
+            self.findIndex((a) => a.url === article.url) === index,
+        );
+
         // D1データベースに保存
-        if (allArticles.length > 0) {
-          await saveArticlesToDB({ db: env.DB, articles: allArticles });
+        if (uniqueArticles.length > 0) {
+          await saveArticlesToDB({ db: env.DB, articles: uniqueArticles });
           console.log(
-            `${allArticles.length}件の記事をデータベースに保存しました`,
+            `${uniqueArticles.length}件の記事をデータベースに保存しました`,
           );
         }
         break;
@@ -159,8 +168,8 @@ export default {
       case '0 15 * * 0': {
         console.log('週次レポート生成処理を開始します');
 
-        // 1. 実行日時をJSTに変換
-        const executionDateJST = convertUTCToJST(new Date());
+        // 1. 実行日時をJSTで取得
+        const executionDateJST = getCurrentJSTDate();
 
         // 2. 前週の範囲を計算
         const weekRange = calculatePreviousWeek(executionDateJST);

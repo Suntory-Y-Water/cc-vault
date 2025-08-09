@@ -13,6 +13,7 @@ import {
 } from '@/config/drizzle/schema';
 import type { WeekRange } from '@/types';
 import type { SiteValueType } from '@/types/article';
+import { getCurrentJSTDateTimeString } from './weekly-report';
 
 /**
  * D1データベースからページネーション対応で記事を取得する
@@ -103,31 +104,48 @@ export async function saveArticlesToDB(params: {
   db: D1Database;
   articles: ArticleRow[];
 }): Promise<void> {
-  const { db, articles } = params;
-  for (const article of articles) {
-    try {
-      const stmt = db.prepare(`
-        INSERT OR REPLACE INTO articles (
-          id, title, url, author, published_at, site, likes, bookmarks, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-      `);
+  const { db, articles: articleList } = params;
 
-      await stmt
-        .bind(
-          article.id,
-          article.title,
-          article.url,
-          article.author,
-          article.published_at,
-          article.site,
-          article.likes,
-          article.bookmarks,
-        )
-        .run();
-    } catch (error) {
-      console.error(`記事の保存に失敗しました ${article.id}:`, error);
-      throw new Error(`記事の保存に失敗しました ${article.id}: ${error}`);
+  if (articleList.length === 0) return;
+
+  const drizzleDB = drizzle(db);
+  const now = getCurrentJSTDateTimeString();
+
+  try {
+    // 他の関数と同じパターンでループ処理
+    for (const article of articleList) {
+      await drizzleDB
+        .insert(articles)
+        .values({
+          id: article.id,
+          title: article.title,
+          url: article.url,
+          author: article.author,
+          publishedAt: article.published_at,
+          site: article.site,
+          likes: article.likes,
+          bookmarks: article.bookmarks,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: articles.id,
+          set: {
+            title: article.title,
+            url: article.url,
+            author: article.author,
+            publishedAt: article.published_at,
+            likes: article.likes,
+            bookmarks: article.bookmarks,
+            updatedAt: now,
+          },
+        });
     }
+
+    console.log(`${articleList.length}件の記事を正常に保存しました`);
+  } catch (error) {
+    console.error('記事の保存に失敗しました:', error);
+    throw new Error(`記事の保存に失敗しました: ${error}`);
   }
 }
 
@@ -394,5 +412,31 @@ export async function fetchWeeklyDisplayData({
   } catch (error) {
     console.error(`${site}の週間表示データ取得に失敗しました:`, error);
     throw new Error(`${site}の週間表示データ取得に失敗しました: ${error}`);
+  }
+}
+
+/**
+ * 最新の完成された週の開始日を取得
+ * weeklyReportsテーブルからstatusが'completed'の最新weekStartDateを取得
+ * @param db - D1データベースインスタンス
+ * @returns 最新完成週の開始日 (YYYY-MM-DD形式) またはnull
+ */
+export async function getLatestCompletedWeek(
+  db: D1Database,
+): Promise<string | null> {
+  try {
+    const drizzleDB = drizzle(db);
+
+    const result = await drizzleDB
+      .select({ weekStartDate: weeklyReports.weekStartDate })
+      .from(weeklyReports)
+      .where(eq(weeklyReports.status, 'completed'))
+      .orderBy(desc(weeklyReports.weekStartDate))
+      .limit(1);
+
+    return result[0]?.weekStartDate || null;
+  } catch (error) {
+    console.error('最新完成週の取得に失敗しました:', error);
+    return null; // エラー時は安全側でnullを返す
   }
 }
