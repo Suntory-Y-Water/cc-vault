@@ -13,7 +13,6 @@ import {
   format,
   isValid,
 } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import type { WeekRange, WeeklyReportGrouped, SiteRanking } from '@/types';
 import { SITE_VALUES } from '@/types/article';
 import {
@@ -21,12 +20,42 @@ import {
   fetchWeeklyDisplayData,
   fetchWeeklyOverallSummary,
 } from './cloudflare';
+import { TZDate } from '@date-fns/tz';
 
 /**
  * 指定された日付から週の開始日を取得（月曜日始まり）
  */
 export function getStartOfWeek(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
+}
+
+/**
+ * 日付をyyyy-MM-dd形式の文字列にフォーマット
+ * toZonedTimeで取得したタイムゾーン考慮済みのDateオブジェクトを適切にフォーマット
+ */
+export function formatDateToString(date: Date): string {
+  return format(date, 'yyyy-MM-dd');
+}
+
+/**
+ * 現在の日時をJST（Asia/Tokyo）で取得
+ */
+export function getCurrentJSTDate(): TZDate {
+  // 現在時刻をJSTタイムゾーンでTZDateとして作成
+  const jstNow = TZDate.tz('Asia/Tokyo');
+
+  // TZDateは正確なJST時刻を保持し、Date互換のオブジェクトを返却
+  return jstNow;
+}
+
+/**
+ * 現在のJST日時をISO8601形式の文字列で取得
+ * データベースのcreated_at/updated_atフィールド用
+ */
+export function getCurrentJSTDateTimeString(): string {
+  const jstDate = getCurrentJSTDate();
+  // JST日時を手動でISO形式の文字列に変換（UTCに戻らない）
+  return format(jstDate, "yyyy-MM-dd'T'HH:mm:ss");
 }
 
 /**
@@ -99,7 +128,7 @@ export function getAdjacentWeeks(currentWeek: string): {
  * 指定された週が未来の週かどうかを判定
  */
 export function isFutureWeek(weekStartDate: string): boolean {
-  const today = toZonedTime(new Date(), 'Asia/Tokyo');
+  const today = getCurrentJSTDate();
   const currentWeekStart = getStartOfWeek(today);
   const targetWeekStart = parseISO(weekStartDate);
 
@@ -160,7 +189,8 @@ export async function generateWeeklyReportGrouped({
   weekStartDate: string;
   db: D1Database;
 }): Promise<WeeklyReportGrouped> {
-  const weekRange = createWeekRange(new Date(weekStartDate));
+  // parseISOを使ってJST基準で日付を解析
+  const weekRange = createWeekRange(parseISO(weekStartDate));
   const [siteRankings, overallSummary] = await Promise.all([
     fetchWeeklyReportData({ weekRange, db }),
     fetchWeeklyOverallSummary({ db, weekStartDate: weekRange.startDate }),
@@ -175,21 +205,13 @@ export async function generateWeeklyReportGrouped({
 
 /**
  * UTCの日時をJST（Asia/Tokyo）に変換
- *
- * TODO: この関数は危険な手動計算を行っており、以下の問題がある
- * - サマータイム（DST）を考慮できない
- * - うるう秒やタイムゾーンオフセット変更に対応できない
- * - toZonedTimeは表示用で計算には不適切
- *
- * 推奨対応：
- * 1. 計算ロジックをUTCベースに変更
- * 2. 表示時のみformatInTimeZoneやtoLocaleStringを使用
- * 3. この関数自体の削除を検討
+ * TZDateを使用した正確なタイムゾーン変換
  */
-export function convertUTCToJST(utcDate: Date): Date {
-  // FIXME: 危険な手動計算 - サマータイム等を考慮できない
-  const jstTimestamp = utcDate.getTime() + 9 * 60 * 60 * 1000;
-  return new Date(jstTimestamp);
+export function convertUTCToJST(utcDate: Date): TZDate {
+  // UTC時刻をJSTタイムゾーンのTZDateに変換
+  const jstTZDate = new TZDate(utcDate.getTime(), 'Asia/Tokyo');
+
+  return jstTZDate;
 }
 
 /**

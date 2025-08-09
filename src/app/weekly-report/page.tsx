@@ -10,10 +10,12 @@ import {
   getStartOfWeek,
   hasWeeklyData,
   isValidDateString,
+  formatDateToString,
+  getCurrentJSTDate,
 } from '@/lib/weekly-report';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
-import { toZonedTime } from 'date-fns-tz';
+import { getLatestCompletedWeek } from '@/lib/cloudflare';
 
 /**
  * ウィークリーレポートページのprops
@@ -37,9 +39,13 @@ export async function generateMetadata({
     notFound();
   }
 
-  const today = toZonedTime(new Date(), 'Asia/Tokyo');
+  const today = getCurrentJSTDate();
   const currentWeekStart = getStartOfWeek(today);
-  const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
+
+  // 最新完成週を取得、なければ現在週をフォールバック
+  const latestCompletedWeek = await getLatestCompletedWeek(env.DB);
+  const selectedWeek =
+    week || latestCompletedWeek || formatDateToString(currentWeekStart);
 
   const weeklyReport = await generateWeeklyReportGrouped({
     weekStartDate: selectedWeek,
@@ -75,9 +81,13 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
     notFound();
   }
 
-  const today = toZonedTime(new Date(), 'Asia/Tokyo');
+  const today = getCurrentJSTDate();
   const currentWeekStart = getStartOfWeek(today);
-  const selectedWeek = week || currentWeekStart.toISOString().split('T')[0];
+
+  // 最新完成週を取得、なければ現在週をフォールバック
+  const latestCompletedWeek = await getLatestCompletedWeek(env.DB);
+  const selectedWeek =
+    week || latestCompletedWeek || formatDateToString(currentWeekStart);
 
   // 週間レポートデータを生成
   const weeklyReport = await generateWeeklyReportGrouped({
@@ -85,15 +95,6 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
     db: env.DB,
   });
   const adjacentWeeks = getAdjacentWeeks(selectedWeek);
-  console.log(`選択された週: ${selectedWeek}`);
-  console.log(`前の週: ${JSON.stringify(adjacentWeeks.previous, null, 2)}`);
-  console.log(`次の週: ${JSON.stringify(adjacentWeeks.next, null, 2)}`);
-  console.log(
-    `現在の週範囲: ${JSON.stringify(weeklyReport.weekRange, null, 2)}`,
-  );
-  console.log(
-    `全体サマリー: ${JSON.stringify(weeklyReport.overallSummary, null, 2)}`,
-  );
 
   // データ存在チェック
   const [hasPreviousData, hasNextData] = await Promise.all([
