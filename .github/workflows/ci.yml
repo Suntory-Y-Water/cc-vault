@@ -76,6 +76,5 @@ jobs:
       - name: type check
         run: pnpm run typecheck
 
-      # 一旦無し
-      # - name: Test
-      #   run: pnpm test
+      - name: Test
+        run: pnpm test
