@@ -7,15 +7,14 @@ import TopArticles from '@/components/weekly-report/TopArticles';
 import {
   generateWeeklyReportGrouped,
   getAdjacentWeeks,
-  getStartOfWeek,
-  hasWeeklyData,
   isValidDateString,
-  formatDateToString,
   getCurrentJSTDate,
+  getStartOfWeek,
+  formatDateToString,
 } from '@/lib/weekly-report';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
-import { getLatestCompletedWeek } from '@/lib/cloudflare';
+import { getLatestCompletedWeek, hasWeeklyReportData } from '@/lib/cloudflare';
 
 /**
  * ウィークリーレポートページのprops
@@ -98,8 +97,8 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
 
   // データ存在チェック
   const [hasPreviousData, hasNextData] = await Promise.all([
-    hasWeeklyData(adjacentWeeks.previous, env.DB),
-    hasWeeklyData(adjacentWeeks.next, env.DB),
+    hasWeeklyReportData({ db: env.DB, weekStartDate: adjacentWeeks.previous.startDate }),
+    hasWeeklyReportData({ db: env.DB, weekStartDate: adjacentWeeks.next.startDate }),
   ]);
 
   if (

@@ -11,7 +11,7 @@ import {
   weeklySummaries,
   weeklyReports,
 } from '@/config/drizzle/schema';
-import type { WeekRange } from '@/types';
+import type { SiteRanking, WeekRange } from '@/types';
 import type { SiteValueType } from '@/types/article';
 import { getCurrentJSTDateTimeString } from './weekly-report';
 
@@ -315,44 +315,6 @@ export async function hasWeeklyReportData({
   }
 }
 
-/**
- * 指定サイトの画面表示用週間データを取得（weeklySummariesとarticlesのINNER JOIN）
- * @param db - D1データベースインスタンス
- * @param site - サイト名
- * @param weekStartDate - 週開始日 (YYYY-MM-DD形式)
- * @returns 画面表示用の記事データ（AI要約とSnapshot値を含む）
- */
-/**
- * 指定週の全体要約を取得
- */
-export async function fetchWeeklyOverallSummary({
-  db,
-  weekStartDate,
-}: {
-  db: D1Database;
-  weekStartDate: string;
-}): Promise<string | null> {
-  try {
-    const drizzleDB = drizzle(db);
-
-    const result = await drizzleDB
-      .select({ overallSummary: weeklyReports.overallSummary })
-      .from(weeklyReports)
-      .where(
-        and(
-          eq(weeklyReports.weekStartDate, weekStartDate),
-          eq(weeklyReports.status, 'completed'),
-        ),
-      )
-      .limit(1);
-
-    return result[0]?.overallSummary || null;
-  } catch (error) {
-    console.error('全体要約の取得に失敗しました:', error);
-    return null;
-  }
-}
-
 export async function fetchWeeklyDisplayData({
   db,
   site,
@@ -438,5 +400,87 @@ export async function getLatestCompletedWeek(
   } catch (error) {
     console.error('最新完成週の取得に失敗しました:', error);
     return null; // エラー時は安全側でnullを返す
+  }
+}
+
+/**
+ * 週間レポートのデータを取得（サイト別に整理済み）
+ * weeklySummariesテーブルとarticlesテーブルのINNER JOINで画面表示用データを取得
+ */
+export async function fetchWeeklyReportData({
+  weekRange,
+  db,
+}: {
+  weekRange: WeekRange;
+  db: D1Database;
+}): Promise<SiteRanking[]> {
+  try {
+    return await Promise.all(
+      SITE_VALUES.map(async (site) => {
+        const articles = await fetchWeeklyDisplayData({
+          db,
+          site,
+          weekStartDate: weekRange.startDate,
+        });
+        return {
+          site,
+          articles: articles.map((article, index) => ({
+            id: article.id,
+            title: article.title,
+            url: article.url,
+            author: article.author,
+            publishedAt: article.publishedAt,
+            site: article.site,
+            summary: article.summary, // AI要約を追加
+            engagement: {
+              likes: article.likesSnapshot, // Snapshot値を使用
+              bookmarks: article.bookmarksSnapshot, // Snapshot値を使用
+            },
+            weeklyRank: index + 1,
+          })),
+        };
+      }),
+    );
+  } catch (error) {
+    console.error('週間レポートデータの取得に失敗しました:', error);
+    return [];
+  }
+}
+
+/**
+ * 指定サイトの画面表示用週間データを取得（weeklySummariesとarticlesのINNER JOIN）
+ * @param db - D1データベースインスタンス
+ * @param site - サイト名
+ * @param weekStartDate - 週開始日 (YYYY-MM-DD形式)
+ * @returns 画面表示用の記事データ（AI要約とSnapshot値を含む）
+ */
+/**
+ * 指定週の全体要約を取得
+ */
+export async function fetchWeeklyOverallSummary({
+  db,
+  weekStartDate,
+}: {
+  db: D1Database;
+  weekStartDate: string;
+}): Promise<string | null> {
+  try {
+    const drizzleDB = drizzle(db);
+
+    const result = await drizzleDB
+      .select({ overallSummary: weeklyReports.overallSummary })
+      .from(weeklyReports)
+      .where(
+        and(
+          eq(weeklyReports.weekStartDate, weekStartDate),
+          eq(weeklyReports.status, 'completed'),
+        ),
+      )
+      .limit(1);
+
+    return result[0]?.overallSummary || null;
+  } catch (error) {
+    console.error('全体要約の取得に失敗しました:', error);
+    return null;
   }
 }

@@ -16,7 +16,6 @@ export function getArticleSummaryPrompt(articleContent: string): string {
 
 ## 要約の要件
 
-- **対象読者:** ソフトウェアエンジニア
 - **文字数**: 150-200文字程度
 - **言語**: 日本語
 - **内容**:
@@ -39,7 +38,6 @@ export function getArticleSummaryPrompt(articleContent: string): string {
 1. Claude Code の機能や使い方
 2. 実装方法やコード例の有無
 3. 実際の活用事例や TIPS の有無
-4. 記事の対象読者
 
 ## 出力要件
 
@@ -75,7 +73,6 @@ export function getOverallSummaryPrompt(
 
 ## 総括の要件
 
-- **対象読者:** ソフトウェアエンジニア  
 - **文字数**: 200-300文字程度
 - **言語**: 日本語
 - **内容**:
@@ -95,6 +92,7 @@ export function getOverallSummaryPrompt(
 
 - プレーンテキスト形式で出力
 - 総括文章のみを出力し、追加の解説や前置きは含めない
+- 引用箇所を(1,2)といった番号で提示しない
 
 ## 今週の記事要約一覧
 

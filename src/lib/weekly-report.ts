@@ -13,17 +13,13 @@ import {
   format,
   isValid,
 } from 'date-fns';
-import type { WeekRange, WeeklyReportGrouped, SiteRanking } from '@/types';
-import { SITE_VALUES } from '@/types/article';
-import {
-  hasWeeklyReportData,
-  fetchWeeklyDisplayData,
-  fetchWeeklyOverallSummary,
-} from './cloudflare';
+import type { WeekRange, WeeklyReportGrouped } from '@/types';
+import { fetchWeeklyOverallSummary, fetchWeeklyReportData } from './cloudflare';
 import { TZDate } from '@date-fns/tz';
 
 /**
  * 指定された日付から週の開始日を取得（月曜日始まり）
+ * プロジェクト全体で統一された週の開始日の定義
  */
 export function getStartOfWeek(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
@@ -31,7 +27,7 @@ export function getStartOfWeek(date: Date): Date {
 
 /**
  * 日付をyyyy-MM-dd形式の文字列にフォーマット
- * toZonedTimeで取得したタイムゾーン考慮済みのDateオブジェクトを適切にフォーマット
+ * プロジェクト全体で統一された日付文字列形式の定義
  */
 export function formatDateToString(date: Date): string {
   return format(date, 'yyyy-MM-dd');
@@ -60,30 +56,28 @@ export function getCurrentJSTDateTimeString(): string {
 
 /**
  * 指定された日付から週の終了日を取得（月曜日始まり）
+ * プロジェクト全体で統一された週の終了日の定義
  */
-function getEndOfWeek(date: Date): Date {
+export function getEndOfWeek(date: Date): Date {
   return endOfWeek(date, { weekStartsOn: 1 });
 }
 
 /**
  * 日付文字列の有効性を検証
- * @param dateString - 検証対象の日付文字列（YYYY-MM-DD形式）
- * @returns 有効な日付の場合はtrue
+ * YYYY-MM-DD形式の有効な日付文字列かどうかを判定
  */
 export function isValidDateString(dateString: string): boolean {
-  // 基本的なフォーマットチェック（YYYY-MM-DD）
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(dateString)) {
     return false;
   }
 
-  // parseISOで解析した結果が有効な日付かチェック
-  const parsedDate = parseISO(dateString);
-  return isValid(parsedDate);
+  return isValid(parseISO(dateString));
 }
 
 /**
  * 週の範囲を生成
+ * 指定された日付を含む週の開始日・終了日・年・週番号・ラベルを計算
  */
 function createWeekRange(startDate: Date): WeekRange {
   const start = getStartOfWeek(startDate);
@@ -93,8 +87,8 @@ function createWeekRange(startDate: Date): WeekRange {
   const weekNumber = getWeek(start, { weekStartsOn: 1 });
 
   return {
-    startDate: format(start, 'yyyy-MM-dd'),
-    endDate: format(end, 'yyyy-MM-dd'),
+    startDate: formatDateToString(start),
+    endDate: formatDateToString(end),
     year,
     weekNumber,
     label: `#${weekNumber}`,
@@ -103,20 +97,25 @@ function createWeekRange(startDate: Date): WeekRange {
 
 /**
  * 前週・次週の週範囲を取得
+ * 指定された週の前後の週範囲を計算して返す
  */
 export function getAdjacentWeeks(currentWeek: string): {
   previous: WeekRange;
   next: WeekRange;
 } {
+  if (!isValidDateString(currentWeek)) {
+    throw new Error(`無効な日付文字列です: ${currentWeek}`);
+  }
+
   const current = parseISO(currentWeek);
 
   // 前週（1週間前）
   const previousWeekDate = addWeeks(current, -1);
-  const previousWeekStart = startOfWeek(previousWeekDate, { weekStartsOn: 1 });
+  const previousWeekStart = getStartOfWeek(previousWeekDate);
 
   // 次週（1週間後）
   const nextWeekDate = addWeeks(current, 1);
-  const nextWeekStart = startOfWeek(nextWeekDate, { weekStartsOn: 1 });
+  const nextWeekStart = getStartOfWeek(nextWeekDate);
 
   return {
     previous: createWeekRange(previousWeekStart),
@@ -126,8 +125,13 @@ export function getAdjacentWeeks(currentWeek: string): {
 
 /**
  * 指定された週が未来の週かどうかを判定
+ * 現在の週より後の週の場合にtrueを返す
  */
 export function isFutureWeek(weekStartDate: string): boolean {
+  if (!isValidDateString(weekStartDate)) {
+    throw new Error(`無効な日付文字列です: ${weekStartDate}`);
+  }
+
   const today = getCurrentJSTDate();
   const currentWeekStart = getStartOfWeek(today);
   const targetWeekStart = parseISO(weekStartDate);
@@ -136,51 +140,8 @@ export function isFutureWeek(weekStartDate: string): boolean {
 }
 
 /**
- * 週間レポートのデータを取得（サイト別に整理済み）
- * weeklySummariesテーブルとarticlesテーブルのINNER JOINで画面表示用データを取得
- */
-async function fetchWeeklyReportData({
-  weekRange,
-  db,
-}: {
-  weekRange: WeekRange;
-  db: D1Database;
-}): Promise<SiteRanking[]> {
-  try {
-    return await Promise.all(
-      SITE_VALUES.map(async (site) => {
-        const articles = await fetchWeeklyDisplayData({
-          db,
-          site,
-          weekStartDate: weekRange.startDate,
-        });
-        return {
-          site,
-          articles: articles.map((article, index) => ({
-            id: article.id,
-            title: article.title,
-            url: article.url,
-            author: article.author,
-            publishedAt: article.publishedAt,
-            site: article.site,
-            summary: article.summary, // AI要約を追加
-            engagement: {
-              likes: article.likesSnapshot, // Snapshot値を使用
-              bookmarks: article.bookmarksSnapshot, // Snapshot値を使用
-            },
-            weeklyRank: index + 1,
-          })),
-        };
-      }),
-    );
-  } catch (error) {
-    console.error('週間レポートデータの取得に失敗しました:', error);
-    return [];
-  }
-}
-
-/**
  * サイト別グループ化された週間レポートデータを生成
+ * 指定された週の開始日に基づいてレポートデータを取得し、グループ化して返す
  */
 export async function generateWeeklyReportGrouped({
   weekStartDate,
@@ -189,7 +150,10 @@ export async function generateWeeklyReportGrouped({
   weekStartDate: string;
   db: D1Database;
 }): Promise<WeeklyReportGrouped> {
-  // parseISOを使ってJST基準で日付を解析
+  if (!isValidDateString(weekStartDate)) {
+    throw new Error(`無効な日付文字列です: ${weekStartDate}`);
+  }
+
   const weekRange = createWeekRange(parseISO(weekStartDate));
   const [siteRankings, overallSummary] = await Promise.all([
     fetchWeeklyReportData({ weekRange, db }),
@@ -204,36 +168,9 @@ export async function generateWeeklyReportGrouped({
 }
 
 /**
- * UTCの日時をJST（Asia/Tokyo）に変換
- * TZDateを使用した正確なタイムゾーン変換
- */
-export function convertUTCToJST(utcDate: Date): TZDate {
-  // UTC時刻をJSTタイムゾーンのTZDateに変換
-  const jstTZDate = new TZDate(utcDate.getTime(), 'Asia/Tokyo');
-
-  return jstTZDate;
-}
-
-/**
  * JST基準で前週の週範囲を計算
  */
 export function calculatePreviousWeek(jstDate: Date): WeekRange {
   const previousWeekDate = addWeeks(jstDate, -1);
   return createWeekRange(previousWeekDate);
-}
-
-/**
- * 指定週のウィークリーレポートデータが存在するかチェック（公開関数）
- * @param weekRange - 週範囲オブジェクト
- * @param db - D1データベースインスタンス
- * @returns データが存在する場合true
- */
-export async function hasWeeklyData(
-  weekRange: WeekRange,
-  db: D1Database,
-): Promise<boolean> {
-  return await hasWeeklyReportData({
-    db,
-    weekStartDate: weekRange.startDate,
-  });
 }
