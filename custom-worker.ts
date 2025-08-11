@@ -28,8 +28,63 @@ import {
  * カスタムWorker設定
  * OpenNext.jsのfetch handlerにscheduled handlerを追加
  */
-export default {
-  fetch: handler.fetch,
+const worker = {
+  /**
+   * HTTPリクエストハンドラー
+   * 通常のリクエスト + 認証付き手動実行エンドポイントを処理
+   */
+  async fetch(
+    request: Request,
+    env: CloudflareEnv,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    const url = new URL(request.url);
+
+    // 認証付き手動実行エンドポイント
+    if (url.pathname === '/manual-trigger') {
+      // Bearer token認証
+      const authHeader = request.headers.get('Authorization');
+      if (
+        !authHeader ||
+        !authHeader.startsWith('Bearer ') ||
+        authHeader.slice(7) !== env.MANUAL_TRIGGER_SECRET
+      ) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+
+      const cronType = url.searchParams.get('cron');
+
+      if (cronType === 'articles') {
+        const controller: ScheduledController = {
+          cron: '0 23,0-14 * * *',
+          scheduledTime: Date.now(),
+          noRetry: () => {},
+        };
+
+        await worker.scheduled(controller, env, ctx);
+        return new Response('記事取得処理を実行しました', { status: 200 });
+      }
+
+      if (cronType === 'weekly') {
+        const controller: ScheduledController = {
+          cron: '0 15 * * SUN',
+          scheduledTime: Date.now(),
+          noRetry: () => {},
+        };
+
+        await worker.scheduled(controller, env, ctx);
+        return new Response('週次レポート生成を実行しました', { status: 200 });
+      }
+
+      return new Response(
+        'Usage: /manual-trigger?cron=articles または /manual-trigger?cron=weekly',
+        { status: 400 },
+      );
+    }
+
+    // 通常のNext.jsリクエストは元のhandlerに委譲
+    return handler.fetch(request, env, ctx);
+  },
 
   /**
    * スケジュール処理ハンドラー
@@ -165,7 +220,7 @@ export default {
        * 週次レポート生成処理
        * 毎週月曜日 JST 00:00 (UTC 15:00 日曜日) に実行
        */
-      case '0 15 * * 0': {
+      case '0 15 * * SUN': {
         console.log('週次レポート生成処理を開始します');
 
         // 1. 実行日時をJSTで取得
@@ -213,6 +268,8 @@ export default {
     console.log('スケジュールタスクが完了しました');
   },
 } satisfies ExportedHandler<CloudflareEnv>;
+
+export default worker;
 
 /**
  * 記事要約生成処理
