@@ -111,9 +111,9 @@ export async function saveArticlesToDB(params: {
   const drizzleDB = drizzle(db);
   const now = getCurrentJSTDateTimeString();
 
-  try {
-    // 他の関数と同じパターンでループ処理
-    for (const article of articleList) {
+  // 各記事を個別に処理し、エラー時も継続
+  for (const article of articleList) {
+    try {
       await drizzleDB
         .insert(articles)
         .values({
@@ -129,10 +129,9 @@ export async function saveArticlesToDB(params: {
           updatedAt: now,
         })
         .onConflictDoUpdate({
-          target: articles.id,
+          target: articles.url,
           set: {
             title: article.title,
-            url: article.url,
             author: article.author,
             publishedAt: article.published_at,
             likes: article.likes,
@@ -140,12 +139,9 @@ export async function saveArticlesToDB(params: {
             updatedAt: now,
           },
         });
+    } catch (error) {
+      console.error(`記事保存エラー [${article.id}]:`, error);
     }
-
-    console.log(`${articleList.length}件の記事を正常に保存しました`);
-  } catch (error) {
-    console.error('記事の保存に失敗しました:', error);
-    throw new Error(`記事の保存に失敗しました: ${error}`);
   }
 }
 
