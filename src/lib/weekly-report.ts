@@ -34,6 +34,15 @@ export function formatDateToString(date: Date): string {
 }
 
 /**
+ * 日付を年月日表示にフォーマット（例：2024年12月25日）
+ * ユーザー向け表示用の日本語日付フォーマット
+ */
+export function formatDateToJapanese(date: string): string {
+  const dateObj = parseISO(date);
+  return format(dateObj, 'yyyy年M月d日');
+}
+
+/**
  * 現在の日時をJST（Asia/Tokyo）で取得
  */
 export function getCurrentJSTDate(): TZDate {

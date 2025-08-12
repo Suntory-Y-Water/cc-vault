@@ -11,6 +11,7 @@ import {
   getCurrentJSTDate,
   getStartOfWeek,
   formatDateToString,
+  formatDateToJapanese,
 } from '@/lib/weekly-report';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
@@ -108,8 +109,8 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
     notFound();
   }
 
-  // データ取得日時点（週終了日をyyyy-mm-dd形式で表示）
-  const snapshotDate = weeklyReport.weekRange.endDate;
+  // データ取得日時点（週終了日を年月日表示でフォーマット）
+  const snapshotDate = formatDateToJapanese(weeklyReport.weekRange.endDate);
 
   return (
     <div className='container mx-auto px-4 py-8'>

@@ -39,6 +39,17 @@ const worker = {
     ctx: ExecutionContext,
   ): Promise<Response> {
     const url = new URL(request.url);
+    const colo = request.cf?.colo;
+    const country = request.cf?.country;
+    const city = request.cf?.city;
+
+    const coloInfo = colo ? `COL: ${colo}` : 'COL: not available';
+    const countryInfo = country
+      ? `Country: ${country}`
+      : 'Country: not available';
+    const cityInfo = city ? `City: ${city}` : 'City: not available';
+
+    console.log(`Worker ran. ${coloInfo}, ${countryInfo}, ${cityInfo}`);
 
     // 認証付き手動実行エンドポイント
     if (url.pathname === '/manual-trigger') {
