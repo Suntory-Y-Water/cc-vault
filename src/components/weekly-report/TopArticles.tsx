@@ -33,18 +33,18 @@ export default function TopArticles({
   /**
    * サイトバッジの色を取得
    */
-  const getSiteBadgeColor = (site: string) => {
+  function getSiteBadgeColor(site: string) {
     const siteConfig = SITE_CONFIGS[site];
     if (siteConfig) {
       return `text-white`;
     }
     return 'bg-[#E0DFDA] text-[#141413]';
-  };
+  }
 
   /**
    * 日付を相対的な形式でフォーマット
    */
-  const formatRelativeDate = (dateString: string) => {
+  function formatRelativeDate(dateString: string) {
     const date = new Date(dateString);
     const now = getCurrentJSTDate();
     const diffInDays = Math.floor(
@@ -55,17 +55,17 @@ export default function TopArticles({
     if (diffInDays === 1) return '昨日';
     if (diffInDays < 7) return `${diffInDays}日前`;
     return date.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
-  };
+  }
 
   /**
    * ランキング番号のスタイルを取得
    */
-  const getRankStyle = (rank: number) => {
+  function getRankStyle(rank: number) {
     if (rank === 1) return 'bg-[#FFD700] text-[#141413] font-bold';
     if (rank === 2) return 'bg-[#C0C0C0] text-[#141413] font-bold';
     if (rank === 3) return 'bg-[#CD7F32] text-white font-bold';
     return 'bg-[#E0DFDA] text-[#141413] font-medium';
-  };
+  }
 
   /**
    * 記事カードをレンダリング
@@ -90,7 +90,7 @@ export default function TopArticles({
             {/* 記事情報 */}
             <div className='flex-1 min-w-0'>
               <div className='flex items-start justify-between gap-2 mb-2'>
-                <h3 className='font-semibold text-[#141413] line-clamp-2 hover:text-[#DB8163] transition-colors'>
+                <h3 className='font-semibold text-[#141413] line-clamp-4 hover:text-[#DB8163] transition-colors'>
                   <a
                     href={article.url}
                     target='_blank'
@@ -104,8 +104,7 @@ export default function TopArticles({
               </div>
 
               <div className='flex items-center gap-2 text-sm text-[#141413] opacity-70 mb-2'>
-                <span>by {article.author}</span>
-                <span>•</span>
+                <span>著者 {article.author}</span>
                 <div className='flex items-center gap-1'>
                   <Clock className='w-3 h-3' />
                   <span>{formatRelativeDate(article.publishedAt)}</span>
