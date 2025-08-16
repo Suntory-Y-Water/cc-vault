@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import SearchBox from '@/components/search/SearchBox';
 
 /**
  * 共通ヘッダーコンポーネント
@@ -8,8 +9,8 @@ import Image from 'next/image';
 export default function Header() {
   return (
     <header className='sticky top-0 z-50 w-full border-b border-[#E0DFDA] bg-[#FAF9F5]/95 backdrop-blur-sm'>
-      <div className='max-w-[80rem] mx-auto px-4 flex h-16 items-center justify-between'>
-        <Link className='flex items-center gap-2' href='/'>
+      <div className='max-w-[80rem] mx-auto px-4 flex h-16 items-center justify-between gap-4'>
+        <Link className='flex items-center gap-2 flex-shrink-0' href='/'>
           <Image
             src='/cc.svg'
             alt='CC-Vault logo'
@@ -17,10 +18,11 @@ export default function Header() {
             height={32}
             className='rounded-sm'
           />
-          <span className='text-xl font-bold bg-gradient-to-r from-[#141413] to-[#141413]/80 bg-clip-text text-transparent'>
+          <span className='text-lg sm:text-xl font-bold bg-gradient-to-r from-[#141413] to-[#141413]/80 bg-clip-text text-transparent'>
             CC-Vault
           </span>
         </Link>
+        <SearchBox />
       </div>
     </header>
   );

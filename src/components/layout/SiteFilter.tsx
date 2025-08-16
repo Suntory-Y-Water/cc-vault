@@ -8,6 +8,7 @@ type Props = {
   currentSearchParams: {
     site: SiteType;
     order: SortOrder;
+    q?: string;
   };
 };
 
@@ -17,19 +18,30 @@ type Props = {
  * @param currentOrder - 現在のソート順
  * @returns URLクエリパラメータ文字列
  */
-function createSiteFilterUrl(site: SiteType, currentOrder: SortOrder): string {
+function createSiteFilterUrl(
+  site: SiteType,
+  currentOrder: SortOrder,
+  currentQuery?: string,
+): string {
   const params = new URLSearchParams();
-  
+
+  // 検索クエリがある場合は検索ページ、ない場合はホームページ
+  const basePath = currentQuery ? '/search' : '/';
+
+  if (currentQuery) {
+    params.set('q', currentQuery);
+  }
+
   if (site !== 'all') {
     params.set('site', site);
   }
-  
+
   if (currentOrder !== 'latest') {
     params.set('order', currentOrder);
   }
-  
+
   const queryString = params.toString();
-  return queryString ? `/?${queryString}` : '/';
+  return queryString ? `${basePath}?${queryString}` : basePath;
 }
 
 /**
@@ -47,7 +59,11 @@ export default function SiteFilter({ activeSite, currentSearchParams }: Props) {
         return (
           <Link
             key={key}
-            href={createSiteFilterUrl(siteKey, currentSearchParams.order)}
+            href={createSiteFilterUrl(
+              siteKey,
+              currentSearchParams.order,
+              currentSearchParams.q,
+            )}
             prefetch={true}
           >
             <Button

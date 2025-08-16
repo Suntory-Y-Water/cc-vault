@@ -10,6 +10,7 @@ type PaginationProps = {
   searchParams?: {
     order?: 'latest' | 'trending';
     site?: string;
+    q?: string;
   };
 };
 
