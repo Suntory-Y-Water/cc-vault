@@ -7,6 +7,7 @@ type Props = {
   currentSearchParams: {
     site: SiteType;
     order: SortOrder;
+    q?: string;
   };
 };
 
@@ -16,19 +17,30 @@ type Props = {
  * @param currentSite - 現在のサイトフィルタ
  * @returns URLクエリパラメータ文字列
  */
-function createSortUrl(targetOrder: SortOrder, currentSite: SiteType): string {
+function createSortUrl(
+  targetOrder: SortOrder,
+  currentSite: SiteType,
+  currentQuery?: string,
+): string {
   const params = new URLSearchParams();
-  
+
+  // 検索クエリがある場合は検索ページ、ない場合はホームページ
+  const basePath = currentQuery ? '/search' : '/';
+
+  if (currentQuery) {
+    params.set('q', currentQuery);
+  }
+
   if (currentSite !== 'all') {
     params.set('site', currentSite);
   }
-  
+
   if (targetOrder !== 'latest') {
     params.set('order', targetOrder);
   }
-  
+
   const queryString = params.toString();
-  return queryString ? `/?${queryString}` : '/';
+  return queryString ? `${basePath}?${queryString}` : basePath;
 }
 
 /**
@@ -41,22 +53,32 @@ export default function MainTabs({ order, currentSearchParams }: Props) {
   return (
     <Tabs value={currentTab}>
       <TabsList className='grid w-full grid-cols-2 bg-[#E0DFDA] rounded-lg p-1'>
-        <Link href={createSortUrl(SORT_ORDERS.latest, currentSearchParams.site)} prefetch={true}>
-          <TabsTrigger
-            value='new'
-            className='data-[state=active]:bg-[#FAF9F5] data-[state=active]:text-[#141413] text-[#141413] font-medium w-full cursor-pointer'
+        <TabsTrigger value='new' asChild>
+          <Link
+            href={createSortUrl(
+              SORT_ORDERS.latest,
+              currentSearchParams.site,
+              currentSearchParams.q,
+            )}
+            prefetch={true}
+            className='data-[state=active]:bg-[#FAF9F5] data-[state=active]:text-[#141413] text-[#141413] font-medium w-full cursor-pointer flex items-center justify-center'
           >
             新着
-          </TabsTrigger>
-        </Link>
-        <Link href={createSortUrl(SORT_ORDERS.trending, currentSearchParams.site)} prefetch={true}>
-          <TabsTrigger
-            value='trending'
-            className='data-[state=active]:bg-[#FAF9F5] data-[state=active]:text-[#141413] text-[#141413] font-medium w-full cursor-pointer'
+          </Link>
+        </TabsTrigger>
+        <TabsTrigger value='trending' asChild>
+          <Link
+            href={createSortUrl(
+              SORT_ORDERS.trending,
+              currentSearchParams.site,
+              currentSearchParams.q,
+            )}
+            prefetch={true}
+            className='data-[state=active]:bg-[#FAF9F5] data-[state=active]:text-[#141413] text-[#141413] font-medium w-full cursor-pointer flex items-center justify-center'
           >
             トレンド
-          </TabsTrigger>
-        </Link>
+          </Link>
+        </TabsTrigger>
       </TabsList>
     </Tabs>
   );

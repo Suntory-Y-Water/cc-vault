@@ -2,6 +2,7 @@ import {
   ArticlePaginationParams,
   ArticleRow,
   PaginatedArticles,
+  SearchParams,
   SITE_VALUES,
 } from '@/types';
 import { drizzle } from 'drizzle-orm/d1';
@@ -94,6 +95,120 @@ export async function getArticlesWithPagination(
   } catch (error) {
     console.error('D1からページネーション記事の取得に失敗しました:', error);
     throw new Error(`D1からページネーション記事の取得に失敗しました: ${error}`);
+  }
+}
+
+/**
+ * 検索条件に基づいて記事を取得する関数
+ * 
+ * 事前条件:
+ * - queryが空文字列でない場合、有効な検索キーワードであること
+ * - pageは1以上の整数であること
+ * - limitは1以上の整数であること
+ * 
+ * 事後条件:
+ * - 検索結果が要件に合致する記事のみを含むこと
+ * - ページネーション情報が正確であること
+ */
+/**
+ * タイトル検索条件に基づいて記事を取得する関数
+ */
+export async function fetchArticlesByTitle(params: {
+  db: D1Database;
+  searchParams: SearchParams;
+}): Promise<PaginatedArticles> {
+  const { db, searchParams: { page, limit, site, order, query } } = params;
+
+  if (page < 1) {
+    throw new Error('Invalid page parameter: must be greater than 0');
+  }
+  if (limit < 1) {
+    throw new Error('Invalid limit parameter: must be greater than 0');
+  }
+
+  try {
+    const drizzleDB = drizzle(db);
+    const offset = (page - 1) * limit;
+
+    // WHERE条件の構築
+    const conditions = [];
+    
+    // サイトフィルタ
+    if (site && site !== 'all') {
+      conditions.push(eq(articles.site, site));
+    }
+    
+    // 検索条件（タイトルのLIKE検索、大文字小文字区別なし）
+    if (query) {
+      conditions.push(sql`${articles.title} LIKE ${'%' + query + '%'} COLLATE NOCASE`);
+    }
+
+    const whereCondition = conditions.length > 0 
+      ? conditions.length === 1 
+        ? conditions[0]
+        : and(...conditions)
+      : undefined;
+
+    // ORDER BY条件の構築
+    const orderCondition =
+      order === 'trending'
+        ? [
+            desc(sql`(${articles.likes} + ${articles.bookmarks})`),
+            desc(articles.publishedAt),
+          ]
+        : [desc(articles.publishedAt)];
+
+    // 総件数を取得
+    const countResult = await drizzleDB
+      .select({ total: count() })
+      .from(articles)
+      .where(whereCondition);
+
+    const totalCount = countResult[0]?.total || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // 記事データを取得
+    const results = await drizzleDB
+      .select({
+        id: articles.id,
+        title: articles.title,
+        url: articles.url,
+        author: articles.author,
+        published_at: articles.publishedAt,
+        likes: articles.likes,
+        bookmarks: articles.bookmarks,
+        site: articles.site,
+      })
+      .from(articles)
+      .where(whereCondition)
+      .orderBy(...orderCondition)
+      .limit(limit)
+      .offset(offset);
+
+    const articlesData = results.map((row) => ({
+      id: row.id,
+      title: row.title,
+      url: row.url,
+      author: row.author,
+      publishedAt: row.published_at,
+      site: row.site,
+      engagement: {
+        likes: row.likes || 0,
+        bookmarks: row.bookmarks || 0,
+      },
+    }));
+
+    return {
+      articles: articlesData,
+      totalCount,
+      totalPages,
+      currentPage: page,
+      hasNext: page < totalPages,
+      hasPrevious: page > 1,
+    };
+  } catch (error) {
+    console.error('記事検索に失敗しました:', error);
+    throw new Error(`記事検索に失敗しました: ${error}`);
   }
 }
 

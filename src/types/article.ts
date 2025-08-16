@@ -125,6 +125,12 @@ export type ArticlePaginationParams = {
   site?: SiteType;
   order?: SortOrder;
 };
+/**
+ * 検索機能用のパラメータ型定義
+ */
+export type SearchParams = ArticlePaginationParams & {
+  query?: string;
+};
 
 /**
  * ページネーション結果の型定義
@@ -149,4 +155,21 @@ type Data = {
   readonly key: string;
   readonly name: string;
   readonly body: string;
+};
+
+/**
+ * ページネーションの型定義
+ */
+export type PaginationParams = {
+  page?: number;
+  limit?: number;
+};
+
+/**
+ * API実行時の型定義
+ */
+export type FetchOptions = {
+  cache?: RequestCache;
+  revalidate?: number;
+  tags?: string[];
 };
