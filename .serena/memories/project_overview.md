@@ -22,7 +22,7 @@ cc-vault
 
 ### バックエンド
 - **ランタイム**: Cloudflare Workers (OpenNext.js Cloudflare)
-- **データベース**: LibSQL (Turso)
+- **データベース**: ローカル→LibSQL（Turso）、本番→Cloudflare D1
 - **ORM**: Drizzle ORM
 - **AI**: Google Gemini API
 
