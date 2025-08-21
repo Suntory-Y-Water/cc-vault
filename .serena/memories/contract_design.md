@@ -40,24 +40,17 @@ JST形式の日付文字列を返す関数での契約実装を示します。
 
 ```typescript
 function formatDateToJST(date: Date): string {
-  // 事前条件
-  if (!(date instanceof Date) || isNaN(date.getTime())) {
-    throw new Error('Invalid date object');
-  }
+  // 事前条件、想定されない日付をブロック
   if (date.getFullYear() < 1900 || date.getFullYear() > 2100) {
-    throw new Error('Date out of supported range');
+    throw new Error('サポート対象外の日付範囲です');
   }
 
   // 実装部分(AIに委譲)
-  const jstDate = new Date(date.getTime() + (9 * 60 * 60 * 1000));
-  const year = jstDate.getUTCFullYear();
-  const month = String(jstDate.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(jstDate.getUTCDate()).padStart(2, '0');
-  const result = `${year}-${month}-${day}`;
+  const result = generateDate(date);
 
   // 事後条件
   if (!/^\d{4}-\d{2}-\d{2}$/.test(result)) {
-    throw new Error('Invalid output format');
+    throw new Error('出力フォーマットが不正です');
   }
 
   return result;
@@ -73,7 +66,7 @@ Webクローラーでの要素取得における契約適用例を示します�
 ```typescript
 function getDateFromElement(selector: string): Date {
   // 事前条件
-  if (!selector || typeof selector !== 'string') {
+  if (selector === '') {
     throw new Error('Invalid selector');
   }
 

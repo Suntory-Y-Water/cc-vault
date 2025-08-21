@@ -32,10 +32,6 @@ export default function SearchBox() {
    */
   function handleSearch() {
     // 事前条件チェック
-    if (typeof query !== 'string') {
-      throw new Error('Invalid query: must be string');
-    }
-
     const trimmedQuery = query.trim();
 
     // 空文字チェック
@@ -51,10 +47,11 @@ export default function SearchBox() {
     // 検索ページに遷移
     const searchUrl = `/search?q=${encodeURIComponent(trimmedQuery)}`;
     router.push(searchUrl);
+    setQuery('');
 
     // 事後条件チェック
     if (!searchUrl.startsWith('/search?q=')) {
-      throw new Error('Invalid search URL generation');
+      throw new Error('生成したURLが無効です');
     }
   }
 
@@ -74,9 +71,7 @@ export default function SearchBox() {
         type='text'
         placeholder='記事を検索...'
         value={query}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setQuery(e.target.value)
-        }
+        onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
         className='w-full sm:min-w-[250px] pl-10'
         maxLength={100}
