@@ -6,8 +6,8 @@
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "forwardPorts": [3000],
 
-  // // コンテナ作成時に一度だけ実行するコマンド
-  // "postCreateCommand": "pnpm install",
+  // Use 'postCreateCommand' to run commands after the container is created.
+  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && echo 'export PATH=\"$HOME/.cargo/bin:$PATH\"' >> ~/.bashrc",
 
   // VS Codeがコンテナに接続するたびに実行するコマンド
   "postAttachCommand": "echo 'Welcome to your dev container!'",
@@ -15,7 +15,36 @@
   // VS Codeの設定
   "customizations": {
     "vscode": {
-      "extensions": ["biomejs.biome"],
+      "extensions": [
+        "anthropic.claude-code",
+        "anysphere.pyright",
+        "bierner.markdown-mermaid",
+        "biomejs.biome",
+        "bradlc.vscode-tailwindcss",
+        "christian-kohler.path-intellisense",
+        "dbaeumer.vscode-eslint",
+        "donjayamanne.githistory",
+        "ecmel.vscode-html-css",
+        "esbenp.prettier-vscode",
+        "github.vscode-github-actions",
+        "hbenl.vscode-test-explorer",
+        "ionutvmi.path-autocomplete",
+        "marp-team.marp-vscode",
+        "mechatroner.rainbow-csv",
+        "meganrogge.template-string-converter",
+        "ms-azuretools.vscode-docker",
+        "ms-ceintl.vscode-language-pack-ja",
+        "ms-vscode.test-adapter-converter",
+        "njpwerner.autodocstring",
+        "oderwat.indent-rainbow",
+        "oouo-diogo-perdigao.docthis",
+        "pkief.material-icon-theme",
+        "redhat.vscode-yaml",
+        "ritwickdey.liveserver",
+        "tamasfe.even-better-toml",
+        "unifiedjs.vscode-mdx",
+        "yzhang.markdown-all-in-one"
+      ],
       "settings": {
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "biomejs.biome",
@@ -37,8 +66,6 @@
   },
   "remoteEnv": {
     "NODE_ENV": "development"
-    // "API_URL": "${localEnv:API_URL}",
-    // "API_KEY": "${localEnv:API_KEY}"
   },
 
   // ユーザーを非rootユーザーにする
@@ -47,6 +74,8 @@
   // コンテナにインストールするパッケージ
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // Claude Code 公式のイメージ
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   }
 }
