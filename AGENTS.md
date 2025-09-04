@@ -77,26 +77,6 @@ TypeScript環境での契約による設計の適切な実装方法
 
 - メソッドの事前条件、事後条件、不変条件を検証するテストであること
 - Given-When-Thenパターンに基づいて実装すること
-- TDD を実施する。コードを生成するときは、それに対応するユニットテストを常に生成する。
-  - コードを追加で修正したとき、`pnpm run test` がパスすることを常に確認する。
-  ```ts
-  function add(a: number, b: number) { return a + b }
-  test("1+2=3", () => {
-    expect(add(1, 2)).toBe(3);
-  });
-  ```
-- vitest で実装と同じファイルにユニットテストを書く。
-  - 出力例
-  ```ts
-  export function distance(a: Point, b: Point): number {...}
-  if (import.meta.vitest) {
-    const {test, expect} = import.meta.vitest;
-    test("ユークリッド距離を計算する", () => {
-      const result = distance({x: 0, y: 0}, {x: 3, y: 4});
-      expect(distance(result)).toBe(5)
-    });
-  }
-  ```
 
 ## 品質保証
 
@@ -116,8 +96,3 @@ TypeScript環境での契約による設計の適切な実装方法
 ### コード作成後の型エラー、Lintエラーチェック
 
 - コード生成時は関数やコンポーネントには JSDoc コメントを必ず追加し、生成後は`pnpm run ai-check`でリント、型チェックを実行します。
-
-### Web 検索の制約
-
-- WebSearch ツールは使用禁止 - 利用することは禁止です
-- 代替手段：`gemini --prompt "WebSearch: <検索クエリ>` - Gemini 経由の検索
