@@ -6,3 +6,4 @@ export * from './article';
 export * from './site';
 export * from './next-data';
 export * from './weekly-report';
+export * from './schema';

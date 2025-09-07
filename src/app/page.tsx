@@ -1,6 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getArticlesWithPagination } from '@/lib/cloudflare';
-import { SiteType, SortOrder, SITE_NAMES, SORT_ORDERS } from '@/types';
+import { validateQueryParams } from '@/lib/utils';
 import SiteFilter from '@/components/layout/SiteFilter';
 import MainTabs from '@/components/layout/MainTabs';
 import ArticleList from '@/components/article/ArticleList';
@@ -23,29 +23,13 @@ type Props = {
 export default async function HomePage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
 
-  // 公式推奨: 分割代入とデフォルト値を使用
-  const {
-    page: pageParam = '1',
-    site: siteParam,
-    order: orderParam,
-  } = await searchParams;
-
-  // 配列の場合は最初の値を使用
-  const pageValue = Array.isArray(pageParam) ? pageParam[0] : pageParam;
-  const siteValue = Array.isArray(siteParam) ? siteParam[0] : siteParam;
-  const orderValue = Array.isArray(orderParam) ? orderParam[0] : orderParam;
-
-  const page = Number(pageValue) || 1;
-
-  // 型安全なバリデーション
-  const site =
-    siteValue && Object.keys(SITE_NAMES).includes(siteValue)
-      ? (siteValue as SiteType)
-      : 'all';
-  const order =
-    orderValue && Object.keys(SORT_ORDERS).includes(orderValue)
-      ? (orderValue as SortOrder)
-      : 'latest';
+  // 型安全なクエリパラメータバリデーション
+  const rawParams = await searchParams;
+  const { page, site, order } = validateQueryParams({
+    page: rawParams.page,
+    site: rawParams.site,
+    order: rawParams.order,
+  });
   const limit = 24; // 1ページあたりの記事数
 
   // D1データベースからページネーション対応でデータを取得

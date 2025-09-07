@@ -1,6 +1,13 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, toZonedTime } from 'date-fns-tz';
+import {
+  ValidPageNumberSchema,
+  ValidSiteTypeSchema,
+  ValidSortOrderSchema,
+  ValidatedQueryParamsSchema,
+  type ValidatedQueryParams,
+} from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,4 +101,48 @@ export function convertQiitaUrlToApiUrl(articleUrl: string): string {
   } catch (error) {
     throw new Error(`Qiita URL変換に失敗しました: ${error}`);
   }
+}
+
+/**
+ * クエリパラメータをZod Branded Typeスキーマで検証し、型安全な値を返す
+ * 契約による設計：不正な値が来ても例外を投げず、無害なデフォルト値にフォールバックする
+ * @param params - 生のクエリパラメータ
+ * @returns ValidatedQueryParams型（Branded Type）の検証済みクエリパラメータ
+ */
+export function validateQueryParams(params: {
+  page?: string | string[];
+  site?: string | string[];
+  order?: string | string[];
+}): ValidatedQueryParams {
+  // 配列の場合は最初の値を使用、undefinedの場合はデフォルト値を使用
+  const pageValue = Array.isArray(params.page) ? params.page[0] : params.page;
+  const siteValue = Array.isArray(params.site) ? params.site[0] : params.site;
+  const orderValue = Array.isArray(params.order)
+    ? params.order[0]
+    : params.order;
+
+  // 事前条件チェック（例外を投げずデフォルト値にフォールバック）
+  const safePageResult = ValidPageNumberSchema.safeParse(
+    Number(pageValue) || 1,
+  );
+  const validPage = safePageResult.success
+    ? safePageResult.data
+    : ValidPageNumberSchema.parse(1);
+
+  const safeSiteResult = ValidSiteTypeSchema.safeParse(siteValue);
+  const validSite = safeSiteResult.success
+    ? safeSiteResult.data
+    : ValidSiteTypeSchema.parse('all');
+
+  const safeOrderResult = ValidSortOrderSchema.safeParse(orderValue);
+  const validOrder = safeOrderResult.success
+    ? safeOrderResult.data
+    : ValidSortOrderSchema.parse('latest');
+
+  // 事後条件チェック：Branded Type付きオブジェクトの検証・生成
+  return ValidatedQueryParamsSchema.parse({
+    page: validPage,
+    site: validSite,
+    order: validOrder,
+  });
 }
