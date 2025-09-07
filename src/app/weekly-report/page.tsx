@@ -98,8 +98,14 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
 
   // データ存在チェック
   const [hasPreviousData, hasNextData] = await Promise.all([
-    hasWeeklyReportData({ db: env.DB, weekStartDate: adjacentWeeks.previous.startDate }),
-    hasWeeklyReportData({ db: env.DB, weekStartDate: adjacentWeeks.next.startDate }),
+    hasWeeklyReportData({
+      db: env.DB,
+      weekStartDate: adjacentWeeks.previous.startDate,
+    }),
+    hasWeeklyReportData({
+      db: env.DB,
+      weekStartDate: adjacentWeeks.next.startDate,
+    }),
   ]);
 
   if (

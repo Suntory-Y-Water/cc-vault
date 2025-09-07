@@ -30,7 +30,7 @@ export async function getGeminiResponse({
 }): Promise<string> {
   const response = await ai.models.generateContent({
     // プロジェクトで固定
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-2.5-flash-lite',
     contents: prompt,
   });
   const text = response.text;

@@ -100,12 +100,12 @@ export async function getArticlesWithPagination(
 
 /**
  * 検索条件に基づいて記事を取得する関数
- * 
+ *
  * 事前条件:
  * - queryが空文字列でない場合、有効な検索キーワードであること
  * - pageは1以上の整数であること
  * - limitは1以上の整数であること
- * 
+ *
  * 事後条件:
  * - 検索結果が要件に合致する記事のみを含むこと
  * - ページネーション情報が正確であること
@@ -117,7 +117,10 @@ export async function fetchArticlesByTitle(params: {
   db: D1Database;
   searchParams: SearchParams;
 }): Promise<PaginatedArticles> {
-  const { db, searchParams: { page, limit, site, order, query } } = params;
+  const {
+    db,
+    searchParams: { page, limit, site, order, query },
+  } = params;
 
   if (page < 1) {
     throw new Error('Invalid page parameter: must be greater than 0');
@@ -132,22 +135,25 @@ export async function fetchArticlesByTitle(params: {
 
     // WHERE条件の構築
     const conditions = [];
-    
+
     // サイトフィルタ
     if (site && site !== 'all') {
       conditions.push(eq(articles.site, site));
     }
-    
+
     // 検索条件（タイトルのLIKE検索、大文字小文字区別なし）
     if (query) {
-      conditions.push(sql`${articles.title} LIKE ${'%' + query + '%'} COLLATE NOCASE`);
+      conditions.push(
+        sql`${articles.title} LIKE ${'%' + query + '%'} COLLATE NOCASE`,
+      );
     }
 
-    const whereCondition = conditions.length > 0 
-      ? conditions.length === 1 
-        ? conditions[0]
-        : and(...conditions)
-      : undefined;
+    const whereCondition =
+      conditions.length > 0
+        ? conditions.length === 1
+          ? conditions[0]
+          : and(...conditions)
+        : undefined;
 
     // ORDER BY条件の構築
     const orderCondition =

@@ -58,47 +58,6 @@ function formatDateToJST(date: Date): string {
 ```
 
 AIには日付計算ロジックのみを任せ、入力検証と出力検証は契約で保証します。
-
-## クローラーでの実装例
-
-Webクローラーでの要素取得における契約適用例を示します。
-
-```typescript
-function getDateFromElement(selector: string): Date {
-  // 事前条件
-  if (selector === '') {
-    throw new Error('Invalid selector');
-  }
-
-  const element = document.querySelector(selector);
-  if (!element || !element.textContent) {
-    throw new Error(`Element not found: ${selector}`);
-  }
-
-  const text = element.textContent.trim();
-
-  // 事後条件: 日付形式チェック
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    throw new Error(`Invalid date format: ${text}`);
-  }
-
-  const date = new Date(text);
-  if (isNaN(date.getTime())) {
-    throw new Error(`Invalid date: ${text}`);
-  }
-
-  // 事後条件: 合理的範囲チェック
-  const year = date.getFullYear();
-  if (year < 1900 || year > 2100) {
-    throw new Error(`Date out of range: ${year}`);
-  }
-
-  return date;
-}
-```
-
-従来の「要素存在チェックのみ」から「データ形式・値チェック」まで拡張することで、サイト仕様変更の早期検出と異常データ混入を防げます。
-
 ## テストアプローチとの比較
 
 ### 契約による設計でのテスト
