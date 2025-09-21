@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/devcontainers/javascript-node:20-bookworm
 
-# pnpmをグローバルにインストール (rootユーザーで実行)
+# pnpm install
 RUN npm install -g pnpm
 
 # 作業ディレクトリを設定 
