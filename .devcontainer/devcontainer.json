@@ -4,13 +4,16 @@
   "runArgs": ["--init"],
   // コンテナ内のワークスペースフォルダを動的に設定
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "forwardPorts": [3000],
-
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && echo 'export PATH=\"$HOME/.cargo/bin:$PATH\"' >> ~/.bashrc",
+  "forwardPorts": [3000, 5173, 8787],
+  "otherPortsAttributes": {
+    "onAutoForward": "notify"
+  },
 
   // VS Codeがコンテナに接続するたびに実行するコマンド
   "postAttachCommand": "echo 'Welcome to your dev container!'",
+
+  // コンテナ作成後に実行するコマンド
+  "postCreateCommand": "bash .devcontainer/post_create.sh",
 
   // VS Codeの設定
   "customizations": {
@@ -73,8 +76,8 @@
 
   // コンテナにインストールするパッケージ
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // "ghcr.io/devcontainers/features/git:1": {},
+    // "ghcr.io/devcontainers/features/github-cli:1": {},
     // Claude Code 公式のイメージ
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   }
