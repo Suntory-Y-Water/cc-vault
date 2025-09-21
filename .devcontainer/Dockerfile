@@ -1,6 +1,4 @@
-# Node.js 20の公式devcontainerイメージをベースに使用
-# このイメージには開発に必要な基本的なツールが含まれています
-FROM mcr.microsoft.com/devcontainers/javascript-node:20-bullseye
+FROM mcr.microsoft.com/devcontainers/javascript-node:20-bookworm
 
 # pnpmをグローバルにインストール (rootユーザーで実行)
 RUN npm install -g pnpm
