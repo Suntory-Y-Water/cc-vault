@@ -8,6 +8,9 @@ curl -fsSL https://bun.sh/install | bash
 echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
 echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc
 
+# Codex cliのインストール
+npm i -g @openai/codex
+
 echo "Installation completed!"
 
 # npmとnpxを使用させずpnpmを使うようにする設定
