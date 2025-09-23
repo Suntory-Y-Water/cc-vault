@@ -39,7 +39,14 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         <div className='flex flex-col'>
           {/* サイトバッジと投稿日時 */}
           <div className='flex items-center gap-3 mb-3'>
-            <Badge className='ai-themed-badge text-xs font-medium px-2 py-1 border-none'>
+            <Badge
+              style={{
+                backgroundColor: siteConfig.color,
+                color: 'white',
+                border: 'none',
+              }}
+              className='text-xs font-medium px-2 py-1'
+            >
               {siteConfig.displayName}
             </Badge>
             <span className='text-sm ai-themed-text opacity-70'>

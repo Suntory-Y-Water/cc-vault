@@ -107,9 +107,9 @@ export default async function RootLayout({
             aria-hidden
             style={gradientStyle}
           />
-          <Header branding={aiAgent.branding} />
+          <Header aiAgent={aiAgent} />
           <main className='flex-1'>{children}</main>
-          <Footer />
+          <Footer aiAgent={aiAgent} />
         </div>
       </body>
     </html>

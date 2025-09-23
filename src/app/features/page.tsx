@@ -32,8 +32,7 @@ export default async function FeaturesPage() {
     {
       icon: Search,
       title: '記事の自動収集',
-      description:
-        'Zenn、Qiitaなど複数のプラットフォームからClaudeCode関連記事を自動で収集します。',
+      description: `Zenn、Qiitaなど複数のプラットフォームから${aiAgent.name}関連記事を自動で収集します。`,
     },
     {
       icon: Filter,
@@ -75,7 +74,8 @@ export default async function FeaturesPage() {
           機能紹介
         </h1>
         <p className='text-lg text-[var(--ai-secondary)] max-w-2xl mx-auto'>
-          CC-VaultはClaudeCode関連の技術記事を効率的に収集・キュレーションし、
+          {aiAgent.branding.siteName}は{aiAgent.name}
+          関連の技術記事を効率的に収集・キュレーションし、
           最新のトレンドや人気記事を一箇所で確認できるプラットフォームです。
         </p>
       </div>
@@ -126,7 +126,8 @@ export default async function FeaturesPage() {
           今すぐ始めましょう
         </h2>
         <p className='text-lg text-[var(--ai-secondary)] mb-8 max-w-xl mx-auto'>
-          CC-VaultでClaudeCode関連の最新情報をキャッチアップし、技術トレンドを見逃すことなく学習を続けましょう。
+          {aiAgent.branding.siteName}で{aiAgent.name}
+          関連の最新情報をキャッチアップし、技術トレンドを見逃すことなく学習を続けましょう。
         </p>
         <Link
           href='/'

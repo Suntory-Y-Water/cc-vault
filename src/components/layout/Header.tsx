@@ -1,18 +1,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import SearchBox from '@/components/search/SearchBox';
+import type { AIAgent } from '@/config/ai-agents';
 
 type HeaderProps = {
-  branding: {
-    siteName: string;
-  };
+  aiAgent: AIAgent;
 };
 
 /**
  * 共通ヘッダーコンポーネント
  * テナントのブランディング情報を受け取り、テーマカラーとテキストを動的に適用する
  */
-export default function Header({ branding }: HeaderProps) {
+export default function Header({ aiAgent }: HeaderProps) {
+  const { branding } = aiAgent;
+
   return (
     <header
       className='sticky top-0 z-50 w-full border-b backdrop-blur-sm'
@@ -38,7 +39,7 @@ export default function Header({ branding }: HeaderProps) {
             </span>
           </div>
         </Link>
-        <SearchBox />
+        <SearchBox aiAgent={aiAgent} />
       </div>
     </header>
   );

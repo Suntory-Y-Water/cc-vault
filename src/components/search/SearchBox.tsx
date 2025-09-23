@@ -3,7 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { Input } from '@/components/ui/input';
+import type { AIAgent } from '@/config/ai-agents';
+import { buildThemeStyle } from '@/lib/utils';
+
+type SearchBoxProps = {
+  aiAgent: Pick<AIAgent, 'colors'>;
+};
+
+type SearchThemeVariables = CSSProperties &
+  Record<'--search-ring-color' | '--search-ring-offset', string>;
 
 /**
  * 検索ボックスコンポーネント
@@ -16,9 +26,15 @@ import { Input } from '@/components/ui/input';
  * - 検索実行時に適切な検索URLに遷移すること
  * - 空文字列の検索は実行しないこと
  */
-export default function SearchBox() {
+export default function SearchBox({ aiAgent }: SearchBoxProps) {
   const [query, setQuery] = useState('');
   const router = useRouter();
+  const { colors } = aiAgent;
+  const themeVariables: SearchThemeVariables = {
+    ...buildThemeStyle(colors),
+    '--search-ring-color': colors.primary,
+    '--search-ring-offset': colors.background,
+  };
 
   /**
    * 検索を実行する関数
@@ -65,7 +81,10 @@ export default function SearchBox() {
   }
 
   return (
-    <div className='relative w-full sm:w-auto sm:max-w-md'>
+    <div
+      className='relative w-full sm:w-auto sm:max-w-md'
+      style={themeVariables}
+    >
       <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400' />
       <Input
         type='text'
@@ -73,7 +92,7 @@ export default function SearchBox() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
-        className='w-full sm:min-w-[250px] pl-10'
+        className='w-full sm:min-w-[250px] pl-10 focus-visible:ring-[var(--search-ring-color)] focus-visible:ring-offset-[var(--search-ring-offset)]'
         maxLength={100}
       />
     </div>
