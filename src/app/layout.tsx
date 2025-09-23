@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { Inter } from 'next/font/google';
-import type React from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import './globals.css';
 import StructuredData from '@/components/common/StructuredData';
 import Header from '@/components/layout/Header';
@@ -67,23 +67,66 @@ export const metadata: Metadata = {
   },
 };
 
+function buildThemeStyle(colors: {
+  primary: string;
+  primaryHover: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  text: string;
+}): CSSProperties {
+  return {
+    '--ai-primary': colors.primary,
+    '--ai-primary-hover': colors.primaryHover,
+    '--ai-secondary': colors.secondary,
+    '--ai-accent': colors.accent,
+    '--ai-background': colors.background,
+    '--ai-text': colors.text,
+    backgroundColor: colors.background,
+    color: colors.text,
+  } as CSSProperties;
+}
+
+const shellStyle: CSSProperties = {
+  backgroundColor: 'var(--ai-background)',
+  color: 'var(--ai-text)',
+};
+
+const gradientStyle: CSSProperties = {
+  background:
+    'linear-gradient(to bottom right, color-mix(in srgb, var(--ai-text) 5%, transparent), transparent, color-mix(in srgb, var(--ai-accent) 5%, transparent))',
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   const requestHeaders = await headers();
   const host = requestHeaders?.get('host') ?? null;
   const aiAgent = resolveAIAgentFromHost({ host });
+  const themeStyle = buildThemeStyle(aiAgent.colors);
 
   return (
     <html lang='ja' data-ai-agent={aiAgent.id}>
-      <body className={inter.className} data-ai-agent={aiAgent.id}>
+      <body
+        className={inter.className}
+        data-ai-agent={aiAgent.id}
+        style={themeStyle}
+      >
         <StructuredData type='website' />
-        <div className='min-h-screen flex flex-col bg-[#FAF9F5] text-[#141413]'>
+        <div
+          className='min-h-screen flex flex-col'
+          data-ai-theme='shell'
+          style={shellStyle}
+        >
           {/* 背景グラデーション */}
-          <div className='absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-[#141413]/5 via-transparent to-[#E0DFDA]/5' />
-          <Header />
+          <div
+            className='absolute inset-0 -z-10 pointer-events-none'
+            aria-hidden
+            style={gradientStyle}
+          />
+          <Header branding={aiAgent.branding} />
           <main className='flex-1'>{children}</main>
           <Footer />
         </div>

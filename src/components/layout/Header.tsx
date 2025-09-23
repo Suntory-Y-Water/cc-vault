@@ -2,25 +2,47 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SearchBox from '@/components/search/SearchBox';
 
+type HeaderProps = {
+  branding: {
+    siteName: string;
+    tagline?: string;
+  };
+};
+
 /**
  * 共通ヘッダーコンポーネント
- * 全ページで使用される共通のヘッダー部分
+ * テナントのブランディング情報を受け取り、テーマカラーとテキストを動的に適用する
  */
-export default function Header() {
+export default function Header({ branding }: HeaderProps) {
   return (
-    <header className='sticky top-0 z-50 w-full border-b border-[#E0DFDA] bg-[#FAF9F5]/95 backdrop-blur-sm'>
+    <header
+      className='sticky top-0 z-50 w-full border-b backdrop-blur-sm'
+      data-ai-theme='surface'
+      style={{
+        backgroundColor:
+          'color-mix(in srgb, var(--ai-background) 95%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--ai-accent) 60%, transparent)',
+      }}
+    >
       <div className='max-w-[80rem] mx-auto px-4 flex h-16 items-center justify-between gap-4'>
-        <Link className='flex items-center gap-2 flex-shrink-0' href='/'>
+        <Link className='flex items-center gap-3 flex-shrink-0' href='/'>
           <Image
             src='/cc.svg'
-            alt='CC-Vault logo'
+            alt={`${branding.siteName} logo`}
             width={32}
             height={32}
             className='rounded-sm'
           />
-          <span className='text-lg sm:text-xl font-bold bg-gradient-to-r from-[#141413] to-[#141413]/80 bg-clip-text text-transparent'>
-            CC-Vault
-          </span>
+          <div className='flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2'>
+            <span className='text-lg sm:text-xl font-bold text-[color:var(--ai-text)]'>
+              {branding.siteName}
+            </span>
+            {branding.tagline ? (
+              <span className='text-xs sm:text-sm text-[color:color-mix(in srgb, var(--ai-text) 70%, transparent)]'>
+                {branding.tagline}
+              </span>
+            ) : null}
+          </div>
         </Link>
         <SearchBox />
       </div>

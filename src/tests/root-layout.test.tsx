@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { parseHTML } from 'linkedom';
 
 const headersMock = vi.fn();
+const headerPropsSpy = vi.fn();
 
 vi.mock('next/headers', () => ({
   headers: headersMock,
@@ -19,7 +20,19 @@ vi.mock('@/components/common/StructuredData', () => ({
 }));
 
 vi.mock('@/components/layout/Header', () => ({
-  default: () => <header data-testid='header' />,
+  __esModule: true,
+  default: (props: {
+    branding: { siteName: string; tagline?: string | undefined };
+  }) => {
+    headerPropsSpy(props);
+    return (
+      <header
+        data-testid='header'
+        data-site-name={props.branding.siteName}
+        data-tagline={props.branding.tagline ?? ''}
+      />
+    );
+  },
 }));
 
 vi.mock('@/components/layout/Footer', () => ({
@@ -34,29 +47,47 @@ function mockHeaders(host: string | null) {
   };
 }
 
+function extractBodyStyle(markup: string) {
+  const styleMatch = markup.match(/<body[^>]*style="([^"]*)"/);
+  return styleMatch ? styleMatch[1] : null;
+}
+
 describe('RootLayout', () => {
   beforeEach(() => {
     headersMock.mockReset();
+    headerPropsSpy.mockReset();
   });
 
-  it('ホスト名から識別されたAIエージェントをdata属性として適用する', async () => {
-    headersMock.mockReturnValue(mockHeaders('claude-code.example.com'));
+  it('ホスト名から識別されたAIエージェントテーマをdata属性とCSSカスタムプロパティで適用する', async () => {
+    headersMock.mockReturnValue(mockHeaders('codex.example.com'));
 
     const RootLayout = (await import('../app/layout')).default;
     const markup = renderToStaticMarkup(
       await RootLayout({ children: <div>content</div> }),
     );
     const { document } = parseHTML(markup);
+    const bodyStyle = extractBodyStyle(markup);
 
     expect(headersMock).toHaveBeenCalledOnce();
     expect(document.documentElement.getAttribute('data-ai-agent')).toBe(
-      'claude-code',
+      'codex',
     );
-    expect(document.documentElement.getAttribute('lang')).toBe('ja');
-    expect(document.body.className).toContain('mocked-inter');
+    expect(document.body.getAttribute('data-ai-agent')).toBe('codex');
+    expect(bodyStyle).toContain('--ai-primary');
+    expect(bodyStyle).toContain('#10b981');
+    expect(bodyStyle).toContain('--ai-background');
+    expect(bodyStyle).toContain('#f0fdf4');
+    expect(headerPropsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        branding: expect.objectContaining({
+          siteName: 'Codex Central',
+          tagline: 'コード生成AIの専門情報',
+        }),
+      }),
+    );
   });
 
-  it('サブドメインが解決できない場合でもデフォルトエージェントでフォールバックする', async () => {
+  it('サブドメインが解決できない場合でもデフォルトテーマとブランディングでフォールバックする', async () => {
     headersMock.mockReturnValue(mockHeaders(null));
 
     const RootLayout = (await import('../app/layout')).default;
@@ -64,9 +95,21 @@ describe('RootLayout', () => {
       await RootLayout({ children: <div>fallback</div> }),
     );
     const { document } = parseHTML(markup);
+    const bodyStyle = extractBodyStyle(markup);
 
     expect(document.documentElement.getAttribute('data-ai-agent')).toBe(
       'default',
+    );
+    expect(document.body.getAttribute('data-ai-agent')).toBe('default');
+    expect(bodyStyle).toContain('--ai-primary');
+    expect(bodyStyle).toContain('#DB8163');
+    expect(headerPropsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        branding: expect.objectContaining({
+          siteName: 'CC-Vault',
+          tagline: '技術記事のキュレーション',
+        }),
+      }),
     );
   });
 
