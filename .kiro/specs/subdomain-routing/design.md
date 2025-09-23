@@ -100,7 +100,6 @@ type AIAgent = {
   contentFilter: string[];
   branding: {
     siteName: string;
-    tagline?: string;
   };
 };
 

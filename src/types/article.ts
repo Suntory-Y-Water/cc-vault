@@ -135,6 +135,7 @@ export type ArticlePaginationParams = {
   limit: number;
   site?: SiteType;
   order?: SortOrder;
+  aiAgent?: AIAgentType;
 };
 /**
  * 検索機能用のパラメータ型定義

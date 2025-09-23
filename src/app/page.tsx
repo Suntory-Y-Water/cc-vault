@@ -1,6 +1,8 @@
+import { headers } from 'next/headers';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getArticlesWithPagination } from '@/lib/cloudflare';
 import { SiteType, SortOrder, SITE_NAMES, SORT_ORDERS } from '@/types';
+import { resolveAIAgentFromHost } from '@/config/ai-agents';
 import SiteFilter from '@/components/layout/SiteFilter';
 import MainTabs from '@/components/layout/MainTabs';
 import ArticleList from '@/components/article/ArticleList';
@@ -22,6 +24,11 @@ type Props = {
  */
 export default async function HomePage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
+
+  // AIエージェント識別
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
+  const aiAgent = resolveAIAgentFromHost({ host });
 
   // 公式推奨: 分割代入とデフォルト値を使用
   const {
@@ -54,6 +61,7 @@ export default async function HomePage({ searchParams }: Props) {
     limit,
     site,
     order,
+    aiAgent: aiAgent.id === 'default' ? 'all' : aiAgent.id,
   });
 
   return (
@@ -62,10 +70,10 @@ export default async function HomePage({ searchParams }: Props) {
         <div className='flex flex-col gap-4'>
           <div>
             <h1 className='text-4xl md:text-6xl font-extrabold tracking-tight text-[#141413]'>
-              CC-Vault
+              {aiAgent.branding.siteName}
             </h1>
             <p className='mt-5 text-lg text-[#7D4A38]'>
-              Claude Code中心の技術トレンドをまとめてチェック
+              {aiAgent.name}中心の技術トレンドをまとめてチェック
             </p>
           </div>
           <div className='flex-shrink-0'>

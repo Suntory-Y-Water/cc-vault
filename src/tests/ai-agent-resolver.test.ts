@@ -13,16 +13,18 @@ import {
 describe('AIエージェント解決システム', () => {
   describe('resolveAIAgentFromHost', () => {
     it('有効なサブドメインの場合、対応するAIエージェント設定を返すべき', () => {
-      // Claude Code サブドメインのテスト
+      // Claude Code サブドメインのテスト（デフォルトベースドメインを使用）
       const claudeCodeAgent = resolveAIAgentFromHost({
-        host: 'claude-code.example.com',
+        host: 'claude-code.agents-vault.com',
       });
       expect(claudeCodeAgent.id).toBe('claude-code');
       expect(claudeCodeAgent.name).toBe('Claude Code');
       expect(claudeCodeAgent.branding.siteName).toBe('Claude Code Hub');
 
       // Codex サブドメインのテスト
-      const codexAgent = resolveAIAgentFromHost({ host: 'codex.example.com' });
+      const codexAgent = resolveAIAgentFromHost({
+        host: 'codex.agents-vault.com',
+      });
       expect(codexAgent.id).toBe('codex');
       expect(codexAgent.name).toBe('Codex');
       expect(codexAgent.branding.siteName).toBe('Codex Central');
@@ -30,14 +32,14 @@ describe('AIエージェント解決システム', () => {
 
     it('未知のサブドメインの場合、デフォルトエージェントを返すべき', () => {
       const unknownAgent = resolveAIAgentFromHost({
-        host: 'unknown.example.com',
+        host: 'unknown.agents-vault.com',
       });
       expect(unknownAgent.id).toBe('default');
       expect(unknownAgent.name).toBe('CC-Vault');
     });
 
     it('サブドメインなしのホスト名の場合、デフォルトエージェントを返すべき', () => {
-      const directAgent = resolveAIAgentFromHost({ host: 'example.com' });
+      const directAgent = resolveAIAgentFromHost({ host: 'agents-vault.com' });
       expect(directAgent.id).toBe('default');
     });
 
@@ -49,7 +51,7 @@ describe('AIエージェント解決システム', () => {
       expect(emptyAgent.id).toBe('default');
     });
 
-    it('ローカル開発環境の場合、デフォルトエージェントを返すべき', () => {
+    it('ローカル開発環境のlocalhost（サブドメインなし）の場合、デフォルトエージェントを返すべき', () => {
       const localhostAgent = resolveAIAgentFromHost({ host: 'localhost:3000' });
       expect(localhostAgent.id).toBe('default');
 
@@ -57,22 +59,63 @@ describe('AIエージェント解決システム', () => {
       expect(ipAgent.id).toBe('default');
     });
 
+    it('ローカル開発環境で*.localhostサブドメインの場合、対応するエージェントを返すべき', () => {
+      // Claude Code サブドメインのテスト
+      const claudeCodeAgent = resolveAIAgentFromHost({
+        host: 'claude-code.localhost:3000',
+      });
+      expect(claudeCodeAgent.id).toBe('claude-code');
+      expect(claudeCodeAgent.branding.siteName).toBe('Claude Code Hub');
+
+      // Codex サブドメインのテスト
+      const codexAgent = resolveAIAgentFromHost({
+        host: 'codex.localhost:3000',
+      });
+      expect(codexAgent.id).toBe('codex');
+      expect(codexAgent.branding.siteName).toBe('Codex Central');
+
+      // ポート番号なしでも動作すること
+      const claudeCodeNoPort = resolveAIAgentFromHost({
+        host: 'claude-code.localhost',
+      });
+      expect(claudeCodeNoPort.id).toBe('claude-code');
+    });
+
+    it('ローカル開発環境で未知のサブドメインの場合、デフォルトエージェントを返すべき', () => {
+      const unknownAgent = resolveAIAgentFromHost({
+        host: 'unknown-agent.localhost:3000',
+      });
+      expect(unknownAgent.id).toBe('default');
+    });
+
+    it('ローカル開発環境で無効なサブドメイン名の場合、デフォルトエージェントを返すべき', () => {
+      const invalidAgent = resolveAIAgentFromHost({
+        host: '-invalid.localhost:3000',
+      });
+      expect(invalidAgent.id).toBe('default');
+
+      const invalidAgent2 = resolveAIAgentFromHost({
+        host: 'invalid-.localhost:3000',
+      });
+      expect(invalidAgent2.id).toBe('default');
+    });
+
     it('ホスト名検証とサニタイゼーションが適切に動作すべき', () => {
       // 不正な文字を含むホスト名
       const maliciousAgent = resolveAIAgentFromHost({
-        host: 'claude-code.<script>alert(1)</script>.com',
+        host: 'claude-code.<script>alert(1)</script>.agents-vault.com',
       });
       expect(maliciousAgent.id).toBe('default');
 
       // 非常に長いホスト名
-      const longHostname = 'a'.repeat(1000) + '.example.com';
+      const longHostname = 'a'.repeat(1000) + '.agents-vault.com';
       const longHostAgent = resolveAIAgentFromHost({ host: longHostname });
       expect(longHostAgent.id).toBe('default');
     });
 
     it('ポート番号が含まれるホスト名でも正しく動作すべき', () => {
       const portAgent = resolveAIAgentFromHost({
-        host: 'claude-code.example.com:8080',
+        host: 'claude-code.agents-vault.com:8080',
       });
       expect(portAgent.id).toBe('claude-code');
     });
@@ -122,9 +165,9 @@ describe('AIエージェント解決システム', () => {
   describe('セキュリティ要件', () => {
     it('XSS攻撃を含むホスト名に対して安全に動作すべき', () => {
       const xssHosts = [
-        'javascript:alert(1).example.com',
-        'data:text/html,<script>alert(1)</script>.example.com',
-        '<img src=x onerror=alert(1)>.example.com',
+        'javascript:alert(1).agents-vault.com',
+        'data:text/html,<script>alert(1)</script>.agents-vault.com',
+        '<img src=x onerror=alert(1)>.agents-vault.com',
       ];
 
       xssHosts.forEach((host) => {
@@ -135,8 +178,8 @@ describe('AIエージェント解決システム', () => {
 
     it('SQLインジェクション攻撃を含むホスト名に対して安全に動作すべき', () => {
       const sqlInjectionHosts = [
-        "'; DROP TABLE users; --.example.com",
-        '1 OR 1=1.example.com',
+        "'; DROP TABLE users; --.agents-vault.com",
+        '1 OR 1=1.agents-vault.com',
         "admin'; --",
       ];
 
@@ -148,8 +191,8 @@ describe('AIエージェント解決システム', () => {
 
     it('パストラバーサル攻撃を含むホスト名に対して安全に動作すべき', () => {
       const pathTraversalHosts = [
-        '../../../etc/passwd.example.com',
-        '..\\..\\windows\\system32\\cmd.exe.example.com',
+        '../../../etc/passwd.agents-vault.com',
+        '..\\..\\windows\\system32\\cmd.exe.agents-vault.com',
       ];
 
       pathTraversalHosts.forEach((host) => {

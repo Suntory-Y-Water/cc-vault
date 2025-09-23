@@ -28,12 +28,26 @@ export async function getArticlesWithPagination(
 ): Promise<PaginatedArticles> {
   try {
     const drizzleDB = drizzle(db);
-    const { page, limit, site, order } = params;
+    const { page, limit, site, order, aiAgent } = params;
     const offset = (page - 1) * limit;
 
     // WHERE条件の構築
+    const whereConditions = [];
+
+    if (site && site !== 'all') {
+      whereConditions.push(eq(articles.site, site));
+    }
+
+    if (aiAgent && aiAgent !== 'all') {
+      whereConditions.push(eq(articles.aiAgent, aiAgent));
+    }
+
     const whereCondition =
-      site && site !== 'all' ? eq(articles.site, site) : undefined;
+      whereConditions.length > 0
+        ? whereConditions.length === 1
+          ? whereConditions[0]
+          : and(...whereConditions)
+        : undefined;
 
     // ORDER BY条件の構築
     const orderCondition =
@@ -119,7 +133,7 @@ export async function fetchArticlesByTitle(params: {
 }): Promise<PaginatedArticles> {
   const {
     db,
-    searchParams: { page, limit, site, order, query },
+    searchParams: { page, limit, site, order, query, aiAgent },
   } = params;
 
   if (page < 1) {
@@ -139,6 +153,11 @@ export async function fetchArticlesByTitle(params: {
     // サイトフィルタ
     if (site && site !== 'all') {
       conditions.push(eq(articles.site, site));
+    }
+
+    // AIエージェントフィルタ
+    if (aiAgent && aiAgent !== 'all') {
+      conditions.push(eq(articles.aiAgent, aiAgent));
     }
 
     // 検索条件（タイトルのLIKE検索、大文字小文字区別なし）

@@ -18,7 +18,6 @@ export type AIAgent = {
   contentFilter: string[];
   branding: {
     siteName: string;
-    tagline?: string;
   };
 };
 
@@ -42,7 +41,6 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     contentFilter: [],
     branding: {
       siteName: 'CC-Vault',
-      tagline: '技術記事のキュレーション',
     },
   },
   'claude-code': {
@@ -59,14 +57,13 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     },
     contentFilter: ['claude', 'anthropic', 'ai-coding'],
     branding: {
-      siteName: 'Claude Code Hub',
-      tagline: 'AIアシスタントコーディングの最前線',
+      siteName: 'CC-Vault',
     },
   },
   codex: {
     id: 'codex',
     name: 'Codex',
-    description: 'OpenAI Codexとコード生成AIに関する技術情報',
+    description: 'Claude Codeに関する技術記事とリソースのキュレーション',
     colors: {
       primary: '#10b981', // エメラルドグリーン系
       primaryHover: '#059669', // より濃いグリーン
@@ -77,8 +74,7 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     },
     contentFilter: ['codex', 'openai', 'code-generation'],
     branding: {
-      siteName: 'Codex Central',
-      tagline: 'コード生成AIの専門情報',
+      siteName: 'Codex-Vault',
     },
   },
 };
@@ -94,11 +90,11 @@ const SECURITY_CONSTANTS = {
   MALICIOUS_PATTERNS: [
     /javascript:/i,
     /data:/i,
-    /<[^>]*>/,  // HTMLタグ
-    /['";]/,    // SQL注入攻撃の可能性
-    /\.\./,     // パストラバーサル
-    /[\\]/      // バックスラッシュ
-  ]
+    /<[^>]*>/, // HTMLタグ
+    /['";]/, // SQL注入攻撃の可能性
+    /\.\./, // パストラバーサル
+    /[\\]/, // バックスラッシュ
+  ],
 } as const;
 
 /**
@@ -117,7 +113,9 @@ function isValidHostname(host: string): boolean {
   if (host.length > SECURITY_CONSTANTS.MAX_HOSTNAME_LENGTH) return false;
 
   // 不正なパターンを検出
-  return !SECURITY_CONSTANTS.MALICIOUS_PATTERNS.some(pattern => pattern.test(host));
+  return !SECURITY_CONSTANTS.MALICIOUS_PATTERNS.some((pattern) =>
+    pattern.test(host),
+  );
 }
 
 /**
@@ -125,7 +123,11 @@ function isValidHostname(host: string): boolean {
  */
 function isValidSubdomain(subdomain: string): boolean {
   // サブドメインの基本的な検証
-  if (!subdomain || subdomain.length === 0 || subdomain.length > SECURITY_CONSTANTS.MAX_SUBDOMAIN_LENGTH) {
+  if (
+    !subdomain ||
+    subdomain.length === 0 ||
+    subdomain.length > SECURITY_CONSTANTS.MAX_SUBDOMAIN_LENGTH
+  ) {
     return false;
   }
 
@@ -134,7 +136,8 @@ function isValidSubdomain(subdomain: string): boolean {
 }
 
 /**
- * ホスト名からサブドメインを抽出する
+ * ホスト名からサブドメインを抽出する関数
+ * ローカル開発環境（*.localhost）と本番環境の両方に対応
  */
 function extractSubdomain(host: string | null): string | null {
   if (!host) return null;
@@ -145,26 +148,35 @@ function extractSubdomain(host: string | null): string | null {
   // ホスト名をサニタイズ
   const sanitizedHost = sanitizeHostname(host);
 
-  // ローカル開発環境の場合
-  if (sanitizedHost.includes('localhost') || sanitizedHost.includes('127.0.0.1')) {
-    return null;
-  }
-
   // ポート番号を除去
   const hostWithoutPort = sanitizedHost.split(':')[0];
 
-  // サブドメインを抽出
-  const parts = hostWithoutPort.split('.');
-  if (parts.length < 3) return null;
+  return getSubdomain(hostWithoutPort);
+}
 
-  const subdomain = parts[0];
+/**
+ * サブドメインを抽出する関数
+ * ローカル開発環境と本番環境の両方に対応
+ */
+function getSubdomain(hostRaw: string): string | null {
+  const BASE = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? 'agents-vault.com';
 
-  // サブドメインの追加検証
-  if (!isValidSubdomain(subdomain)) {
-    return null;
+  const host = hostRaw.split(':')[0];
+
+  // ローカル開発環境での対応
+  if (host === 'localhost') return null;
+  if (host.endsWith('.localhost')) {
+    const subdomain = host.slice(0, -'.localhost'.length);
+    return isValidSubdomain(subdomain) ? subdomain : null;
   }
 
-  return subdomain;
+  // 本番環境での対応
+  if (host.endsWith('.' + BASE)) {
+    const subdomain = host.slice(0, -('.' + BASE).length);
+    return isValidSubdomain(subdomain) ? subdomain : null;
+  }
+
+  return null;
 }
 
 /**

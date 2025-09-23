@@ -5,7 +5,6 @@ import SearchBox from '@/components/search/SearchBox';
 type HeaderProps = {
   branding: {
     siteName: string;
-    tagline?: string;
   };
 };
 
@@ -37,11 +36,6 @@ export default function Header({ branding }: HeaderProps) {
             <span className='text-lg sm:text-xl font-bold text-[color:var(--ai-text)]'>
               {branding.siteName}
             </span>
-            {branding.tagline ? (
-              <span className='text-xs sm:text-sm text-[color:color-mix(in srgb, var(--ai-text) 70%, transparent)]'>
-                {branding.tagline}
-              </span>
-            ) : null}
           </div>
         </Link>
         <SearchBox />

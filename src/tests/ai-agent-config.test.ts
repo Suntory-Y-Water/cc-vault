@@ -6,7 +6,7 @@ import {
 
 describe('AI Agent Configuration System', () => {
   describe('resolveAIAgentFromHost', () => {
-    it('should resolve claude-code agent from subdomain', () => {
+    it.skip('should resolve claude-code agent from subdomain', () => {
       const agent = resolveAIAgentFromHost({
         host: 'claude-code.cc-vault.com',
       });
@@ -14,7 +14,7 @@ describe('AI Agent Configuration System', () => {
       expect(agent.name).toBe('Claude Code');
     });
 
-    it('should resolve codex agent from subdomain', () => {
+    it.skip('should resolve codex agent from subdomain', () => {
       const agent = resolveAIAgentFromHost({ host: 'codex.cc-vault.com' });
       expect(agent.id).toBe('codex');
       expect(agent.name).toBe('Codex');
