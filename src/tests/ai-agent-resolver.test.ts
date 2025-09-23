@@ -4,13 +4,19 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { resolveAIAgentFromHost, getAIAgentConfig, type AIAgent } from '../config/ai-agents';
+import {
+  resolveAIAgentFromHost,
+  getAIAgentConfig,
+  type AIAgent,
+} from '../config/ai-agents';
 
 describe('AIエージェント解決システム', () => {
   describe('resolveAIAgentFromHost', () => {
     it('有効なサブドメインの場合、対応するAIエージェント設定を返すべき', () => {
       // Claude Code サブドメインのテスト
-      const claudeCodeAgent = resolveAIAgentFromHost({ host: 'claude-code.example.com' });
+      const claudeCodeAgent = resolveAIAgentFromHost({
+        host: 'claude-code.example.com',
+      });
       expect(claudeCodeAgent.id).toBe('claude-code');
       expect(claudeCodeAgent.name).toBe('Claude Code');
       expect(claudeCodeAgent.branding.siteName).toBe('Claude Code Hub');
@@ -23,7 +29,9 @@ describe('AIエージェント解決システム', () => {
     });
 
     it('未知のサブドメインの場合、デフォルトエージェントを返すべき', () => {
-      const unknownAgent = resolveAIAgentFromHost({ host: 'unknown.example.com' });
+      const unknownAgent = resolveAIAgentFromHost({
+        host: 'unknown.example.com',
+      });
       expect(unknownAgent.id).toBe('default');
       expect(unknownAgent.name).toBe('CC-Vault');
     });
@@ -51,7 +59,9 @@ describe('AIエージェント解決システム', () => {
 
     it('ホスト名検証とサニタイゼーションが適切に動作すべき', () => {
       // 不正な文字を含むホスト名
-      const maliciousAgent = resolveAIAgentFromHost({ host: 'claude-code.<script>alert(1)</script>.com' });
+      const maliciousAgent = resolveAIAgentFromHost({
+        host: 'claude-code.<script>alert(1)</script>.com',
+      });
       expect(maliciousAgent.id).toBe('default');
 
       // 非常に長いホスト名
@@ -61,7 +71,9 @@ describe('AIエージェント解決システム', () => {
     });
 
     it('ポート番号が含まれるホスト名でも正しく動作すべき', () => {
-      const portAgent = resolveAIAgentFromHost({ host: 'claude-code.example.com:8080' });
+      const portAgent = resolveAIAgentFromHost({
+        host: 'claude-code.example.com:8080',
+      });
       expect(portAgent.id).toBe('claude-code');
     });
   });
@@ -85,7 +97,7 @@ describe('AIエージェント解決システム', () => {
     it('すべてのエージェント設定が必要なプロパティを持つべき', () => {
       const agents: AIAgent['id'][] = ['default', 'claude-code', 'codex'];
 
-      agents.forEach(agentId => {
+      agents.forEach((agentId) => {
         const config = getAIAgentConfig({ agentId });
 
         // 基本プロパティの確認
@@ -112,10 +124,10 @@ describe('AIエージェント解決システム', () => {
       const xssHosts = [
         'javascript:alert(1).example.com',
         'data:text/html,<script>alert(1)</script>.example.com',
-        '<img src=x onerror=alert(1)>.example.com'
+        '<img src=x onerror=alert(1)>.example.com',
       ];
 
-      xssHosts.forEach(host => {
+      xssHosts.forEach((host) => {
         const agent = resolveAIAgentFromHost({ host });
         expect(agent.id).toBe('default');
       });
@@ -125,10 +137,10 @@ describe('AIエージェント解決システム', () => {
       const sqlInjectionHosts = [
         "'; DROP TABLE users; --.example.com",
         '1 OR 1=1.example.com',
-        'admin\'; --'
+        "admin'; --",
       ];
 
-      sqlInjectionHosts.forEach(host => {
+      sqlInjectionHosts.forEach((host) => {
         const agent = resolveAIAgentFromHost({ host });
         expect(agent.id).toBe('default');
       });
@@ -137,10 +149,10 @@ describe('AIエージェント解決システム', () => {
     it('パストラバーサル攻撃を含むホスト名に対して安全に動作すべき', () => {
       const pathTraversalHosts = [
         '../../../etc/passwd.example.com',
-        '..\\..\\windows\\system32\\cmd.exe.example.com'
+        '..\\..\\windows\\system32\\cmd.exe.example.com',
       ];
 
-      pathTraversalHosts.forEach(host => {
+      pathTraversalHosts.forEach((host) => {
         const agent = resolveAIAgentFromHost({ host });
         expect(agent.id).toBe('default');
       });

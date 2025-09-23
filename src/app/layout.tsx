@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Inter } from 'next/font/google';
 import type React from 'react';
 import './globals.css';
-import { siteConfig } from '@/config/site';
 import StructuredData from '@/components/common/StructuredData';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { siteConfig } from '@/config/site';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -65,14 +67,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
+  const aiAgent = resolveAIAgentFromHost({ host });
+
   return (
-    <html lang='ja'>
-      <body className={inter.className}>
+    <html lang='ja' data-ai-agent={aiAgent.id}>
+      <body className={inter.className} data-ai-agent={aiAgent.id}>
         <StructuredData type='website' />
         <div className='min-h-screen flex flex-col bg-[#FAF9F5] text-[#141413]'>
           {/* 背景グラデーション */}
