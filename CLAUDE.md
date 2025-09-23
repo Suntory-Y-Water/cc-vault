@@ -16,6 +16,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 
 ### Active Specifications
 - `subdomain-routing`: AIエージェント用マルチテナント・サブドメインルーティングシステム
+- `subdomain-theming-completion`: サブドメインテーマシステムの完成・残課題対応
 - Check `.kiro/specs/` for active specifications
 - Use `/kiro:spec-status [feature-name]` to check progress
 
