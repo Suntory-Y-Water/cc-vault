@@ -289,6 +289,7 @@ export async function fetchTopArticles({
           author: articles.author,
           published_at: articles.publishedAt,
           site: articles.site,
+          ai_agent: articles.aiAgent,
           likes: articles.likes,
           bookmarks: articles.bookmarks,
         })

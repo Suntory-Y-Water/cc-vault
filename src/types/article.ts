@@ -6,6 +6,11 @@
  * サイト名の定数定義
  */
 export const SITE_VALUES = ['qiita', 'zenn', 'hatena'] as const;
+
+/**
+ * AIエージェントの定数定義
+ */
+export const AI_AGENT_VALUES = ['claude-code', 'codex', 'all'] as const;
 export const SITE_NAMES = {
   all: 'all',
   qiita: 'qiita',
@@ -38,6 +43,11 @@ export type SiteValueType = (typeof SITE_VALUES)[number]; // "qiita" | "zenn" | 
  * UI用のサイト名型定義（"all"を含む）
  */
 export type SiteType = SiteValueType | 'all'; // "qiita" | "zenn" | "hatena" | "all"
+
+/**
+ * AIエージェント型定義
+ */
+export type AIAgentType = (typeof AI_AGENT_VALUES)[number]; // "claude-code" | "codex" | "all"
 
 /**
  * ソート順の型定義
@@ -103,6 +113,7 @@ export type ArticleRow = {
   site: SiteValueType;
   likes: number;
   bookmarks: number;
+  ai_agent: AIAgentType;
 };
 
 /**
