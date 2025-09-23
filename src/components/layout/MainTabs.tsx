@@ -52,7 +52,7 @@ export default function MainTabs({ order, currentSearchParams }: Props) {
 
   return (
     <Tabs value={currentTab}>
-      <TabsList className='grid w-full grid-cols-2 bg-[#E0DFDA] rounded-lg p-1'>
+      <TabsList className='ai-themed-tabs-list grid w-full grid-cols-2 rounded-lg p-1'>
         <TabsTrigger value='new' asChild>
           <Link
             href={createSortUrl(
@@ -61,7 +61,7 @@ export default function MainTabs({ order, currentSearchParams }: Props) {
               currentSearchParams.q,
             )}
             prefetch={true}
-            className='data-[state=active]:bg-[#FAF9F5] data-[state=active]:text-[#141413] text-[#141413] font-medium w-full cursor-pointer flex items-center justify-center'
+            className='ai-themed-tabs-trigger font-medium w-full cursor-pointer flex items-center justify-center'
           >
             新着
           </Link>
@@ -74,7 +74,7 @@ export default function MainTabs({ order, currentSearchParams }: Props) {
               currentSearchParams.q,
             )}
             prefetch={true}
-            className='data-[state=active]:bg-[#FAF9F5] data-[state=active]:text-[#141413] text-[#141413] font-medium w-full cursor-pointer flex items-center justify-center'
+            className='ai-themed-tabs-trigger font-medium w-full cursor-pointer flex items-center justify-center'
           >
             トレンド
           </Link>

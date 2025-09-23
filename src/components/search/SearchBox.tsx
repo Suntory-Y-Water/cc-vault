@@ -92,7 +92,7 @@ export default function SearchBox({ aiAgent }: SearchBoxProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
-        className='w-full sm:min-w-[250px] pl-10 focus-visible:ring-[var(--search-ring-color)] focus-visible:ring-offset-[var(--search-ring-offset)]'
+        className='ai-themed-input w-full sm:min-w-[250px] pl-10 focus-visible:ring-[var(--search-ring-color)] focus-visible:ring-offset-[var(--search-ring-offset)]'
         maxLength={100}
       />
     </div>

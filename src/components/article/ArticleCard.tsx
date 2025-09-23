@@ -34,7 +34,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
   };
 
   return (
-    <Card className='ai-themed-bg ai-themed-border hover:shadow-lg transition-shadow duration-200'>
+    <Card className='ai-themed-card hover:shadow-lg transition-shadow duration-200'>
       <CardContent className='p-6'>
         <div className='flex flex-col'>
           {/* サイトバッジと投稿日時 */}

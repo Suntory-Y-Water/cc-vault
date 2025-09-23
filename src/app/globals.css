@@ -112,12 +112,12 @@
 
   /* Codex エージェント */
   [data-ai-agent="codex"] {
-    --ai-primary: #4a90e2;
-    --ai-primary-hover: #357abd;
-    --ai-secondary: #2c3e50;
-    --ai-accent: #e74c3c;
-    --ai-background: #ecf0f1;
-    --ai-text: #2c3e50;
+    --ai-primary: #333333;
+    --ai-primary-hover: #555555;
+    --ai-secondary: #666666;
+    --ai-accent: #333333;
+    --ai-background: #FAFAFA;
+    --ai-text: #1a1a1a;
   }
 
   [data-ai-agent="codex"] .ai-themed-button {
@@ -169,5 +169,40 @@
 
   .ai-themed-accent {
     color: var(--ai-accent);
+  }
+
+  /* shadcn/ui コンポーネント用のAIテーマ対応 */
+  .ai-themed-card {
+    background-color: var(--ai-background);
+    border-color: color-mix(in srgb, var(--ai-accent) 30%, transparent);
+    color: var(--ai-text);
+  }
+
+  .ai-themed-input {
+    background-color: var(--ai-background);
+    border-color: color-mix(in srgb, var(--ai-accent) 50%, transparent);
+    color: var(--ai-text);
+  }
+
+  .ai-themed-input::placeholder {
+    color: color-mix(in srgb, var(--ai-text) 50%, transparent);
+  }
+
+  .ai-themed-tabs-list {
+    background-color: color-mix(
+      in srgb,
+      var(--ai-primary) 10%,
+      var(--ai-background)
+    );
+  }
+
+  .ai-themed-tabs-trigger {
+    color: var(--ai-text);
+  }
+
+  .ai-themed-tabs-trigger[data-state="active"] {
+    background-color: var(--ai-background);
+    color: var(--ai-text);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 }

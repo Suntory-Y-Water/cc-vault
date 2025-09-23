@@ -65,12 +65,12 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     name: 'Codex',
     description: 'Claude Codeに関する技術記事とリソースのキュレーション',
     colors: {
-      primary: '#10b981', // エメラルドグリーン系
-      primaryHover: '#059669', // より濃いグリーン
-      secondary: '#065f46', // ダークグリーン
-      accent: '#10b981', // border色
-      background: '#f0fdf4', // 薄いグリーン背景
-      text: '#141413', // 統一テキスト色
+      primary: '#333333', // ベースカラー（ダークグレー）
+      primaryHover: '#555555', // ホバー時の明るいグレー
+      secondary: '#666666', // セカンダリカラー（ミディアムグレー）
+      accent: '#333333', // border色等
+      background: '#FAFAFA', // 背景色（白に近いライトグレー）
+      text: '#1a1a1a', // テキスト色（濃いグレー）
     },
     contentFilter: ['codex', 'openai', 'code-generation'],
     branding: {
