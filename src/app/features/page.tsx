@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Search,
@@ -9,6 +10,8 @@ import {
   Clock,
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { buildThemeStyle } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: '機能紹介 - CC-Vault',
@@ -19,7 +22,12 @@ export const metadata: Metadata = {
 /**
  * 機能紹介ページコンポーネント
  */
-export default function FeaturesPage() {
+export default async function FeaturesPage() {
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
+  const aiAgent = resolveAIAgentFromHost({ host });
+  const themeStyles = buildThemeStyle(aiAgent.colors);
+
   const features = [
     {
       icon: Search,
@@ -60,13 +68,13 @@ export default function FeaturesPage() {
   ];
 
   return (
-    <div className='max-w-[80rem] mx-auto px-4 py-12'>
+    <div className='max-w-[80rem] mx-auto px-4 py-12' style={themeStyles}>
       {/* ページタイトル */}
       <div className='text-center mb-12'>
-        <h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-[#141413] mb-6'>
+        <h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-[var(--ai-text)] mb-6'>
           機能紹介
         </h1>
-        <p className='text-lg text-[#7D4A38] max-w-2xl mx-auto'>
+        <p className='text-lg text-[var(--ai-secondary)] max-w-2xl mx-auto'>
           CC-VaultはClaudeCode関連の技術記事を効率的に収集・キュレーションし、
           最新のトレンドや人気記事を一箇所で確認できるプラットフォームです。
         </p>
@@ -80,18 +88,24 @@ export default function FeaturesPage() {
             <Card
               // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={index}
-              className='bg-[#FAF9F5] border-[#DB8163] hover:shadow-lg transition-shadow duration-200'
+              className='ai-themed-bg ai-themed-border hover:shadow-lg transition-shadow duration-200'
             >
               <CardContent className='p-6'>
                 <div className='flex items-center gap-4 mb-4'>
-                  <div className='p-3 bg-[#DB8163]/10 rounded-lg'>
-                    <IconComponent className='w-6 h-6 text-[#DB8163]' />
+                  <div
+                    className='p-3 rounded-lg'
+                    style={{
+                      backgroundColor:
+                        'color-mix(in srgb, var(--ai-primary) 15%, transparent)',
+                    }}
+                  >
+                    <IconComponent className='w-6 h-6 text-[var(--ai-primary)]' />
                   </div>
-                  <h3 className='text-xl font-semibold text-[#141413]'>
+                  <h3 className='text-xl font-semibold text-[var(--ai-text)]'>
                     {feature.title}
                   </h3>
                 </div>
-                <p className='text-[#141413] opacity-70 leading-relaxed'>
+                <p className='text-[var(--ai-text)] opacity-70 leading-relaxed'>
                   {feature.description}
                 </p>
               </CardContent>
@@ -101,16 +115,22 @@ export default function FeaturesPage() {
       </div>
 
       {/* CTA セクション */}
-      <div className='text-center bg-[#DB8163]/5 rounded-lg p-12'>
-        <h2 className='text-3xl font-bold text-[#141413] mb-6'>
+      <div
+        className='text-center rounded-lg p-12'
+        style={{
+          backgroundColor:
+            'color-mix(in srgb, var(--ai-accent) 10%, transparent)',
+        }}
+      >
+        <h2 className='text-3xl font-bold text-[var(--ai-text)] mb-6'>
           今すぐ始めましょう
         </h2>
-        <p className='text-lg text-[#7D4A38] mb-8 max-w-xl mx-auto'>
+        <p className='text-lg text-[var(--ai-secondary)] mb-8 max-w-xl mx-auto'>
           CC-VaultでClaudeCode関連の最新情報をキャッチアップし、技術トレンドを見逃すことなく学習を続けましょう。
         </p>
         <Link
           href='/'
-          className='inline-flex items-center gap-2 px-8 py-3 text-lg font-medium text-white bg-[#DB8163] rounded-md hover:bg-[#D97757] transition-colors duration-200'
+          className='inline-flex items-center gap-2 px-8 py-3 text-lg font-medium text-white bg-[var(--ai-primary)] rounded-md hover:bg-[var(--ai-primary-hover)] transition-colors duration-200'
         >
           記事を見る
         </Link>

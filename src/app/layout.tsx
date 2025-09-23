@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { resolveAIAgentFromHost } from '@/config/ai-agents';
 import { siteConfig } from '@/config/site';
+import { buildThemeStyle } from '@/lib/utils';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -66,26 +67,6 @@ export const metadata: Metadata = {
     },
   },
 };
-
-function buildThemeStyle(colors: {
-  primary: string;
-  primaryHover: string;
-  secondary: string;
-  accent: string;
-  background: string;
-  text: string;
-}): CSSProperties {
-  return {
-    '--ai-primary': colors.primary,
-    '--ai-primary-hover': colors.primaryHover,
-    '--ai-secondary': colors.secondary,
-    '--ai-accent': colors.accent,
-    '--ai-background': colors.background,
-    '--ai-text': colors.text,
-    backgroundColor: colors.background,
-    color: colors.text,
-  } as CSSProperties;
-}
 
 const shellStyle: CSSProperties = {
   backgroundColor: 'var(--ai-background)',

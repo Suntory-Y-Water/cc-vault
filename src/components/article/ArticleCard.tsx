@@ -17,6 +17,7 @@ type ArticleCardProps = {
  * - ai-themed-border: エージェント別ボーダー色
  * - ai-themed-text: エージェント別テキスト色
  * - ai-themed-button: エージェント別ボタンスタイル
+ * - ai-themed-badge: エージェント別バッジスタイル
  */
 export default function ArticleCard({ article }: ArticleCardProps) {
   const siteConfig = SITE_CONFIGS[article.site];
@@ -38,14 +39,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
         <div className='flex flex-col'>
           {/* サイトバッジと投稿日時 */}
           <div className='flex items-center gap-3 mb-3'>
-            <Badge
-              style={{
-                backgroundColor: siteConfig.color,
-                color: 'white',
-                border: 'none',
-              }}
-              className='text-xs font-medium px-2 py-1'
-            >
+            <Badge className='ai-themed-badge text-xs font-medium px-2 py-1 border-none'>
               {siteConfig.displayName}
             </Badge>
             <span className='text-sm ai-themed-text opacity-70'>
@@ -86,7 +80,7 @@ export default function ArticleCard({ article }: ArticleCardProps) {
               href={article.url}
               target='_blank'
               rel='noopener noreferrer'
-              className='ai-themed-button inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200'
+              className='ai-themed-button inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 border-none'
             >
               読む
               <ArrowUpRight className='w-4 h-4' />

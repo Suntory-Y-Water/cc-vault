@@ -40,28 +40,28 @@ export const SITE_UI_CONFIGS = {
     label: 'すべて',
     icon: Globe,
     baseStyle:
-      'border border-[#E0DFDA] bg-[#E0DFDA]/30 text-[#7D4A38] hover:bg-[#E0DFDA]/50 hover:border-[#E0DFDA]/80',
-    activeStyle: 'bg-[#DB8163] text-white border-transparent',
+      'border border-[var(--ai-secondary)] bg-[var(--ai-background)] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)] transition-colors duration-200',
+    activeStyle: 'ai-themed-button border-transparent',
   },
   zenn: {
     label: 'Zenn',
     icon: Zap,
     baseStyle:
-      'border border-[#E0DFDA] bg-[#E0DFDA]/30 text-[#7D4A38] hover:bg-[#E0DFDA]/50 hover:border-[#E0DFDA]/80',
-    activeStyle: 'bg-[#DB8163] text-white border-transparent',
+      'border border-[var(--ai-secondary)] bg-[var(--ai-background)] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)] transition-colors duration-200',
+    activeStyle: 'ai-themed-button border-transparent',
   },
   qiita: {
     label: 'Qiita',
     icon: Book,
     baseStyle:
-      'border border-[#E0DFDA] bg-[#E0DFDA]/30 text-[#7D4A38] hover:bg-[#E0DFDA]/50 hover:border-[#E0DFDA]/80',
-    activeStyle: 'bg-[#DB8163] text-white border-transparent',
+      'border border-[var(--ai-secondary)] bg-[var(--ai-background)] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)] transition-colors duration-200',
+    activeStyle: 'ai-themed-button border-transparent',
   },
   hatena: {
     label: 'はてな',
     icon: Bookmark,
     baseStyle:
-      'border border-[#E0DFDA] bg-[#E0DFDA]/30 text-[#7D4A38] hover:bg-[#E0DFDA]/50 hover:border-[#E0DFDA]/80',
-    activeStyle: 'bg-[#DB8163] text-white border-transparent',
+      'border border-[var(--ai-secondary)] bg-[var(--ai-background)] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)] transition-colors duration-200',
+    activeStyle: 'ai-themed-button border-transparent',
   },
 } as const;
