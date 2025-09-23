@@ -110,6 +110,7 @@ src/types/
 ```
 src/config/
 ├── site.ts            # サイト設定（メタデータ等）
+├── ai-agents.ts        # AIエージェント・マルチテナント設定
 └── drizzle/           # Drizzle ORM関連
     └── schema.ts      # データベーススキーマ定義
 ```
@@ -117,7 +118,10 @@ src/config/
 ### 🧪 テストファイル
 ```
 src/tests/
-└── weekly-report.test.ts  # 週次レポート機能テスト
+├── weekly-report.test.ts       # 週次レポート機能テスト
+├── ai-agent-config.test.ts     # AIエージェント設定テスト
+├── ai-agent-resolver.test.ts   # AIエージェント解決テスト
+└── search-tenant-scope.test.ts # テナントスコープ検索テスト
 ```
 
 ## ファイル命名規則
@@ -183,6 +187,12 @@ import { ArticleCard } from './ArticleCard'
 - **CSS Modules回避**: Tailwindクラス統一
 - **Responsive Design**: モバイルファーストアプローチ
 
+### 🏢 マルチテナント・AIエージェント管理
+- **設定ベース管理**: `src/config/ai-agents.ts` 静的設定ファイル
+- **ホスト名解決**: Next.js `headers()` APIベースのサブドメイン抽出
+- **テナント分離**: データベースクエリレベルでの自動フィルタリング
+- **セキュリティパターン**: ホスト名検証・サニタイゼーション統一
+
 ## コード品質・保守性
 
 ### 📏 設計原則
@@ -190,6 +200,7 @@ import { ArticleCard } from './ArticleCard'
 - **DRY**: 重複排除（適度な抽象化）
 - **YAGNI**: 必要になってから実装
 - **契約による設計**: TypeScript型による契約定義
+- **テナント分離**: マルチテナント環境でのデータ・セキュリティ境界維持
 
 ### 🔍 品質保証
 - **型安全性**: TypeScript strict mode
