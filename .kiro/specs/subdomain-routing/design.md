@@ -2,19 +2,19 @@
 
 ## 概要
 
-本機能は、CC-VaultをAIエージェント情報キュレーションメディアに転換し、各AIエージェントが専用サブドメインで独自のコンテンツとデザインを提供するシステムを実現します。Next.js App Routerとサーバーコンポーネントを活用し、最小限の変更で最大の効果を実現する簡素化アプローチを採用します。
+本機能は、CC-VaultをAIエージェント情報キュレーションメディアに転換し、各AIエージェントが専用サブドメインで独自のコンテンツとデザインを提供するシステムを実現します。既存のNext.js App Routerアーキテクチャを最大限活用し、最小限の変更で最大の効果を実現する簡素化アプローチを採用します。
 
-### Goals
+### 目標
 - サブドメイン別のAIエージェント専用コンテンツ配信
 - 既存のCC-Vaultアーキテクチャとの完全互換性
 - サーバーコンポーネント中心の実装によるパフォーマンス最適化
 - 最小限のデータベース変更での実現
 
-### Non-Goals
+### 非目標
 - 複雑なマルチテナント管理システム
 - 動的なテナント追加機能（静的設定で管理）
 - 複雑なテーマカスタマイゼーション（色とコンテンツのみ変更）
-- リアルタイムテナント切り替え機能
+- クライアントサイドでのテナント切り替え機能
 
 ## アーキテクチャ
 
@@ -24,32 +24,27 @@
 - Next.js App Router + Cloudflare Workers
 - Drizzle ORMによるD1データベースアクセス
 - サーバーコンポーネント中心の実装
-- 静的設定とISRキャッシュの活用
+- 既存のsite-basedフィルタリング機能
 
 **保持する設計パターン**:
 - ページレベルでのサーバーサイドデータ取得
 - 既存のコンポーネント構造とスタイリング手法
 - Drizzle ORMベースのデータアクセス層
-- Tailwind CSSによるスタイリング
+- 関数ベース実装（クラス使用禁止）
 
 ### 簡素化アーキテクチャ
 
 ```mermaid
 graph TB
-    A[サブドメインアクセス] --> B[Next.js Layout]
-    B --> C[ホスト名解析]
-    C --> D[静的AIエージェント設定取得]
-    D --> E[テーマ適用 + Props伝播]
+    A[サブドメインアクセス] --> B[layout.tsx]
+    B --> C[headers API ホスト名取得]
+    C --> D[静的AIエージェント設定解決]
+    D --> E[data-ai-agent属性設定]
     E --> F[サーバーコンポーネント]
-    F --> G[Drizzle ORM + フィルタリング]
-    G --> H[Cloudflare D1]
+    F --> G[既存cloudflare.ts拡張]
+    G --> H[ai_agentフィルタ適用]
+    H --> I[Cloudflare D1]
 ```
-
-**重要な簡素化ポイント**:
-- ミドルウェア不要（layout.tsxで直接処理）
-- APIエンドポイント不要（サーバーコンポーネントで直接データ取得）
-- 複雑なContext Provider不要（Props経由でデータ伝播）
-- 動的CSS Variables不要（静的CSSクラス + Tailwind Variables）
 
 ### 技術スタック整合
 
@@ -61,7 +56,20 @@ graph TB
 
 **新規追加要素**:
 - 静的AIエージェント設定ファイル
-- 最小限のデータベースカラム追加
+- articlesテーブルに`ai_agent`カラム追加のみ
+
+## 要件トレーサビリティ
+
+| 要件 | 要件概要 | 実現コンポーネント | 実装方法 |
+|------|----------|------------------|----------|
+| 1.1 | ホスト名からテナント識別子抽出 | layout.tsx | headers()でホスト名取得 |
+| 1.2 | AIエージェント設定特定 | 静的設定ファイル | resolveAIAgentFromHost関数 |
+| 2.1 | テナント別データフィルタリング | cloudflare.ts拡張 | ai_agentカラムでWHERE句適用 |
+| 3.1 | 動的UIテーマ適用 | layout.tsx | data-ai-agent属性 + CSS |
+| 4.1 | テナント別コンテンツ表示 | 既存ページコンポーネント | フィルタ済みprops渡し |
+| 5.1 | テナント設定管理 | 静的設定ファイル | TypeScript設定定義 |
+| 6.1 | パフォーマンス維持 | Next.js ISR | サーバーコンポーネントキャッシュ |
+| 7.1 | セキュリティ維持 | 既存パターン活用 | 入力検証とフォールバック |
 
 ## コンポーネントとインターフェース
 
@@ -96,8 +104,8 @@ type AIAgent = {
   };
 };
 
-function resolveAIAgentFromHost(host: string | null): AIAgent;
-function getAIAgentConfig(agentId: string): AIAgent;
+function resolveAIAgentFromHost(args: { host: string | null }): AIAgent;
+function getAIAgentConfig(args: { agentId: string }): AIAgent;
 ```
 
 #### データアクセス拡張
@@ -120,15 +128,16 @@ type ArticleFilters = {
   site?: string;
 };
 
-function getArticlesWithPagination(filters: ArticleFilters): Promise<Article[]>;
-function getWeeklyReportData(aiAgent: string, weekStart: string): Promise<WeeklyReport | null>;
-function getTotalArticleCount(aiAgent?: string): Promise<number>;
+function getArticlesWithPagination(args: {
+  db: D1Database;
+  params: ArticleFilters;
+}): Promise<PaginatedArticles>;
 ```
 
 **既存関数への最小限拡張**:
 - `getArticlesWithPagination`にaiAgentフィルターを追加
-- `getWeeklyReportData`にAIエージェント別集計を追加
-- 新規関数追加は最小限（2-3個のみ）
+- WHERE句でのai_agentカラムフィルタリング
+- 新規関数追加は最小限
 
 ### Layout / レイアウトコンポーネント
 
@@ -150,7 +159,7 @@ type LayoutProps = {
 };
 
 // サーバーコンポーネントとして実装
-export default async function RootLayout({ children }: LayoutProps): Promise<JSX.Element>;
+export default async function RootLayout(args: LayoutProps): Promise<JSX.Element>;
 ```
 
 **実装戦略**:
@@ -159,7 +168,7 @@ export default async function RootLayout({ children }: LayoutProps): Promise<JSX
 - `data-ai-agent`属性でCSSスコープ適用
 - 既存コンポーネントにpropsでAIエージェント情報伝播
 
-## データ モデル
+## データモデル
 
 ### 既存テーブル拡張
 
@@ -196,21 +205,56 @@ sequenceDiagram
     participant D1
 
     User->>Layout: サブドメインアクセス
-    Layout->>Config: resolveAIAgentFromHost(host)
+    Layout->>Layout: headers()でホスト名取得
+    Layout->>Config: resolveAIAgentFromHost({host})
     Config-->>Layout: AIAgent設定
-    Layout->>Layout: テーマCSS適用
+    Layout->>Layout: data-ai-agent属性設定
     Layout->>DataAccess: getArticlesWithPagination({aiAgent})
     DataAccess->>D1: WHERE ai_agent = ?
-    D1-->>DataAccess: 記事データ
-    DataAccess-->>Layout: フィルタ済み記事
+    D1-->>DataAccess: フィルタ済み記事
+    DataAccess-->>Layout: 記事データ
     Layout-->>User: AIエージェント別ページ
 ```
+
+## エラーハンドリング
+
+### エラー戦略
+
+シンプルで堅牢なエラーハンドリング戦略を採用します。
+
+### エラーカテゴリと対応
+
+**未知のサブドメイン**: デフォルトAIエージェント（'default'）への透過的フォールバック
+**データベースエラー**: 既存のCloudflareエラーハンドリング活用
+**CSS適用エラー**: デフォルトスタイルでのgraceful degradation
+
+```typescript
+function resolveAIAgentFromHost(args: { host: string | null }): AIAgent {
+  const subdomain = extractSubdomain(args.host);
+  return getAIAgentConfig({ agentId: subdomain }) ?? DEFAULT_AI_AGENT;
+}
+```
+
+## テスト戦略
+
+### ユニットテスト
+- AIエージェント設定解決関数
+- データフィルタリング関数
+- ホスト名パース機能
+
+### 統合テスト
+- ホスト名からAIエージェント解決の統合フロー
+- データベースフィルタリング機能
+- CSSスコープ適用
+
+### E2Eテスト
+- サブドメインアクセスでの正しいコンテンツ表示
+- AIエージェント別の記事フィルタリング
+- テーマ適用の視覚的確認
 
 ## 実装戦略
 
 ### サーバーコンポーネント中心設計
-
-**ミドルウェア不要**: layout.tsxで直接ホスト名処理
 
 **実装する最小限のコンポーネント**:
 
@@ -231,52 +275,38 @@ sequenceDiagram
    - `[data-ai-agent="claude-code"]`等のセレクタ
    - AIエージェント別の色定義
 
-## エラーハンドリング
+### 実装フェーズ
 
-### エラー戦略
-
-**不明なAIエージェント**: デフォルト設定へのフォールバック
-**データベースエラー**: 既存のエラーハンドリング機構を活用
-**設定エラー**: 開発時の適切なエラーメッセージ
-
-### エラーカテゴリと対応
-
-**ホスト名解析エラー**: 'default' AIエージェントにフォールバック
-**データフィルタリングエラー**: 既存のCloudflareエラーハンドリング活用
-**CSS適用エラー**: デフォルトスタイルで graceful degradation
-
-## テスト戦略
-
-### 統合テスト
-
-- ホスト名からAIエージェント解決のテスト
-- データベースフィルタリング機能のテスト
-- CSSスコープ適用のテスト
-
-### E2Eテスト
-
-- サブドメインアクセスでの正しいコンテンツ表示
-- AIエージェント別の記事フィルタリング
-- テーマ適用の視覚的確認
-
-## 実装計画
-
-### Phase 1: 基盤構築（最小限）
+#### Phase 1: 基盤構築（最小限）
 1. `ai_agent`カラム追加とインデックス作成
 2. 静的AIエージェント設定ファイル作成
 3. layout.tsxでのホスト名解析実装
 
-### Phase 2: データアクセス拡張
+#### Phase 2: データアクセス拡張
 1. 既存関数への`aiAgent`パラメータ追加
 2. WHERE句でのフィルタリング実装
 3. 基本的な動作確認
 
-### Phase 3: UIテーマ適用
+#### Phase 3: UIテーマ適用
 1. CSS data-attribute スコープ実装
 2. AIエージェント別の色定義
 3. 既存コンポーネントとの統合
 
-### Phase 4: 最終調整
+#### Phase 4: 最終調整
 1. エラーハンドリングの実装
 2. テストケースの追加
 3. パフォーマンス確認
+
+## パフォーマンス・スケーラビリティ
+
+### キャッシュ戦略
+
+**Next.js ISR活用**: サーバーコンポーネントでの自動キャッシュ
+**静的設定**: AIエージェント設定の起動時読み込み
+**データベースキャッシュ**: 既存のCloudflare D1キャッシュ機構活用
+
+### スケーラビリティ
+
+**水平スケーリング**: Cloudflare Workersの自動スケーリング活用
+**データベーススケーリング**: 既存のD1パフォーマンス特性維持
+**静的アセット**: Cloudflare CDNによる配信最適化
