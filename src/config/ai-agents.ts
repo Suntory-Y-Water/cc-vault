@@ -84,25 +84,93 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
 };
 
 /**
+ * セキュリティ定数
+ */
+const SECURITY_CONSTANTS = {
+  MAX_HOSTNAME_LENGTH: 253,
+  MAX_SUBDOMAIN_LENGTH: 63,
+  VALID_HOSTNAME_CHARS: /^[a-zA-Z0-9.\-:]+$/,
+  VALID_SUBDOMAIN_PATTERN: /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/,
+  MALICIOUS_PATTERNS: [
+    /javascript:/i,
+    /data:/i,
+    /<[^>]*>/,  // HTMLタグ
+    /['";]/,    // SQL注入攻撃の可能性
+    /\.\./,     // パストラバーサル
+    /[\\]/      // バックスラッシュ
+  ]
+} as const;
+
+/**
+ * ホスト名をサニタイズする（セキュリティ対策）
+ */
+function sanitizeHostname(host: string): string {
+  // 英数字、ハイフン、ピリオド、コロン（ポート番号用）のみ許可
+  return host.replace(/[^a-zA-Z0-9.\-:]/g, '');
+}
+
+/**
+ * ホスト名を検証する（セキュリティ対策）
+ */
+function isValidHostname(host: string): boolean {
+  // 長すぎるホスト名を拒否
+  if (host.length > SECURITY_CONSTANTS.MAX_HOSTNAME_LENGTH) return false;
+
+  // 不正なパターンを検出
+  return !SECURITY_CONSTANTS.MALICIOUS_PATTERNS.some(pattern => pattern.test(host));
+}
+
+/**
+ * サブドメインが有効かどうかを検証する
+ */
+function isValidSubdomain(subdomain: string): boolean {
+  // サブドメインの基本的な検証
+  if (!subdomain || subdomain.length === 0 || subdomain.length > SECURITY_CONSTANTS.MAX_SUBDOMAIN_LENGTH) {
+    return false;
+  }
+
+  // RFC準拠のサブドメイン検証（英数字とハイフン、先頭末尾はハイフン不可）
+  return SECURITY_CONSTANTS.VALID_SUBDOMAIN_PATTERN.test(subdomain);
+}
+
+/**
  * ホスト名からサブドメインを抽出する
  */
 function extractSubdomain(host: string | null): string | null {
   if (!host) return null;
 
+  // セキュリティ検証
+  if (!isValidHostname(host)) return null;
+
+  // ホスト名をサニタイズ
+  const sanitizedHost = sanitizeHostname(host);
+
   // ローカル開発環境の場合
-  if (host.includes('localhost') || host.includes('127.0.0.1')) {
+  if (sanitizedHost.includes('localhost') || sanitizedHost.includes('127.0.0.1')) {
     return null;
   }
 
+  // ポート番号を除去
+  const hostWithoutPort = sanitizedHost.split(':')[0];
+
   // サブドメインを抽出
-  const parts = host.split('.');
+  const parts = hostWithoutPort.split('.');
   if (parts.length < 3) return null;
 
-  return parts[0];
+  const subdomain = parts[0];
+
+  // サブドメインの追加検証
+  if (!isValidSubdomain(subdomain)) {
+    return null;
+  }
+
+  return subdomain;
 }
 
 /**
  * ホスト名からAIエージェント設定を解決する
+ * セキュリティ要件: ホスト名検証とサニタイゼーションを実行
+ * フォールバック戦略: 未知/無効なサブドメインはデフォルトエージェントへ
  */
 export function resolveAIAgentFromHost(args: { host: string | null }): AIAgent {
   const subdomain = extractSubdomain(args.host);
