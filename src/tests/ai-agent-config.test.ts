@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  resolveAIAgentFromHost,
-  getAIAgentConfig,
-} from '../config/ai-agents.ts';
+import { resolveAIAgentFromHost, getAIAgentConfig } from '../config/ai-agents';
 
 describe('AI Agent Configuration System', () => {
   describe('resolveAIAgentFromHost', () => {

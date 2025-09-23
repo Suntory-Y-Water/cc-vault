@@ -22,7 +22,11 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["vitest/globals", "vitest/importMeta"]
+    "types": [
+      "vitest/globals",
+      "vitest/importMeta",
+      "@cloudflare/workers-types/2023-07-01"
+    ]
   },
   "include": [
     "**/*.ts",

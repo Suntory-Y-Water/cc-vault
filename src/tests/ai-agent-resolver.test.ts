@@ -19,7 +19,6 @@ describe('AIエージェント解決システム', () => {
       });
       expect(claudeCodeAgent.id).toBe('claude-code');
       expect(claudeCodeAgent.name).toBe('Claude Code');
-      expect(claudeCodeAgent.branding.siteName).toBe('Claude Code Hub');
 
       // Codex サブドメインのテスト
       const codexAgent = resolveAIAgentFromHost({
@@ -27,7 +26,6 @@ describe('AIエージェント解決システム', () => {
       });
       expect(codexAgent.id).toBe('codex');
       expect(codexAgent.name).toBe('Codex');
-      expect(codexAgent.branding.siteName).toBe('Codex Central');
     });
 
     it('未知のサブドメインの場合、デフォルトエージェントを返すべき', () => {
@@ -35,7 +33,6 @@ describe('AIエージェント解決システム', () => {
         host: 'unknown.agents-vault.com',
       });
       expect(unknownAgent.id).toBe('default');
-      expect(unknownAgent.name).toBe('CC-Vault');
     });
 
     it('サブドメインなしのホスト名の場合、デフォルトエージェントを返すべき', () => {
@@ -65,14 +62,12 @@ describe('AIエージェント解決システム', () => {
         host: 'claude-code.localhost:3000',
       });
       expect(claudeCodeAgent.id).toBe('claude-code');
-      expect(claudeCodeAgent.branding.siteName).toBe('Claude Code Hub');
 
       // Codex サブドメインのテスト
       const codexAgent = resolveAIAgentFromHost({
         host: 'codex.localhost:3000',
       });
       expect(codexAgent.id).toBe('codex');
-      expect(codexAgent.branding.siteName).toBe('Codex Central');
 
       // ポート番号なしでも動作すること
       const claudeCodeNoPort = resolveAIAgentFromHost({

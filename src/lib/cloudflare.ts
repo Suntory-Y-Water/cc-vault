@@ -5,6 +5,7 @@ import {
   SearchParams,
   SITE_VALUES,
 } from '@/types';
+import type { AIAgentType } from '@/types/article';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, desc, count, sql, and, gte, lte } from 'drizzle-orm';
 import {
@@ -456,10 +457,12 @@ export async function fetchWeeklyDisplayData({
   db,
   site,
   weekStartDate,
+  aiAgent,
 }: {
   db: D1Database;
   site: SiteValueType;
   weekStartDate: string;
+  aiAgent?: AIAgentType;
 }): Promise<
   Array<{
     id: string;
@@ -496,6 +499,10 @@ export async function fetchWeeklyDisplayData({
         and(
           eq(weeklySummaries.weekStartDate, weekStartDate),
           eq(articles.site, site),
+          // AIエージェントフィルターを追加
+          aiAgent && aiAgent !== 'default'
+            ? eq(articles.aiAgent, aiAgent)
+            : undefined,
         ),
       )
       .orderBy(
@@ -547,9 +554,11 @@ export async function getLatestCompletedWeek(
 export async function fetchWeeklyReportData({
   weekRange,
   db,
+  aiAgent,
 }: {
   weekRange: WeekRange;
   db: D1Database;
+  aiAgent?: AIAgentType;
 }): Promise<SiteRanking[]> {
   try {
     return await Promise.all(
@@ -558,6 +567,7 @@ export async function fetchWeeklyReportData({
           db,
           site,
           weekStartDate: weekRange.startDate,
+          aiAgent,
         });
         return {
           site,
@@ -597,9 +607,11 @@ export async function fetchWeeklyReportData({
 export async function fetchWeeklyOverallSummary({
   db,
   weekStartDate,
+  aiAgent,
 }: {
   db: D1Database;
   weekStartDate: string;
+  aiAgent?: AIAgentType;
 }): Promise<string | null> {
   try {
     const drizzleDB = drizzle(db);
@@ -611,6 +623,10 @@ export async function fetchWeeklyOverallSummary({
         and(
           eq(weeklyReports.weekStartDate, weekStartDate),
           eq(weeklyReports.status, 'completed'),
+          // AIエージェントフィルターを追加
+          aiAgent && aiAgent !== 'default'
+            ? eq(weeklyReports.aiAgent, aiAgent)
+            : undefined,
         ),
       )
       .limit(1);
