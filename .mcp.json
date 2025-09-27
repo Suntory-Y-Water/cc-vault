@@ -14,14 +14,18 @@
         "--context",
         "ide-assistant",
         "--project",
-        "--enable-web-dashboard false",
+        "--web-dashboard-open-on-launch=false",
         "."
       ],
       "cwd": "."
     },
     "playwright": {
       "command": "pnpm",
-      "args": ["dlx", "@playwright/mcp@latest", "--browser=chromium"]
+      "args": ["dlx", "@playwright/mcp@latest"]
+    },
+    "chrome-devtools": {
+      "command": "pnpm",
+      "args": ["dlx", "chrome-devtools-mcp@latest"]
     }
   }
 }
