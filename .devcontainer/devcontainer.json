@@ -79,7 +79,9 @@
 
   // Claude Code設定の永続化
   "mounts": [
-    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume",
+    "source=tools-cache-${devcontainerId},target=/home/node/.local,type=volume",
+    "source=bun-cache-${devcontainerId},target=/home/node/.bun,type=volume"
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/node/.claude"

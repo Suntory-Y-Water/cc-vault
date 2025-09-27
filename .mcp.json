@@ -14,8 +14,8 @@
         "--context",
         "ide-assistant",
         "--project",
-        "--web-dashboard-open-on-launch=false",
-        "."
+        ".",
+        "--enable-web-dashboard=false"
       ],
       "cwd": "."
     },

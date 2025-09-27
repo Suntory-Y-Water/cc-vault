@@ -21,6 +21,10 @@ RUN pnpm config set store-dir ~/.pnpm-store
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=$PATH:/usr/local/share/npm-global/bin
 
-# Claude設定ディレクトリの権限設定
+# Claude設定ディレクトリとツール用ディレクトリの権限設定
 RUN mkdir -p /home/node/.claude && \
-    chown -R node:node /home/node/.claude
+    mkdir -p /home/node/.local/bin && \
+    mkdir -p /home/node/.bun/bin && \
+    chown -R node:node /home/node/.claude && \
+    chown -R node:node /home/node/.local && \
+    chown -R node:node /home/node/.bun

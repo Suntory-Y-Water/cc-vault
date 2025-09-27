@@ -2,106 +2,54 @@
 
 ## 開発コマンド
 
-### 起動・ビルド
-```bash
-# 開発サーバー起動（Turbopack使用）
-pnpm run dev
+### 基本開発
+- `pnpm dev`: 開発サーバー起動（Turbopack使用）
+- `pnpm dev:cf`: Cloudflare環境での開発サーバー起動
 
-# Cloudflare Workers環境での開発
-pnpm run dev:cf
+### ビルド・デプロイ
+- `pnpm build`: 本番ビルド
+- `pnpm start`: 本番サーバー起動
+- `pnpm preview`: Cloudflareプレビュー
+- `pnpm deploy`: Cloudflareデプロイ
+- `pnpm upload`: DBマイグレーション後にアップロード
 
-# プロダクションビルド
-pnpm run build
-
-# プロダクションサーバー起動
-pnpm run start
-
-# プレビュー（Cloudflare環境）
-pnpm run preview
-```
-
-### コード品質チェック
-```bash
-# 型チェック + リント実行（AI推奨コマンド）
-pnpm run ai-check
-
-# 型チェックのみ
-pnpm run typecheck
-
-# リント実行
-pnpm run lint
-
-# リント + 自動修正
-pnpm run lint:fix
-
-# コードフォーマット
-pnpm run format
-```
+### コード品質
+- `pnpm typecheck`: TypeScript型チェック
+- `pnpm lint`: Biomeリンター実行
+- `pnpm lint:fix`: リンター自動修正
+- `pnpm format`: Biomeフォーマッター実行
+- `pnpm ai-check`: 型チェック＋リンター（AI開発用）
 
 ### テスト
-```bash
-# テスト実行（ウォッチモード）
-pnpm run test
-
-# カバレッジ付きテスト実行
-pnpm run test:cov
-```
+- `pnpm test`: テスト実行
+- `pnpm test:cov`: カバレッジ付きテスト実行
 
 ### データベース
-```bash
-# マイグレーション生成
-pnpm run db:generate
+- `pnpm db:generate`: Drizzleスキーマ生成
+- `pnpm db:push`: スキーマをDBにプッシュ
+- `pnpm db:studio`: Drizzle Studio起動
+- `pnpm db:local`: ローカルマイグレーション（latest）
+- `pnpm db:local:all`: ローカルマイグレーション（all）
+- `pnpm db:backup:prod`: 本番DBバックアップ
 
-# データベースにスキーマを適用
-pnpm run db:push
+### Cloudflare
+- `pnpm typegen`: Cloudflare型定義生成
+- `pnpm schedule`: スケジュールワーカーのテスト
 
-# Drizzle Studio起動（GUI）
-pnpm run db:studio
+## Git・CI/CD
+- `pnpm prepare`: Huskyセットアップ
 
-# ローカルマイグレーション実行
-pnpm run db:local
+## Kiro仕様駆動開発コマンド
+- `/kiro:steering`: ステアリングドキュメント作成・更新
+- `/kiro:spec-init [description]`: 新規仕様初期化
+- `/kiro:spec-requirements [feature]`: 要件ドキュメント生成
+- `/kiro:spec-design [feature]`: 技術設計作成
+- `/kiro:spec-tasks [feature]`: 実装タスク生成
+- `/kiro:spec-status [feature]`: 仕様進捗確認
 
-# 全てのローカルマイグレーション実行
-pnpm run db:local:all
-
-# 本番データベースバックアップ
-pnpm run db:backup:prod
-```
-
-### Cloudflare Workers
-```bash
-# 型定義生成
-pnpm run typegen
-
-# スケジュールテスト
-pnpm run schedule
-
-# デプロイ
-pnpm run deploy
-
-# アップロード（マイグレーション + デプロイ）
-pnpm run upload
-```
-
-### Git・品質管理
-```bash
-# Huskyセットアップ
-pnpm run prepare
-
-# 手動でlint-staged実行
-npx lint-staged
-```
-
-## 開発フロー
-1. `pnpm run dev` で開発サーバー起動
-2. コード変更後 `pnpm run ai-check` で品質チェック
-3. テスト作成・実行: `pnpm run test`
-4. コミット前に自動でlint-stagedが実行される
-5. デプロイ: `pnpm run deploy`
-
-## よく使う Linux コマンド
-- `ls` - ファイル一覧
-- `cd` - ディレクトリ移動  
-- `grep` - テキスト検索
-- `find` - ファイル検索
-- `git` - バージョン管理
+## システムコマンド（Linux）
+- `ls`: ファイル一覧
+- `cd`: ディレクトリ移動
+- `grep`: 文字列検索
+- `find`: ファイル検索
+- `git`: バージョン管理
