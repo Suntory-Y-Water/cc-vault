@@ -1,61 +1,41 @@
-# コーディング規約・スタイル
+# コーディング規約
 
-## 基本原則（CLAUDE.mdより）
-- **type優先**: インターフェースではなくtypeを使用
-- **型安全性**: 構造的型付けを重視
-- **関数ベース**: クラスは使用せず、関数宣言で実装
-- **オブジェクト引数**: 引数が2個以上の場合はオブジェクト形式
-- **既存型活用**: Pick、Omitなどのユーティリティ型を積極利用
-- **配列型記法**: `Array<T>`ではなく`T[]`を使用
+## Biome設定に基づく規約
 
-## TypeScript設定
-- **ターゲット**: ES2017
-- **厳密モード**: strict: true
-- **パス**: `@/*` → `./src/*`
-- **JSX**: preserve
-- **モジュール**: esnext (bundler resolution)
-
-## Biome設定（コードフォーマット）
-### フォーマッター
+### フォーマット設定
 - **インデント**: スペース2個
 - **行幅**: 80文字
-- **クォート**: シングルクォート
-- **JSXクォート**: シングルクォート  
-- **セミコロン**: 常に付与
-- **末尾カンマ**: 常に付与
+- **クォート**: シングルクォート（JavaScript/TypeScript）
+- **JSXクォート**: シングルクォート
+- **セミコロン**: 必須
+- **末尾カンマ**: 全て追加
 
 ### リンタールール
 - **推奨ルール**: 有効
 - **未使用インポート**: 警告
 - **未使用変数**: 警告
-- **テンプレートリテラル強制**: 無効
-- **import type**: 無効
-- **Node.js import protocol**: 無効
+- **テンプレートリテラル**: 無効（useTemplate: off）
+- **import type**: 無効（useImportType: off）
+- **Node.jsインポートプロトコル**: 無効
+- **forEach禁止**: 無効（noForEach: off）
 
-## ファイル・ディレクトリ構造
-```
-src/
-├── app/           # Next.js App Router（ページ）
-├── components/    # UIコンポーネント
-│   ├── ui/       # 基本UIコンポーネント
-│   ├── layout/   # レイアウト関連
-│   ├── article/  # 記事関連
-│   └── common/   # 共通コンポーネント
-├── lib/          # ビジネスロジック・ユーティリティ
-├── types/        # 型定義（集約エクスポート）
-└── config/       # 設定・スキーマ
-```
+### TypeScript設定
+- **strict**: 有効
+- **target**: ES2017
+- **module**: esnext
+- **moduleResolution**: bundler
+- **jsx**: preserve
 
-## 命名規則
-- **コンポーネント**: PascalCase
-- **ファイル**: camelCase（コンポーネントはPascalCase）
-- **関数**: camelCase
-- **型**: PascalCase
-- **定数**: UPPER_SNAKE_CASE
+### テストファイル例外
+- テストファイル（`**/*.test.ts`, `**/*.test.tsx`）はlinter対象外
+- テスト用ディレクトリでは`noExplicitAny`と`noNonNullAssertion`が無効
 
-## JSDocコメント
-関数・コンポーネントには必ずJSDocコメントを追加する。
+### ファイル命名規約
+- コンポーネント: PascalCase（例: `UserProfile.tsx`）
+- ページ: kebab-case（例: `weekly-report/`）
+- 設定ファイル: kebab-case（例: `ai-agents.ts`）
+- テストファイル: `*.test.ts` / `*.test.tsx`
 
-## import/export
-- 型定義は`src/types/index.ts`で集約エクスポート
-- エイリアス`@/`を使用してパス解決
+### インポート規約
+- パスエイリアス`@/`を使用
+- 相対パスより絶対パスを優先

@@ -15,6 +15,7 @@ import {
 } from 'date-fns';
 import type { WeekRange, WeeklyReportGrouped } from '@/types';
 import { fetchWeeklyOverallSummary, fetchWeeklyReportData } from './cloudflare';
+import type { AIAgentType } from '@/types/article';
 import { TZDate } from '@date-fns/tz';
 
 /**
@@ -155,9 +156,11 @@ export function isFutureWeek(weekStartDate: string): boolean {
 export async function generateWeeklyReportGrouped({
   weekStartDate,
   db,
+  aiAgent,
 }: {
   weekStartDate: string;
   db: D1Database;
+  aiAgent?: AIAgentType;
 }): Promise<WeeklyReportGrouped> {
   if (!isValidDateString(weekStartDate)) {
     throw new Error(`無効な日付文字列です: ${weekStartDate}`);
@@ -165,8 +168,12 @@ export async function generateWeeklyReportGrouped({
 
   const weekRange = createWeekRange(parseISO(weekStartDate));
   const [siteRankings, overallSummary] = await Promise.all([
-    fetchWeeklyReportData({ weekRange, db }),
-    fetchWeeklyOverallSummary({ db, weekStartDate: weekRange.startDate }),
+    fetchWeeklyReportData({ weekRange, db, aiAgent }),
+    fetchWeeklyOverallSummary({
+      db,
+      weekStartDate: weekRange.startDate,
+      aiAgent,
+    }),
   ]);
 
   return {

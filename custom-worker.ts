@@ -117,6 +117,7 @@ const worker = {
             author: article.author,
             published_at: convertToJstString(article.published_at),
             site: 'zenn',
+            ai_agent: 'claude-code',
             likes: article.likedCount,
             bookmarks: article.bookmarkedCount,
           });
@@ -141,6 +142,7 @@ const worker = {
             author: article.user.id,
             published_at: convertToJstString(article.created_at),
             site: 'qiita',
+            ai_agent: 'claude-code',
             likes: article.likes_count,
             bookmarks: article.stocks_count,
           });
@@ -168,6 +170,7 @@ const worker = {
             author: article.author,
             published_at: convertToJstString(article.publishedAt),
             site: 'hatena',
+            ai_agent: 'claude-code',
             likes: 0, // はてなブックマークはlikesがないので0固定
             bookmarks: article.bookmarkCount,
           });
@@ -194,6 +197,7 @@ const worker = {
             author: article.author,
             published_at: convertToJstString(article.publishedAt),
             site: 'hatena',
+            ai_agent: 'claude-code',
             likes: 0,
             bookmarks: article.bookmarkCount,
           });

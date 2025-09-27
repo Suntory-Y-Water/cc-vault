@@ -71,6 +71,11 @@ export default function Pagination({
   };
 
   const pageNumbers = generatePageNumbers();
+  const baseButtonClass =
+    'border border-[var(--ai-secondary)] bg-[var(--ai-background)] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)] transition-colors duration-200';
+  const disabledButtonClass =
+    'border border-[var(--ai-secondary)] bg-[var(--ai-background)] text-[var(--ai-text)] opacity-50';
+  const activeButtonClass = 'ai-themed-button border border-transparent';
 
   return (
     <div className='flex items-center justify-center gap-2 mt-8'>
@@ -82,11 +87,7 @@ export default function Pagination({
           ).toString()}`}
           prefetch={true}
         >
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
-          >
+          <Button variant='outline' size='sm' className={baseButtonClass}>
             <ChevronsLeft className='w-4 h-4' />
           </Button>
         </Link>
@@ -95,7 +96,7 @@ export default function Pagination({
           variant='outline'
           size='sm'
           disabled
-          className='border-[#E0DFDA] text-[#141413] opacity-50'
+          className={disabledButtonClass}
         >
           <ChevronsLeft className='w-4 h-4' />
         </Button>
@@ -109,11 +110,7 @@ export default function Pagination({
           ).toString()}`}
           prefetch={true}
         >
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
-          >
+          <Button variant='outline' size='sm' className={baseButtonClass}>
             &lt;
           </Button>
         </Link>
@@ -122,7 +119,7 @@ export default function Pagination({
           variant='outline'
           size='sm'
           disabled
-          className='border-[#E0DFDA] text-[#141413] opacity-50'
+          className={disabledButtonClass}
         >
           &lt;
         </Button>
@@ -139,13 +136,12 @@ export default function Pagination({
             prefetch={true}
           >
             <Button
-              variant={currentPage === pageNumber ? 'default' : 'outline'}
+              variant='outline'
               size='sm'
               className={
-                currentPage === pageNumber
-                  ? 'bg-[#DB8163] text-white border-[#DB8163] hover:bg-[#D97757]'
-                  : 'border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
+                currentPage === pageNumber ? activeButtonClass : baseButtonClass
               }
+              aria-current={currentPage === pageNumber ? 'page' : undefined}
             >
               {pageNumber}
             </Button>
@@ -161,11 +157,7 @@ export default function Pagination({
           ).toString()}`}
           prefetch={true}
         >
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
-          >
+          <Button variant='outline' size='sm' className={baseButtonClass}>
             &gt;
           </Button>
         </Link>
@@ -174,7 +166,7 @@ export default function Pagination({
           variant='outline'
           size='sm'
           disabled
-          className='border-[#E0DFDA] text-[#141413] opacity-50'
+          className={disabledButtonClass}
         >
           &gt;
         </Button>
@@ -188,11 +180,7 @@ export default function Pagination({
           ).toString()}`}
           prefetch={true}
         >
-          <Button
-            variant='outline'
-            size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#F4A382] hover:text-white hover:border-[#F4A382]'
-          >
+          <Button variant='outline' size='sm' className={baseButtonClass}>
             <ChevronsRight className='w-4 h-4' />
           </Button>
         </Link>
@@ -201,7 +189,7 @@ export default function Pagination({
           variant='outline'
           size='sm'
           disabled
-          className='border-[#E0DFDA] text-[#141413] opacity-50'
+          className={disabledButtonClass}
         >
           <ChevronsRight className='w-4 h-4' />
         </Button>

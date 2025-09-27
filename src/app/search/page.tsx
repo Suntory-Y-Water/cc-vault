@@ -6,6 +6,8 @@ import ArticleList from '@/components/article/ArticleList';
 import SiteFilter from '@/components/layout/SiteFilter';
 import MainTabs from '@/components/layout/MainTabs';
 import Pagination from '@/components/article/Pagination';
+import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { headers } from 'next/headers';
 
 type Props = {
   searchParams: Promise<{
@@ -17,18 +19,25 @@ type Props = {
 };
 
 /**
- * 検索結果ページコンポーネント
+ * 検索結果ページコンポーネント（テナント対応）
  *
  * 事前条件:
  * - searchParamsが有効なURLパラメータを含むこと
  * - Cloudflare環境で実行されること
+ * - requestHeadersからホスト名が取得可能であること
  *
  * 事後条件:
  * - 検索条件に基づいた記事一覧が表示されること
+ * - 現在のテナント（AIエージェント）スコープ内での検索結果が表示されること
  * - 適切なフィルタ・ソート・ページネーションが表示されること
  */
 export default async function SearchPage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
+
+  // AIエージェント情報の取得（テナント識別）
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
+  const aiAgent = resolveAIAgentFromHost({ host });
 
   // URLパラメータの取得と正規化
   const {
@@ -72,7 +81,7 @@ export default async function SearchPage({ searchParams }: Props) {
     );
   }
 
-  // D1データベースから検索結果を取得
+  // D1データベースから検索結果を取得（テナント別フィルタリング適用）
   const paginatedData = await fetchArticlesByTitle({
     db: env.DB,
     searchParams: {
@@ -81,6 +90,7 @@ export default async function SearchPage({ searchParams }: Props) {
       limit,
       site,
       order,
+      aiAgent: aiAgent.id,
     },
   });
 

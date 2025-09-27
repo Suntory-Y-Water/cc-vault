@@ -1,6 +1,9 @@
+import { headers } from 'next/headers';
 import { Card, CardContent } from '@/components/ui/card';
 import { HelpCircle, Filter, TrendingUp, Clock } from 'lucide-react';
 import type { Metadata } from 'next';
+import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { buildThemeStyle } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: 'ヘルプセンター - CC-Vault',
@@ -11,23 +14,28 @@ export const metadata: Metadata = {
 /**
  * ヘルプセンターページコンポーネント
  */
-export default function HelpPage() {
+export default async function HelpPage() {
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
+  const aiAgent = resolveAIAgentFromHost({ host });
+  const themeStyles = buildThemeStyle(aiAgent.colors);
+
   const faqs = [
     {
       category: '基本的な使い方',
       icon: HelpCircle,
       questions: [
         {
-          q: 'CC-Vaultとは何ですか？',
-          a: 'CC-VaultはClaudeCode関連の技術記事を複数のプラットフォームから自動収集し、一箇所で閲覧できるキュレーションサービスです。ZennやQiitaなどの記事を効率的にチェックできます。',
+          q: `${aiAgent.branding.siteName}とは何ですか？`,
+          a: `${aiAgent.branding.siteName}は${aiAgent.name}関連の技術記事を複数のプラットフォームから自動収集し、一箇所で閲覧できるキュレーションサービスです。ZennやQiitaなどの記事を効率的にチェックできます。`,
         },
         {
           q: '利用料金はかかりますか？',
-          a: 'CC-Vaultは完全無料でご利用いただけます。会員登録も不要で、どなたでもすぐにご利用開始いただけます。',
+          a: `${aiAgent.branding.siteName}は完全無料でご利用いただけます。会員登録も不要で、どなたでもすぐにご利用開始いただけます。`,
         },
         {
           q: 'どのようなサイトの記事を収集していますか？',
-          a: '現在、Zenn、QiitaからClaudeCode関連の記事を収集しています。今後、対応サイトを拡充予定です。',
+          a: `現在、Zenn、Qiitaから${aiAgent.name}関連の記事を収集しています。今後、対応サイトを拡充予定です。`,
         },
       ],
     },
@@ -69,7 +77,7 @@ export default function HelpPage() {
         },
         {
           q: 'モバイルデバイスでも利用できますか？',
-          a: 'はい、CC-Vaultはレスポンシブデザインに対応しており、スマートフォンやタブレットでも快適にご利用いただけます。',
+          a: `はい、${aiAgent.branding.siteName}はレスポンシブデザインに対応しており、スマートフォンやタブレットでも快適にご利用いただけます。`,
         },
         {
           q: '記事が表示されない場合はどうすればよいですか？',
@@ -80,14 +88,15 @@ export default function HelpPage() {
   ];
 
   return (
-    <div className='max-w-[80rem] mx-auto px-4 py-12'>
+    <div className='max-w-[80rem] mx-auto px-4 py-12' style={themeStyles}>
       {/* ページタイトル */}
       <div className='text-center mb-12'>
-        <h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-[#141413] mb-6'>
+        <h1 className='text-4xl md:text-5xl font-extrabold tracking-tight text-[var(--ai-text)] mb-6'>
           ヘルプセンター
         </h1>
-        <p className='text-lg text-[#7D4A38] max-w-2xl mx-auto'>
-          CC-Vaultの使い方や機能について、よくある質問と回答をまとめました。
+        <p className='text-lg text-[var(--ai-secondary)] max-w-2xl mx-auto'>
+          {aiAgent.branding.siteName}
+          の使い方や機能について、よくある質問と回答をまとめました。
           ご不明な点がございましたら、以下をご確認ください。
         </p>
       </div>
@@ -99,8 +108,8 @@ export default function HelpPage() {
           return (
             <div key={category.category}>
               <div className='flex items-center gap-3 mb-6'>
-                <IconComponent className='w-6 h-6 text-[#DB8163]' />
-                <h2 className='text-2xl font-bold text-[#141413]'>
+                <IconComponent className='w-6 h-6 text-[var(--ai-primary)]' />
+                <h2 className='text-2xl font-bold text-[var(--ai-text)]'>
                   {category.category}
                 </h2>
               </div>
@@ -108,13 +117,13 @@ export default function HelpPage() {
                 {category.questions.map((faq, faqIndex) => (
                   <Card
                     key={`${category.category}-${faqIndex}`}
-                    className='bg-[#FAF9F5] border-[#E0DFDA] hover:shadow-lg transition-shadow duration-200'
+                    className='ai-themed-bg ai-themed-border hover:shadow-lg transition-shadow duration-200'
                   >
                     <CardContent className='p-6'>
-                      <h3 className='text-lg font-semibold text-[#141413] mb-3'>
+                      <h3 className='text-lg font-semibold text-[var(--ai-text)] mb-3'>
                         Q. {faq.q}
                       </h3>
-                      <p className='text-[#141413] opacity-80 leading-relaxed'>
+                      <p className='text-[var(--ai-text)] opacity-80 leading-relaxed'>
                         A. {faq.a}
                       </p>
                     </CardContent>

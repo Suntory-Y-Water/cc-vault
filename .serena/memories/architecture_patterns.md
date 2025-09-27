@@ -1,109 +1,58 @@
-# アーキテクチャ・設計パターン
+# アーキテクチャパターン
 
-## アプリケーション構造
+## Next.js App Router構成
 
-### Next.js App Router パターン
-- **サーバーコンポーネント**: デフォルトでサーバー側実行
-- **クライアントコンポーネント**: `'use client'`で明示
-- **データ取得**: Server Actionsまたはサーバーコンポーネントで実行
+### ページ構造
+- `src/app/`: App Routerによるファイルベースルーティング
+- `layout.tsx`: 共通レイアウト
+- `page.tsx`: ページコンポーネント
+- `error.tsx`: エラーハンドリング
+- `not-found.tsx`: 404ページ
 
-### レイヤー構造
-```
-UI Layer (components/) 
-    ↓
-Business Logic (lib/)
-    ↓  
-Data Layer (config/drizzle/)
-    ↓
-External APIs (Gemini, Web APIs)
-```
+### 機能別ディレクトリ
+- `src/app/features/`: 主要機能
+- `src/app/search/`: 検索機能
+- `src/app/weekly-report/`: レポート機能
 
-## コンポーネント設計パターン
+## コンポーネント設計
 
-### コンポーネント分類
-1. **UI Components** (`components/ui/`)
-   - 汎用的な基本コンポーネント
-   - Radix UIベースで構築
+### UI コンポーネント（shadcn/ui）
+- `src/components/`: 再利用可能なUIコンポーネント
+- Radix UIベースの高品質コンポーネント
+- Tailwind CSSによるスタイリング
 
-2. **Feature Components** (`components/article/`, `components/weekly-report/`)
-   - ドメイン固有のビジネスロジック含有
-   - データ表示・操作機能
+### 設定管理
+- `src/config/`: アプリケーション設定
+- `ai-agents.ts`: AIエージェント設定
+- `site.ts`: サイト共通設定
 
-3. **Layout Components** (`components/layout/`)
-   - アプリケーション全体のレイアウト
-   - ナビゲーション、ヘッダー、フッター
+## データベース設計
 
-4. **Common Components** (`components/common/`)
-   - 複数機能で共有される汎用コンポーネント
+### Drizzle ORM
+- `src/config/drizzle/schema.ts`: スキーマ定義
+- `src/config/drizzle/migrations/`: マイグレーションファイル
+- SQLite（D1）データベース使用
 
-### 関数ベース設計
-- **クラス禁止**: 全て関数コンポーネント・関数で実装
-- **単一責任**: 1つの関数は1つの明確な責任
-- **早期リターン**: 可読性向上のため積極使用
+## Cloudflare統合
 
-## データフロー
+### OpenNext.js Adapter
+- Next.jsアプリケーションのCloudflare Workers適応
+- Edge Runtimeでの実行最適化
+- 静的ファイルのCloudflare Pages配信
 
-### 記事収集・分析フロー
-```
-外部API → Fetchers → Parser → DB保存 → UI表示
-```
+### Environment Variables
+- `.env`: ローカル開発環境変数
+- `.env.example`: 環境変数テンプレート
+- Cloudflare環境変数との連携
 
-### 週次レポート生成フロー
-```
-DB記事データ → Gemini AI → レポート生成 → DB保存 → UI表示
-```
+## 開発ワークフロー
 
-## 状態管理パターン
+### Kiro仕様駆動開発
+- `.kiro/steering/`: プロジェクト指針
+- `.kiro/specs/`: 機能仕様書
+- 要件→設計→タスク→実装の段階的プロセス
 
-### Server State
-- Next.js Server Componentsでデータ取得
-- Cloudflare D1/Tursoデータベースから直接取得
-
-### Client State  
-- React hooksでローカル状態管理
-- プロップスドリリングまたはContext使用
-
-## 型設計パターン
-
-### 型の組織化
-- `src/types/index.ts`で集約エクスポート
-- ドメインごとに型定義ファイル分割
-- Pick・Omitユーティリティ型積極使用
-
-### API型定義
-```typescript
-// レスポンス型
-type ApiResponse<T> = {
-  data: T;
-  error?: string;
-  status: number;
-};
-
-// リクエスト型
-type PaginationParams = {
-  page: number;
-  limit: number;
-};
-```
-
-## エラーハンドリングパターン
-
-### 階層化エラーハンドリング
-1. **API層**: HTTPエラー・ネットワークエラー
-2. **ビジネスロジック層**: バリデーションエラー・データ変換エラー
-3. **UI層**: ユーザー向けエラー表示
-
-### エラーバウンダリ
-- Next.js `error.tsx`でページレベルエラーキャッチ
-- React Error Boundaryでコンポーネントレベルエラーキャッチ
-
-## パフォーマンス最適化
-
-### Next.js最適化
-- `revalidate`によるISR（Incremental Static Regeneration）
-- 動的インポートでコード分割
-- 画像最適化（Next.js Image）
-
-### Cloudflare Workers最適化
-- エッジでの実行によるレイテンシ削減
-- D1データベースでの高速データアクセス
+### Claude Code統合
+- `.claude/commands/`: カスタムコマンド
+- スラッシュコマンドによる開発効率化
+- AIエージェントとの協調開発

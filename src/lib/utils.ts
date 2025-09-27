@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, toZonedTime } from 'date-fns-tz';
+import { CSSProperties } from 'react';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -94,4 +95,27 @@ export function convertQiitaUrlToApiUrl(articleUrl: string): string {
   } catch (error) {
     throw new Error(`Qiita URL変換に失敗しました: ${error}`);
   }
+}
+
+/**
+ * テーマカラーのスタイルを生成する
+ */
+export function buildThemeStyle(colors: {
+  primary: string;
+  primaryHover: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  text: string;
+}): CSSProperties {
+  return {
+    '--ai-primary': colors.primary,
+    '--ai-primary-hover': colors.primaryHover,
+    '--ai-secondary': colors.secondary,
+    '--ai-accent': colors.accent,
+    '--ai-background': colors.background,
+    '--ai-text': colors.text,
+    backgroundColor: colors.background,
+    color: colors.text,
+  } as CSSProperties;
 }
