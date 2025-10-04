@@ -1,27 +1,23 @@
-name: CI
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - "feature-*"
-      - "feature/*"
-      # 依存関係が更新されたときにも一応チェックする
-      - "dependabot/*"
-    paths: ["**/*.ts", "**/*.tsx", "**/*.js", ".github/**", "**/*.json"]
-
-defaults:
-  run:
-    shell: bash
+name: GitHub Actions Lint
 
 permissions: {}
+
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint:
+  actionlint:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
@@ -30,10 +26,9 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: pnpm run lint
+      - uses: koki-develop/github-actions-lint/actionlint@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
 
-  typecheck:
+  ghalint:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
@@ -42,10 +37,11 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: pnpm run typecheck
+      - uses: koki-develop/github-actions-lint/ghalint@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
+        with:
+          action-path: ./.github/actions/**/action.yml
 
-  build:
+  zizmor:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
@@ -54,17 +50,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: pnpm run build
-
-  test:
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: koki-develop/github-actions-lint/zizmor@62dfef5c9854a07712bad7af3bee7edb0c1109b1 # v1.4.1
         with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: pnpm test
+          github-token: ${{ github.token }}
+          persona: auditor

@@ -1,74 +1,69 @@
-# Claude Code Spec-Driven Development
+## 開発手法
 
-Kiro-style Spec Driven Development implementation using claude code slash commands, hooks and agents.
+### 契約による設計の実装指針
 
-## Project Context
+TypeScript環境での契約による設計の適切な実装方法
 
-### Paths
-- Steering: `.kiro/steering/`
-- Specs: `.kiro/specs/`
-- Commands: `.claude/commands/`
+#### 基本原則
 
-### Steering vs Specification
+- **TypeScriptの型システムを信頼する** - ランタイムでの型チェックは不要
+- **ライブラリの仕様を事前確認** - 例外を投げない関数に不要なtry-catchは追加しない
+- **契約はコードで表現** - 過度なJSDocコメントではなく、関数の動作そのもので契約を示す
+- インターフェースによる疎結合
+- 早期リターンで可読性向上
+- 過度な抽象化は避ける
+- 単一責任の法則ではなく、ロジックの意味で実装を行う
+  - 1メソッド、1責任でメソッドを分解しすぎても見づらくなってしまう
 
-**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
-**Specs** (`.kiro/specs/`) - Formalize development process for individual features
+#### 避けるべき実装パターン
 
-### Active Specifications
-- `subdomain-routing`: AIエージェント用マルチテナント・サブドメインルーティングシステム
-- `subdomain-theming-completion`: サブドメインテーマシステムの完成・残課題対応
-- Check `.kiro/specs/` for active specifications
-- Use `/kiro:spec-status [feature-name]` to check progress
+- 既にTypeScriptで型保証されている引数の再チェック
+- 例外を投げないライブラリ関数への不要なtry-catch
+- 「（契約による設計）」など装飾的なコメント
+- 事前・事後・不変条件の詳細なコメント記述
 
-## Development Guidelines
-- Think in English, but generate responses in Japanese (思考は英語、回答の生成は日本語で行うように)
+#### 推奨する実装パターン
 
-## Workflow
+- 関数名と型定義で契約を明示
+- シンプルで読みやすいコード構造
+- 必要最小限のJSDocコメント
+- 純粋関数としての実装（副作用なし）
 
-### Phase 0: Steering (Optional)
-`/kiro:steering` - Create/update steering documents
-`/kiro:steering-custom` - Create custom steering for specialized contexts
+#### 実装前チェックリスト
 
-Note: Optional for new features or small additions. You can proceed directly to spec-init.
+- [ ] TypeScriptが既に保証している条件を重複チェックしていないか
+- [ ] 使用するライブラリ関数の仕様を確認したか
+- [ ] コメントは修正時のメンテナンス負荷を考慮したか
+- [ ] ユーザーレビューを経てから実装を開始するか
 
-### Phase 1: Specification Creation
-1. `/kiro:spec-init [detailed description]` - Initialize spec with detailed project description
-2. `/kiro:spec-requirements [feature]` - Generate requirements document
-3. `/kiro:spec-design [feature]` - Interactive: "Have you reviewed requirements.md? [y/N]"
-4. `/kiro:spec-tasks [feature]` - Interactive: Confirms both requirements and design review
+### テスト方針
 
-### Phase 2: Progress Tracking
-`/kiro:spec-status [feature]` - Check current progress and phases
+- メソッドの事前条件、事後条件、不変条件を検証するテストであること
+- Given-When-Thenパターンに基づいて実装すること
+- TDD を実施する。コードを生成するときは、それに対応するユニットテストを常に生成する。
+  - コードを追加で修正したとき、`pnpm run test` がパスすることを常に確認する。
+  ```ts
+  function add(a: number, b: number) { return a + b }
+  test("1+2=3", () => {
+    expect(add(1, 2)).toBe(3);
+  });
+  ```
 
-## Development Rules
-1. **Consider steering**: Run `/kiro:steering` before major development (optional for new features)
-2. **Follow 3-phase approval workflow**: Requirements → Design → Tasks → Implementation
-3. **Approval required**: Each phase requires human review (interactive prompt or manual)
-4. **No skipping phases**: Design requires approved requirements; Tasks require approved design
-5. **Update task status**: Mark tasks as completed when working on them
-6. **Keep steering current**: Run `/kiro:steering` after significant changes
-7. **Check spec compliance**: Use `/kiro:spec-status` to verify alignment
+## 品質保証
 
-## Steering Configuration
+### コーディング規約
 
-### Current Steering Files
-Managed by `/kiro:steering` command. Updates here reflect command changes.
+- インターフェースではなくtypeを使用する
+- 型安全にするため、構造的に型づけする
+  - アサーションが必要なデータがあるときはユーザーに許可を求める
+- 見通しを良くするためFunction宣言で実装する
+- 関数の引数が2個以上あるときは引数をオブジェクト形式で設定する
+- クラスはこのプロジェクトでは使用しないため、関数ベースの実装を行う
+- 既存の型定義を尊重して、活用できるものがあればPickやOmitなどを使う
+- 配列の型定義は`Array<T>`ではなく`[]`を使用する
 
-### Active Steering Files
-- `product.md`: Always included - Product context and business objectives
-- `tech.md`: Always included - Technology stack and architectural decisions
-- `structure.md`: Always included - File organization and code patterns
+## 制約事項
 
-### Custom Steering Files
-<!-- Added by /kiro:steering-custom command -->
-<!-- Format:
-- `filename.md`: Mode - Pattern(s) - Description
-  Mode: Always|Conditional|Manual
-  Pattern: File patterns for Conditional mode
--->
+### コード作成後の型エラー、Lintエラーチェック
 
-### Inclusion Modes
-- **Always**: Loaded in every interaction (default)
-- **Conditional**: Loaded for specific file patterns (e.g., "*.test.js")
-- **Manual**: Reference with `@filename.md` syntax
-
+- コード生成時は関数やコンポーネントには JSDoc コメントを必ず追加し、生成後は`pnpm run ai-check`でリント、型チェックを実行します。

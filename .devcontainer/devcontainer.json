@@ -85,5 +85,8 @@
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   }
 }
