@@ -4,6 +4,10 @@
 
 import type { FetchOptions } from '@/types';
 
+import { getLogger } from '@/lib/logger';
+
+const logger = getLogger();
+
 /**
  * 汎用fetch関数 - 外部APIからデータを取得
  * @param url - リクエストURL
@@ -38,7 +42,7 @@ export async function fetchExternalData<T>(
     const data = await response.json();
     return data as T;
   } catch (error) {
-    console.error('Fetch error:', error);
+    logger.error({ url, error }, '外部APIの取得に失敗しました');
     throw error;
   }
 }
@@ -49,6 +53,7 @@ export async function fetchExternalData<T>(
  * @param options - fetch オプション
  * @returns Promise<string> - HTML文字列
  */
+
 export async function fetchHtmlDocument(
   url: string,
   options?: RequestInit & FetchOptions,
@@ -84,7 +89,7 @@ export async function fetchHtmlDocument(
     const html = await response.text();
     return html;
   } catch (error) {
-    console.error('HTML fetch error:', error);
+    logger.error({ url, error }, 'HTMLドキュメントの取得に失敗しました');
     throw error;
   }
 }

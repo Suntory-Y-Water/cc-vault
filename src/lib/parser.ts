@@ -14,6 +14,9 @@ import {
   getDomainFromUrl,
   normalizeText,
 } from './utils';
+import { getLogger } from '@/lib/logger';
+
+const logger = getLogger();
 
 /**
  * Next.jsのNEXT_DATAを解析する
@@ -131,6 +134,7 @@ export function getHatenaBookmarkData({ htmlString }: { htmlString: string }) {
  * HTML文字列をパースして、記事の本文を取得する
  * code-block-containerクラスを除外して、テキストのみを抽出する
  */
+
 export function extractArticleContent({
   htmlString,
 }: { htmlString: string }): string {
@@ -172,7 +176,7 @@ export async function fetchZennArticleContent(url: string): Promise<string> {
 
     return content;
   } catch (error) {
-    console.error(`記事の本文取得に失敗しました: ${url}`, error);
+    logger.error({ url, error }, '記事本文の取得に失敗しました');
     throw new Error(`記事の本文取得に失敗しました: ${error}`);
   }
 }
@@ -201,7 +205,7 @@ export async function fetchArticleContent(url: string): Promise<string> {
     const htmlString = await fetchHtmlDocument(url, { cache: 'no-store' });
     return await parseHatenaBookmarkContent({ url, htmlString });
   } catch (error) {
-    console.error(`記事の本文取得に失敗しました: ${url}`, error);
+    logger.error({ url, error }, '記事本文の取得に失敗しました');
     throw new Error(`記事の本文取得に失敗しました: ${error}`);
   }
 }

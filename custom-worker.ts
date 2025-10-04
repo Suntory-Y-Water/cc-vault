@@ -28,6 +28,9 @@ import {
  * カスタムWorker設定
  * OpenNext.jsのfetch handlerにscheduled handlerを追加
  */
+import { getLogger } from '@/lib/logger';
+
+const logger = getLogger('custom-worker');
 const worker = {
   /**
    * HTTPリクエストハンドラー
@@ -94,7 +97,10 @@ const worker = {
     env: CloudflareEnv,
     _ctx: ExecutionContext,
   ) {
-    console.log('スケジュールタスクが実行されました');
+    logger.info(
+      { cron: controller.cron },
+      'スケジュールタスクが実行されました',
+    );
     switch (controller.cron) {
       /**
        * 定時記事更新処理
@@ -212,8 +218,9 @@ const worker = {
         // D1データベースに保存
         if (uniqueArticles.length > 0) {
           await saveArticlesToDB({ db: env.DB, articles: uniqueArticles });
-          console.log(
-            `${uniqueArticles.length}件の記事をデータベースに保存しました`,
+          logger.info(
+            { count: uniqueArticles.length },
+            '記事の保存が完了しました',
           );
         }
         break;
@@ -224,28 +231,37 @@ const worker = {
        * 毎週月曜日 JST 00:00 (UTC 15:00 日曜日) に実行
        */
       case '0 15 * * SUN': {
-        console.log('週次レポート生成処理を開始します');
+        logger.info(
+          { cron: controller.cron },
+          '週次レポート生成処理を開始します',
+        );
 
         // 1. 実行日時をJSTで取得
         const executionDateJST = getCurrentJSTDate();
 
         // 2. 前週の範囲を計算
         const weekRange = calculatePreviousWeek(executionDateJST);
-        console.log(`対象週: ${weekRange.startDate} - ${weekRange.endDate}`);
+        logger.info(
+          { startDate: weekRange.startDate, endDate: weekRange.endDate },
+          '週次レポートの対象期間を決定しました',
+        );
 
         // 3. 各サイトの上位3記事を取得
         const topArticles = await fetchTopArticles({
           db: env.DB,
           weekRange,
         });
-        console.log(`記事取得: ${topArticles.length}件`);
+        logger.info(
+          { count: topArticles.length },
+          '週次対象記事の取得が完了しました',
+        );
 
         // 4. 各記事の本文取得と要約生成
         const summaries = await generateArticleSummaries({
           env,
           articles: topArticles,
         });
-        console.log(`要約生成完了: ${summaries.length}件`);
+        logger.info({ count: summaries.length }, '週次要約生成が完了しました');
 
         // 5. DBに要約データ保存
         await saveWeeklySummaries({
@@ -264,11 +280,14 @@ const worker = {
           overallSummary,
         });
 
-        console.log('週次レポート生成処理が完了しました');
+        logger.info(
+          { weekStartDate: weekRange.startDate },
+          '週次レポート生成処理が完了しました',
+        );
         break;
       }
     }
-    console.log('スケジュールタスクが完了しました');
+    logger.info({ cron: controller.cron }, 'スケジュールタスクが完了しました');
   },
 } satisfies ExportedHandler<CloudflareEnv>;
 
@@ -308,11 +327,14 @@ async function generateArticleSummaries({
       const prompt = getArticleSummaryPrompt(content);
       const result = await getGeminiResponse({ ai: geminiClient, prompt });
 
-      console.log(
-        `記事要約生成完了: ${article.id}`,
-        `promptTokens: ${result.usageMetadata?.promptTokenCount ?? 'N/A'}`,
-        `responseTokens: ${result.usageMetadata?.responseTokenCount ?? 'N/A'}`,
-        `totalTokens: ${result.usageMetadata?.totalTokenCount ?? 'N/A'}`,
+      logger.info(
+        {
+          articleId: article.id,
+          promptTokens: result.usageMetadata?.promptTokenCount ?? null,
+          responseTokens: result.usageMetadata?.responseTokenCount ?? null,
+          totalTokens: result.usageMetadata?.totalTokenCount ?? null,
+        },
+        '記事要約生成が完了しました',
       );
 
       summaries.push({
@@ -322,7 +344,10 @@ async function generateArticleSummaries({
         bookmarksSnapshot: article.bookmarks,
       });
     } catch (error) {
-      console.error(`記事要約生成に失敗しました: ${article.id}`, error);
+      logger.error(
+        { articleId: article.id, error },
+        '記事要約生成に失敗しました',
+      );
       // エラーが発生した記事はスキップして続行
     }
   }
@@ -349,11 +374,13 @@ async function generateOverallSummary({
   const prompt = getOverallSummaryPrompt(summaries);
   const result = await getGeminiResponse({ ai: geminiClient, prompt });
 
-  console.log(
-    `全体総括生成完了:`,
-    `promptTokens: ${result.usageMetadata?.promptTokenCount ?? 'N/A'}`,
-    `responseTokens: ${result.usageMetadata?.responseTokenCount ?? 'N/A'}`,
-    `totalTokens: ${result.usageMetadata?.totalTokenCount ?? 'N/A'}`,
+  logger.info(
+    {
+      promptTokens: result.usageMetadata?.promptTokenCount ?? null,
+      responseTokens: result.usageMetadata?.responseTokenCount ?? null,
+      totalTokens: result.usageMetadata?.totalTokenCount ?? null,
+    },
+    '全体総括生成が完了しました',
   );
 
   return result.text;
