@@ -22,6 +22,10 @@ else
     echo "bun already installed, skipping..."
 fi
 
+# 最新版をインストールしたいので、毎回実行する
+echo "Installing claude code..."
+npm i -g @anthropic-ai/claude-code
+
 # 環境パスの設定
 echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
 echo 'export PATH="$HOME/.bun/bin:$PATH"' >> ~/.bashrc

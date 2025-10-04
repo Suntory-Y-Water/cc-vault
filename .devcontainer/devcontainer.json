@@ -85,11 +85,5 @@
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/node/.claude"
-  },
-
-  // コンテナにインストールするパッケージ
-  "features": {
-    // Claude Code 公式のイメージ
-    "ghcr.io/anthropics/devcontainer-features/claude-code:latest": {}
   }
 }

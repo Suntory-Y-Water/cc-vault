@@ -19,13 +19,9 @@
       ],
       "cwd": "."
     },
-    "playwright": {
-      "command": "pnpm",
-      "args": ["dlx", "@playwright/mcp@latest"]
-    },
-    "chrome-devtools": {
-      "command": "pnpm",
-      "args": ["dlx", "chrome-devtools-mcp@latest"]
+    "deepwiki": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.deepwiki.com/sse"]
     }
   }
 }

@@ -4,6 +4,37 @@
 
 本機能は、CC-VaultをAIエージェント情報キュレーションメディアに転換し、各AIエージェントが専用サブドメインで独自のコンテンツとデザインを提供するシステムを実現します。既存のNext.js App Routerアーキテクチャを最大限活用し、最小限の変更で最大の効果を実現する簡素化アプローチを採用します。
 
+## Codexエージェント追加の影響範囲
+
+### A. 設定・定義層の変更
+1. **AIエージェント型定義拡張** (`src/config/ai-agents.ts`)
+   - `id`型を`'claude-code' | 'codex'`に拡張
+   - `searchQueries`プロパティ追加（zenn/qiita/hatena）
+   - Codexエージェント設定オブジェクト追加
+
+### B. データ収集層の変更
+2. **custom-worker.ts記事収集ロジック修正**
+   - ハードコード`ai_agent: 'claude-code'`除去
+   - Claude Code/Codexエージェントループ実装
+   - エージェント別検索クエリ実行（`claudecode`/`codex`）
+
+### C. データアクセス層の変更
+3. **データベーススキーマ拡張**
+   - `ai_agent`カラム値に`'codex'`追加
+   - 既存`'claude-code'`データとの併存
+
+### D. フロントエンド層の変更
+4. **サブドメインルーティング対応**
+   - `codex.cc-vault.com`サブドメイン解決
+   - Codex専用テーマ・色設定
+   - Codexブランディング要素
+
+### E. 変更されない範囲
+- 既存の記事表示ロジック（フィルタリングのみ適用）
+- データベースクエリ処理（WHERE句にエージェント条件追加のみ）
+- レイアウト・コンポーネント構造
+- Next.js App Router設定
+
 ### 目標
 - サブドメイン別のAIエージェント専用コンテンツ配信
 - 既存のCC-Vaultアーキテクチャとの完全互換性
@@ -80,7 +111,7 @@ graph TB
 **主要責任**: 静的設定からAIエージェント情報を提供し、ホスト名に基づくテナント解決を行う
 
 **依存関係**:
-- **Inbound**: layout.tsx、page.tsx
+- **Inbound**: layout.tsx、page.tsx、custom-worker.ts
 - **Outbound**: なし（静的設定）
 - **External**: Next.js headers() API
 
@@ -89,7 +120,7 @@ graph TB
 ```typescript
 // src/config/ai-agents.ts
 type AIAgent = {
-  id: 'default' | 'claude-code' | 'codex';
+  id: 'claude-code' | 'codex';
   name: string;
   description: string;
   colors: {
@@ -98,6 +129,11 @@ type AIAgent = {
     accent: string;
   };
   contentFilter: string[];
+  searchQueries: {
+    zenn: string;
+    qiita: string;
+    hatena: string;
+  };
   branding: {
     siteName: string;
   };
@@ -112,7 +148,7 @@ function getAIAgentConfig(args: { agentId: string }): AIAgent;
 **主要責任**: 既存のCloudflare D1アクセス関数にAIエージェントフィルタリングを追加
 
 **依存関係**:
-- **Inbound**: page.tsx、各種サーバーコンポーネント
+- **Inbound**: page.tsx、各種サーバーコンポーネント、custom-worker.ts
 - **Outbound**: Drizzle ORM、Cloudflare D1
 - **External**: なし
 
@@ -137,6 +173,17 @@ function getArticlesWithPagination(args: {
 - `getArticlesWithPagination`にaiAgentフィルターを追加
 - WHERE句でのai_agentカラムフィルタリング
 - 新規関数追加は最小限
+
+### Worker / データ収集管理
+
+#### custom-worker.ts拡張
+
+**主要責任**: 既存の記事収集処理をエージェント別に実行
+
+**修正内容**:
+- Claude Code: `claudecode`で検索 → `ai_agent: 'claude-code'`で保存
+- Codex: `codex`で検索 → `ai_agent: 'codex'`で保存
+- ハードコード`ai_agent: 'claude-code'`をエージェントループに変更
 
 ### Layout / レイアウトコンポーネント
 
@@ -215,6 +262,27 @@ sequenceDiagram
     Layout-->>User: AIエージェント別ページ
 ```
 
+### エージェント別データ収集フロー
+
+```mermaid
+sequenceDiagram
+    participant Scheduler
+    participant Worker
+    participant ExternalAPI
+    participant D1
+
+    Scheduler->>Worker: 定期実行トリガー
+
+    loop Claude Code, Codex
+        Worker->>ExternalAPI: エージェント別クエリ実行
+        ExternalAPI-->>Worker: 記事データ
+        Worker->>D1: saveArticlesToDB({articles, aiAgent})
+        D1-->>Worker: 保存完了
+    end
+
+    Worker-->>Scheduler: 全エージェント処理完了
+```
+
 ## エラーハンドリング
 
 ### エラー戦略
@@ -286,12 +354,18 @@ function resolveAIAgentFromHost(args: { host: string | null }): AIAgent {
 2. WHERE句でのフィルタリング実装
 3. 基本的な動作確認
 
-#### Phase 3: UIテーマ適用
+#### Phase 3: Worker層エージェント別データ収集
+1. `src/config/ai-agents.ts`にCodex設定追加（`searchQueries`含む）
+2. `custom-worker.ts`の既存ハードコード`ai_agent: 'claude-code'`除去
+3. エージェント設定ループによる動的記事収集実装
+4. Claude Code（`claudecode`）とCodex（`codex`）の並列収集実行
+
+#### Phase 4: UIテーマ適用
 1. CSS data-attribute スコープ実装
 2. AIエージェント別の色定義
 3. 既存コンポーネントとの統合
 
-#### Phase 4: 最終調整
+#### Phase 5: 最終調整
 1. エラーハンドリングの実装
 2. テストケースの追加
 3. パフォーマンス確認
