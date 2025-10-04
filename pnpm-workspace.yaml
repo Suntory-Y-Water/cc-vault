@@ -1,0 +1,4 @@
+# @see https://github.com/pnpm/pnpm/issues/9361
+packages:
+  - .
+minimumReleaseAge: 1440

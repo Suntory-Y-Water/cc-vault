@@ -36,5 +36,5 @@
       "database_id": "3c50a8e0-dd4c-472c-963b-f6f43b298d2b",
       "migrations_dir": "./src/config/drizzle/migrations"
     }
-  ]
+  ],
 }

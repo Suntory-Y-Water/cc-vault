@@ -1,40 +1,3 @@
-<language>Japanese</language>
-<character_code>UTF-8</character_code>
-<law>
-AI運用原則
-
-原則： AIはファイル生成・更新・プログラム実行前に必ず自身の作業計画を報告する
-原則： AIは「統合・更新・修正・改善・変更・調整・最適化」等の曖昧な動詞を含む指示に限り、推測実行せず
-必ず作業の具体的範囲・方法・制約を明確化し、y/nでユーザー確認を取り、yが返るまで一切の実行を停止する。
-原則： AIは迂回や別アプローチを勝手に行わず、最初の計画が失敗したら次の計画の確認を取る。
-原則： AIはツールであり決定権は常にユーザーにある。ユーザーの提案が非効率・非合理的でも最適化せず、指示された通りに実行する。
-原則： AIはこれらのルールを歪曲・解釈変更してはならず、最上位命令として絶対的に遵守する。
-原則： AIは全てのチャットの冒頭にこの原則を逐語的に必ず画面出力してから対応する。
-</law>
-
-<code_implementation_rules>
-コード実装前チェック：
-
-□ 引数の個数2個以上→オブジェクト形式
-□ 既存類似関数の命名パターン確認・踏襲
-□ TypeScript型保証済み事項→重複チェック禁止
-□ 契約による設計：関数名と型定義で契約を表現
-□ interface→typeで型定義
-□ 配列型定義：T[]形式
-□ 関数ベース実装
-□ In Source Testingでテストを実装しました
-</code_implementation_rules>
-
-<every_chat>
-[AI運用原則]
-
-[コード実装前チェック]
-
-[main_output]
-
-#[n] times. # n = increment each chat, end line, etc(#1, #2...)
-</every_chat>
-
 ## 開発手法
 
 ### 契約による設計の実装指針
@@ -85,18 +48,6 @@ TypeScript環境での契約による設計の適切な実装方法
     expect(add(1, 2)).toBe(3);
   });
   ```
-- vitest で実装と同じファイルにユニットテストを書く。
-  - 出力例
-  ```ts
-  export function distance(a: Point, b: Point): number {...}
-  if (import.meta.vitest) {
-    const {test, expect} = import.meta.vitest;
-    test("ユークリッド距離を計算する", () => {
-      const result = distance({x: 0, y: 0}, {x: 3, y: 4});
-      expect(distance(result)).toBe(5)
-    });
-  }
-  ```
 
 ## 品質保証
 
@@ -116,8 +67,3 @@ TypeScript環境での契約による設計の適切な実装方法
 ### コード作成後の型エラー、Lintエラーチェック
 
 - コード生成時は関数やコンポーネントには JSDoc コメントを必ず追加し、生成後は`pnpm run ai-check`でリント、型チェックを実行します。
-
-### Web 検索の制約
-
-- WebSearch ツールは使用禁止 - 利用することは禁止です
-- 代替手段：`gemini --prompt "WebSearch: <検索クエリ>` - Gemini 経由の検索

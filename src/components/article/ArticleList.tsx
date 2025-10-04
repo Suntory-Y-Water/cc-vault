@@ -12,7 +12,7 @@ export default function ArticleList({ articles }: ArticleListProps) {
   if (articles.length === 0) {
     return (
       <div className='text-center py-12'>
-        <p className='text-[#141413] opacity-70 text-lg'>
+        <p className='ai-themed-text opacity-70 text-lg'>
           記事が見つかりませんでした。
         </p>
       </div>

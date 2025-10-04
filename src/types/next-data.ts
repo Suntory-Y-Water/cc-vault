@@ -44,7 +44,7 @@ type ArticleProps = {
 
 type ArticlePageProps = {
   readonly article: ArticleDetail;
-  readonly user: PurpleUser;
+  readonly user: User;
 };
 
 type ArticleDetail = {
@@ -58,8 +58,3 @@ type ArticleDetail = {
   readonly ogImageURL: string;
 };
 
-type PurpleUser = {
-  readonly id: number;
-  readonly username: string;
-  readonly name: string;
-};

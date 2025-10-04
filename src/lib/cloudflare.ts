@@ -5,6 +5,7 @@ import {
   SearchParams,
   SITE_VALUES,
 } from '@/types';
+import type { AIAgentType } from '@/types/article';
 import { drizzle } from 'drizzle-orm/d1';
 import { eq, desc, count, sql, and, gte, lte } from 'drizzle-orm';
 import {
@@ -28,12 +29,26 @@ export async function getArticlesWithPagination(
 ): Promise<PaginatedArticles> {
   try {
     const drizzleDB = drizzle(db);
-    const { page, limit, site, order } = params;
+    const { page, limit, site, order, aiAgent } = params;
     const offset = (page - 1) * limit;
 
     // WHERE条件の構築
+    const whereConditions = [];
+
+    if (site && site !== 'all') {
+      whereConditions.push(eq(articles.site, site));
+    }
+
+    if (aiAgent && aiAgent !== 'all') {
+      whereConditions.push(eq(articles.aiAgent, aiAgent));
+    }
+
     const whereCondition =
-      site && site !== 'all' ? eq(articles.site, site) : undefined;
+      whereConditions.length > 0
+        ? whereConditions.length === 1
+          ? whereConditions[0]
+          : and(...whereConditions)
+        : undefined;
 
     // ORDER BY条件の構築
     const orderCondition =
@@ -119,7 +134,7 @@ export async function fetchArticlesByTitle(params: {
 }): Promise<PaginatedArticles> {
   const {
     db,
-    searchParams: { page, limit, site, order, query },
+    searchParams: { page, limit, site, order, query, aiAgent },
   } = params;
 
   if (page < 1) {
@@ -139,6 +154,11 @@ export async function fetchArticlesByTitle(params: {
     // サイトフィルタ
     if (site && site !== 'all') {
       conditions.push(eq(articles.site, site));
+    }
+
+    // AIエージェントフィルタ
+    if (aiAgent && aiAgent !== 'all') {
+      conditions.push(eq(articles.aiAgent, aiAgent));
     }
 
     // 検索条件（タイトルのLIKE検索、大文字小文字区別なし）
@@ -289,6 +309,7 @@ export async function fetchTopArticles({
           author: articles.author,
           published_at: articles.publishedAt,
           site: articles.site,
+          ai_agent: articles.aiAgent,
           likes: articles.likes,
           bookmarks: articles.bookmarks,
         })
@@ -436,10 +457,12 @@ export async function fetchWeeklyDisplayData({
   db,
   site,
   weekStartDate,
+  aiAgent,
 }: {
   db: D1Database;
   site: SiteValueType;
   weekStartDate: string;
+  aiAgent?: AIAgentType;
 }): Promise<
   Array<{
     id: string;
@@ -476,6 +499,8 @@ export async function fetchWeeklyDisplayData({
         and(
           eq(weeklySummaries.weekStartDate, weekStartDate),
           eq(articles.site, site),
+          // AIエージェントフィルターを追加
+          aiAgent ? eq(articles.aiAgent, aiAgent) : undefined,
         ),
       )
       .orderBy(
@@ -527,9 +552,11 @@ export async function getLatestCompletedWeek(
 export async function fetchWeeklyReportData({
   weekRange,
   db,
+  aiAgent,
 }: {
   weekRange: WeekRange;
   db: D1Database;
+  aiAgent?: AIAgentType;
 }): Promise<SiteRanking[]> {
   try {
     return await Promise.all(
@@ -538,6 +565,7 @@ export async function fetchWeeklyReportData({
           db,
           site,
           weekStartDate: weekRange.startDate,
+          aiAgent,
         });
         return {
           site,
@@ -577,9 +605,11 @@ export async function fetchWeeklyReportData({
 export async function fetchWeeklyOverallSummary({
   db,
   weekStartDate,
+  aiAgent,
 }: {
   db: D1Database;
   weekStartDate: string;
+  aiAgent?: AIAgentType;
 }): Promise<string | null> {
   try {
     const drizzleDB = drizzle(db);
@@ -591,6 +621,8 @@ export async function fetchWeeklyOverallSummary({
         and(
           eq(weeklyReports.weekStartDate, weekStartDate),
           eq(weeklyReports.status, 'completed'),
+          // AIエージェントフィルターを追加
+          aiAgent ? eq(weeklyReports.aiAgent, aiAgent) : undefined,
         ),
       )
       .limit(1);

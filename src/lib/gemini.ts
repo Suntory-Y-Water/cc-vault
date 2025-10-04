@@ -27,15 +27,38 @@ export async function getGeminiResponse({
 }: {
   ai: GoogleGenAI;
   prompt: string;
-}): Promise<string> {
+}): Promise<{
+  text: string;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    responseTokenCount?: number;
+    totalTokenCount?: number;
+  };
+}> {
   const response = await ai.models.generateContent({
     // プロジェクトで固定
     model: 'gemini-2.5-flash-lite',
     contents: prompt,
+    config: {
+      temperature: 0.5,
+      thinkingConfig: {
+        thinkingBudget: 0,
+        includeThoughts: false,
+      },
+    },
   });
   const text = response.text;
   if (!text) {
     throw new Error('Gemini APIからの応答が空です');
   }
-  return text;
+  return {
+    text,
+    usageMetadata: response.usageMetadata
+      ? {
+          promptTokenCount: response.usageMetadata.promptTokenCount,
+          responseTokenCount: response.usageMetadata.candidatesTokenCount,
+          totalTokenCount: response.usageMetadata.totalTokenCount,
+        }
+      : undefined,
+  };
 }

@@ -14,9 +14,14 @@
         "--context",
         "ide-assistant",
         "--project",
-        "."
+        ".",
+        "--enable-web-dashboard=false"
       ],
       "cwd": "."
+    },
+    "deepwiki": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp.deepwiki.com/sse"]
     }
   }
 }

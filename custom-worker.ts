@@ -117,6 +117,7 @@ const worker = {
             author: article.author,
             published_at: convertToJstString(article.published_at),
             site: 'zenn',
+            ai_agent: 'claude-code',
             likes: article.likedCount,
             bookmarks: article.bookmarkedCount,
           });
@@ -141,6 +142,7 @@ const worker = {
             author: article.user.id,
             published_at: convertToJstString(article.created_at),
             site: 'qiita',
+            ai_agent: 'claude-code',
             likes: article.likes_count,
             bookmarks: article.stocks_count,
           });
@@ -168,6 +170,7 @@ const worker = {
             author: article.author,
             published_at: convertToJstString(article.publishedAt),
             site: 'hatena',
+            ai_agent: 'claude-code',
             likes: 0, // はてなブックマークはlikesがないので0固定
             bookmarks: article.bookmarkCount,
           });
@@ -194,6 +197,7 @@ const worker = {
             author: article.author,
             published_at: convertToJstString(article.publishedAt),
             site: 'hatena',
+            ai_agent: 'claude-code',
             likes: 0,
             bookmarks: article.bookmarkCount,
           });
@@ -302,11 +306,18 @@ async function generateArticleSummaries({
 
       // AI要約生成
       const prompt = getArticleSummaryPrompt(content);
-      const summary = await getGeminiResponse({ ai: geminiClient, prompt });
+      const result = await getGeminiResponse({ ai: geminiClient, prompt });
+
+      console.log(
+        `記事要約生成完了: ${article.id}`,
+        `promptTokens: ${result.usageMetadata?.promptTokenCount ?? 'N/A'}`,
+        `responseTokens: ${result.usageMetadata?.responseTokenCount ?? 'N/A'}`,
+        `totalTokens: ${result.usageMetadata?.totalTokenCount ?? 'N/A'}`,
+      );
 
       summaries.push({
         articleId: article.id,
-        summary,
+        summary: result.text,
         likesSnapshot: article.likes,
         bookmarksSnapshot: article.bookmarks,
       });
@@ -336,5 +347,14 @@ async function generateOverallSummary({
 }): Promise<string> {
   const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
   const prompt = getOverallSummaryPrompt(summaries);
-  return await getGeminiResponse({ ai: geminiClient, prompt });
+  const result = await getGeminiResponse({ ai: geminiClient, prompt });
+
+  console.log(
+    `全体総括生成完了:`,
+    `promptTokens: ${result.usageMetadata?.promptTokenCount ?? 'N/A'}`,
+    `responseTokens: ${result.usageMetadata?.responseTokenCount ?? 'N/A'}`,
+    `totalTokens: ${result.usageMetadata?.totalTokenCount ?? 'N/A'}`,
+  );
+
+  return result.text;
 }
