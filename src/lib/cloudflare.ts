@@ -108,7 +108,10 @@ export async function getArticlesWithPagination(
       hasPrevious: page > 1,
     };
   } catch (error) {
-    console.error('D1からページネーション記事の取得に失敗しました:', error);
+    logger.error(
+      { params, error },
+      'D1からページネーション記事の取得に失敗しました',
+    );
     throw new Error(`D1からページネーション記事の取得に失敗しました: ${error}`);
   }
 }
@@ -128,6 +131,10 @@ export async function getArticlesWithPagination(
 /**
  * タイトル検索条件に基づいて記事を取得する関数
  */
+import { getLogger } from '@/lib/logger';
+
+const logger = getLogger();
+
 export async function fetchArticlesByTitle(params: {
   db: D1Database;
   searchParams: SearchParams;
@@ -233,7 +240,7 @@ export async function fetchArticlesByTitle(params: {
       hasPrevious: page > 1,
     };
   } catch (error) {
-    console.error('記事検索に失敗しました:', error);
+    logger.error({ params, error }, '記事検索に失敗しました');
     throw new Error(`記事検索に失敗しました: ${error}`);
   }
 }
@@ -281,7 +288,10 @@ export async function saveArticlesToDB(params: {
           },
         });
     } catch (error) {
-      console.error(`記事保存エラー [${article.id}]:`, error);
+      logger.error(
+        { articleId: article.id, error },
+        '記事保存でエラーが発生しました',
+      );
     }
   }
 }
@@ -380,8 +390,11 @@ export async function saveWeeklySummaries({
         });
     }
   } catch (error) {
-    console.error('週間要約データの保存に失敗しました:', error);
-    throw new Error(`週間要約データの保存に失敗しました: ${error}`);
+    logger.error(
+      { weekStartDate, error },
+      '週次要約データの保存に失敗しました',
+    );
+    throw new Error(`週次要約データの保存に失敗しました: ${error}`);
   }
 }
 
@@ -415,8 +428,8 @@ export async function saveWeeklyReport({
         },
       });
   } catch (error) {
-    console.error('週間レポートの保存に失敗しました:', error);
-    throw new Error(`週間レポートの保存に失敗しました: ${error}`);
+    logger.error({ weekStartDate, error }, '週次レポートの保存に失敗しました');
+    throw new Error(`週次レポートの保存に失敗しました: ${error}`);
   }
 }
 
@@ -448,7 +461,10 @@ export async function hasWeeklyReportData({
 
     return (result[0]?.count ?? 0) > 0;
   } catch (error) {
-    console.error('週間レポートデータの存在確認に失敗しました:', error);
+    logger.error(
+      { weekStartDate, error },
+      '週次レポートデータの存在確認に失敗しました',
+    );
     return false; // エラー時は安全側でfalseを返す
   }
 }
@@ -514,8 +530,11 @@ export async function fetchWeeklyDisplayData({
       publishedAt: result.publishedAt.split('T')[0], // YYYY-MM-DD形式に変換
     }));
   } catch (error) {
-    console.error(`${site}の週間表示データ取得に失敗しました:`, error);
-    throw new Error(`${site}の週間表示データ取得に失敗しました: ${error}`);
+    logger.error(
+      { site, weekStartDate, aiAgent, error },
+      '週次表示データの取得に失敗しました',
+    );
+    throw new Error(`${site}の週次表示データ取得に失敗しました: ${error}`);
   }
 }
 
@@ -540,7 +559,7 @@ export async function getLatestCompletedWeek(
 
     return result[0]?.weekStartDate || null;
   } catch (error) {
-    console.error('最新完成週の取得に失敗しました:', error);
+    logger.error({ error }, '最新完了週の取得に失敗しました');
     return null; // エラー時は安全側でnullを返す
   }
 }
@@ -587,7 +606,10 @@ export async function fetchWeeklyReportData({
       }),
     );
   } catch (error) {
-    console.error('週間レポートデータの取得に失敗しました:', error);
+    logger.error(
+      { weekRange, aiAgent, error },
+      '週次レポートデータの取得に失敗しました',
+    );
     return [];
   }
 }
@@ -629,7 +651,10 @@ export async function fetchWeeklyOverallSummary({
 
     return result[0]?.overallSummary || null;
   } catch (error) {
-    console.error('全体要約の取得に失敗しました:', error);
+    logger.error(
+      { weekStartDate, aiAgent, error },
+      '全体要約の取得に失敗しました',
+    );
     return null;
   }
 }
