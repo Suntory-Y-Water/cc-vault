@@ -306,11 +306,18 @@ async function generateArticleSummaries({
 
       // AI要約生成
       const prompt = getArticleSummaryPrompt(content);
-      const summary = await getGeminiResponse({ ai: geminiClient, prompt });
+      const result = await getGeminiResponse({ ai: geminiClient, prompt });
+
+      console.log(
+        `記事要約生成完了: ${article.id}`,
+        `promptTokens: ${result.usageMetadata?.promptTokenCount ?? 'N/A'}`,
+        `responseTokens: ${result.usageMetadata?.responseTokenCount ?? 'N/A'}`,
+        `totalTokens: ${result.usageMetadata?.totalTokenCount ?? 'N/A'}`,
+      );
 
       summaries.push({
         articleId: article.id,
-        summary,
+        summary: result.text,
         likesSnapshot: article.likes,
         bookmarksSnapshot: article.bookmarks,
       });
@@ -340,5 +347,14 @@ async function generateOverallSummary({
 }): Promise<string> {
   const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
   const prompt = getOverallSummaryPrompt(summaries);
-  return await getGeminiResponse({ ai: geminiClient, prompt });
+  const result = await getGeminiResponse({ ai: geminiClient, prompt });
+
+  console.log(
+    `全体総括生成完了:`,
+    `promptTokens: ${result.usageMetadata?.promptTokenCount ?? 'N/A'}`,
+    `responseTokens: ${result.usageMetadata?.responseTokenCount ?? 'N/A'}`,
+    `totalTokens: ${result.usageMetadata?.totalTokenCount ?? 'N/A'}`,
+  );
+
+  return result.text;
 }

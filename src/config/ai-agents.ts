@@ -18,6 +18,8 @@ export type AIAgent = {
   contentFilter: string[];
   branding: {
     siteName: string;
+    favicon?: string;
+    ogImage?: string;
   };
 };
 
@@ -38,7 +40,7 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
       background: '#FAF9F5', // カード背景色
       text: '#141413', // テキスト色
     },
-    contentFilter: [],
+    contentFilter: ['claude', 'anthropic', 'ai-coding'],
     branding: {
       siteName: 'CC-Vault',
     },
@@ -65,16 +67,18 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     name: 'Codex',
     description: 'Claude Codeに関する技術記事とリソースのキュレーション',
     colors: {
-      primary: '#333333', // ベースカラー（ダークグレー）
+      primary: '#333333', // ベースカラー(ダークグレー)
       primaryHover: '#555555', // ホバー時の明るいグレー
-      secondary: '#666666', // セカンダリカラー（ミディアムグレー）
+      secondary: '#666666', // セカンダリカラー(ミディアムグレー)
       accent: '#333333', // border色等
-      background: '#FAFAFA', // 背景色（白に近いライトグレー）
-      text: '#1a1a1a', // テキスト色（濃いグレー）
+      background: '#FAFAFA', // 背景色(白に近いライトグレー)
+      text: '#1a1a1a', // テキスト色(濃いグレー)
     },
     contentFilter: ['codex', 'openai', 'code-generation'],
     branding: {
       siteName: 'Codex-Vault',
+      favicon: '/cx.svg',
+      ogImage: '/cx-og.png',
     },
   },
 };

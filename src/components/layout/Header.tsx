@@ -13,6 +13,7 @@ type HeaderProps = {
  */
 export default function Header({ aiAgent }: HeaderProps) {
   const { branding } = aiAgent;
+  const logoSrc = branding.favicon ?? '/cc.svg';
 
   return (
     <header
@@ -27,7 +28,7 @@ export default function Header({ aiAgent }: HeaderProps) {
       <div className='max-w-[80rem] mx-auto px-4 flex h-16 items-center justify-between gap-4'>
         <Link className='flex items-center gap-3 flex-shrink-0' href='/'>
           <Image
-            src='/cc.svg'
+            src={logoSrc}
             alt={`${branding.siteName} logo`}
             width={32}
             height={32}

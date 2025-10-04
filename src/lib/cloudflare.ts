@@ -500,9 +500,7 @@ export async function fetchWeeklyDisplayData({
           eq(weeklySummaries.weekStartDate, weekStartDate),
           eq(articles.site, site),
           // AIエージェントフィルターを追加
-          aiAgent && aiAgent !== 'default'
-            ? eq(articles.aiAgent, aiAgent)
-            : undefined,
+          aiAgent ? eq(articles.aiAgent, aiAgent) : undefined,
         ),
       )
       .orderBy(
@@ -624,9 +622,7 @@ export async function fetchWeeklyOverallSummary({
           eq(weeklyReports.weekStartDate, weekStartDate),
           eq(weeklyReports.status, 'completed'),
           // AIエージェントフィルターを追加
-          aiAgent && aiAgent !== 'default'
-            ? eq(weeklyReports.aiAgent, aiAgent)
-            : undefined,
+          aiAgent ? eq(weeklyReports.aiAgent, aiAgent) : undefined,
         ),
       )
       .limit(1);
