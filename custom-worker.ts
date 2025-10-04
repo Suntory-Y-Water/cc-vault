@@ -30,7 +30,7 @@ import {
  */
 import { getLogger } from '@/lib/logger';
 
-const logger = getLogger();
+const logger = getLogger('custom-worker');
 const worker = {
   /**
    * HTTPリクエストハンドラー
@@ -97,7 +97,10 @@ const worker = {
     env: CloudflareEnv,
     _ctx: ExecutionContext,
   ) {
-    logger.info({ cron: controller.cron }, 'スケジュールタスクが実行されました');
+    logger.info(
+      { cron: controller.cron },
+      'スケジュールタスクが実行されました',
+    );
     switch (controller.cron) {
       /**
        * 定時記事更新処理
@@ -258,10 +261,7 @@ const worker = {
           env,
           articles: topArticles,
         });
-        logger.info(
-          { count: summaries.length },
-          '週次要約生成が完了しました',
-        );
+        logger.info({ count: summaries.length }, '週次要約生成が完了しました');
 
         // 5. DBに要約データ保存
         await saveWeeklySummaries({
