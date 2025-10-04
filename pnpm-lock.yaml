@@ -44,9 +44,6 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(@cloudflare/workers-types@4.20251003.0)(@libsql/client@0.15.15)
-      hono-pino:
-        specifier: ^0.10.2
-        version: 0.10.2(hono@4.9.9)(pino@10.0.0)
       linkedom:
         specifier: ^0.18.12
         version: 0.18.12
@@ -3166,17 +3163,6 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
-
-  hono-pino@0.10.2:
-    resolution: {integrity: sha512-h8h4jODUoWdY7n7J1GsOO5Szpf0KH0+bdh8inJVTFrud/R/cxNjKty/pEaJIYSY9+enP0dfAiY+gjXTEFkARYg==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      hono: '>=4.0.0'
-      pino: '>=7.1.0'
-
-  hono@4.9.9:
-    resolution: {integrity: sha512-Hxw4wT6zjJGZJdkJzAx9PyBdf7ZpxaTSA0NfxqjLghwMrLBX8p33hJBzoETRakF3UJu6OdNQBZAlNSkGqKFukw==}
-    engines: {node: '>=16.9.0'}
 
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
@@ -7961,14 +7947,6 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
-
-  hono-pino@0.10.2(hono@4.9.9)(pino@10.0.0):
-    dependencies:
-      defu: 6.1.4
-      hono: 4.9.9
-      pino: 10.0.0
-
-  hono@4.9.9: {}
 
   html-escaper@2.0.2: {}
 

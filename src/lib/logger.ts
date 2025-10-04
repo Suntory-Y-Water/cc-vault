@@ -1,21 +1,19 @@
 import pino, { type LoggerOptions, stdTimeFunctions } from 'pino';
-import { PinoLogger } from 'hono-pino';
 
 const loggerName = 'cc-vault';
 const coreLogger = createCoreLogger();
-const sharedLogger = new PinoLogger(coreLogger);
 
-export type AppLogger = PinoLogger;
+type AppLogger = pino.Logger;
 
 /**
  * Returns the shared application logger instance for emitting structured logs.
  */
 export function getLogger(context?: string): AppLogger {
   if (!context) {
-    return sharedLogger;
+    return coreLogger;
   }
 
-  return new PinoLogger(coreLogger.child({ loggerContext: `-${context}-` }));
+  return coreLogger.child({ loggerContext: `-${context}-` });
 }
 
 /**
