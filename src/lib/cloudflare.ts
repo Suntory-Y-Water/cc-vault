@@ -278,12 +278,11 @@ export async function saveArticlesToDB(params: {
           updatedAt: now,
         })
         .onConflictDoUpdate({
-          target: articles.url,
+          target: [articles.url, articles.aiAgent],
           set: {
             title: article.title,
             author: article.author,
             publishedAt: article.published_at,
-            aiAgent: article.ai_agent,
             likes: article.likes,
             bookmarks: article.bookmarks,
             updatedAt: now,
