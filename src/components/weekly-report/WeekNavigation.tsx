@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { WeekRange } from '@/types';
 import { isFutureWeek } from '@/lib/weekly-report';
+import type { CSSProperties } from 'react';
 
 type WeekNavigationProps = {
   /** 現在の週の範囲 */
@@ -15,6 +16,8 @@ type WeekNavigationProps = {
   hasPreviousData: boolean;
   /** 次の週のデータが存在するか */
   hasNextData: boolean;
+  /** AIエージェントテーマスタイル */
+  themeStyles?: CSSProperties;
 };
 
 /**
@@ -27,16 +30,17 @@ export default function WeekNavigation({
   nextWeek,
   hasPreviousData,
   hasNextData,
+  themeStyles,
 }: WeekNavigationProps) {
   return (
-    <div className='flex items-center justify-between mb-6'>
+    <div className='flex items-center justify-between mb-6' style={themeStyles}>
       {/* 前の週ボタン */}
       {!hasPreviousData ? (
         <Button
           variant='outline'
           size='sm'
           disabled
-          className='border-[#E0DFDA] text-[#141413] opacity-50'
+          className='border-[#E0DFDA] text-[var(--ai-text)] opacity-50'
         >
           <ChevronLeft className='w-4 h-4 mr-1' />
           前の週
@@ -46,7 +50,7 @@ export default function WeekNavigation({
           <Button
             variant='outline'
             size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+            className='border-[#E0DFDA] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)]'
           >
             <ChevronLeft className='w-4 h-4 mr-1' />
             前の週
@@ -56,10 +60,10 @@ export default function WeekNavigation({
 
       {/* 現在の週の表示 */}
       <div className='text-center'>
-        <h2 className='text-lg font-semibold text-[#141413]'>
+        <h2 className='text-lg font-semibold text-[var(--ai-text)]'>
           {currentWeek.label}
         </h2>
-        <p className='text-sm text-[#141413] opacity-70'>
+        <p className='text-sm text-[var(--ai-text)] opacity-70'>
           {currentWeek.startDate} - {currentWeek.endDate}
         </p>
       </div>
@@ -70,7 +74,7 @@ export default function WeekNavigation({
           variant='outline'
           size='sm'
           disabled
-          className='border-[#E0DFDA] text-[#141413] opacity-50'
+          className='border-[#E0DFDA] text-[var(--ai-text)] opacity-50'
         >
           次の週
           <ChevronRight className='w-4 h-4 ml-1' />
@@ -80,7 +84,7 @@ export default function WeekNavigation({
           <Button
             variant='outline'
             size='sm'
-            className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+            className='border-[#E0DFDA] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)]'
           >
             次の週
             <ChevronRight className='w-4 h-4 ml-1' />

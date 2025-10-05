@@ -17,6 +17,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
 import { getLatestCompletedWeek, hasWeeklyReportData } from '@/lib/cloudflare';
 import { getAIAgentFromHeaders } from '@/config/ai-agents';
+import { buildThemeStyle } from '@/lib/utils';
 
 /**
  * ウィークリーレポートページのprops
@@ -83,6 +84,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
 
   // AIエージェント識別
   const aiAgent = await getAIAgentFromHeaders();
+  const themeStyles = buildThemeStyle(aiAgent.colors);
 
   // 無効な日付の場合は404にリダイレクト
   if (week && !isValidDateString(week)) {
@@ -128,7 +130,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
   const snapshotDate = formatDateToJapanese(weeklyReport.weekRange.endDate);
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='container mx-auto px-4 py-8' style={themeStyles}>
       {/* ヘッダー */}
       <div className='mb-6'>
         <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
@@ -137,14 +139,14 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
               <Button
                 variant='outline'
                 size='sm'
-                className='border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+                className='border-[#E0DFDA] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)]'
               >
                 <ArrowLeft className='w-4 h-4 mr-1' />
                 ホームに戻る
               </Button>
             </Link>
           </div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-[#141413] order-1 sm:order-2'>
+          <h1 className='text-2xl sm:text-3xl font-bold text-[var(--ai-text)] order-1 sm:order-2'>
             ウィークリーレポート
           </h1>
         </div>
@@ -157,6 +159,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
         nextWeek={adjacentWeeks.next}
         hasPreviousData={hasPreviousData}
         hasNextData={hasNextData}
+        themeStyles={themeStyles}
       />
 
       {/* 週間人気記事サイト別ランキング */}
@@ -164,13 +167,14 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
         siteRankings={weeklyReport.siteRankings}
         weekLabel={weeklyReport.weekRange.label}
         overallSummary={weeklyReport.overallSummary}
+        themeStyles={themeStyles}
       />
 
       {/* フッター */}
-      <div className='mt-12 text-center text-sm text-[#141413] opacity-70 space-y-2'>
+      <div className='mt-12 text-center text-sm text-[var(--ai-text)] opacity-70 space-y-2'>
         <p>
           データは毎週更新されます。最新の情報については
-          <Link href='/' className='text-[#DB8163] hover:underline'>
+          <Link href='/' className='text-[var(--ai-primary)] hover:underline'>
             トップページ
           </Link>
           をご確認ください。
