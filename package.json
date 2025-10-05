@@ -75,6 +75,5 @@
   "lint-staged": {
     "*.{ts,tsx}": "",
     "*.{js,jsx,ts,tsx,json,css,md}": ""
-  },
-  "packageManager": "pnpm@10.0.0"
+  }
 }
