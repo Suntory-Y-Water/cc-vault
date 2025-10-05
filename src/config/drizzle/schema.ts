@@ -33,7 +33,7 @@ export const articles = sqliteTable(
     updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
   },
   (table) => [
-    unique().on(table.url),
+    unique().on(table.url, table.aiAgent),
     // サイト追加したらここも更新する。現状はCHECK制約では動的パラメータを使用できません。
     check('site_check', sql`${table.site} IN ('qiita', 'zenn', 'hatena')`),
     index('idx_articles_site').on(table.site),
