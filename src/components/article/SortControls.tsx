@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { SortOrder } from '@/types';
 import { Clock, TrendingUp } from 'lucide-react';
+import type { CSSProperties } from 'react';
 
 type SortControlsProps = {
   currentOrder: SortOrder;
@@ -9,6 +10,8 @@ type SortControlsProps = {
     site?: string;
     page?: string;
   };
+  /** AIエージェントテーマスタイル */
+  themeStyles?: CSSProperties;
 };
 
 /**
@@ -18,10 +21,13 @@ type SortControlsProps = {
 export default function SortControls({
   currentOrder,
   searchParams = {},
+  themeStyles,
 }: SortControlsProps) {
   return (
-    <div className='flex items-center gap-2 mb-6'>
-      <span className='text-sm text-[#141413] opacity-70 mr-2'>並び順:</span>
+    <div className='flex items-center gap-2 mb-6' style={themeStyles}>
+      <span className='text-sm text-[var(--ai-text)] opacity-70 mr-2'>
+        並び順:
+      </span>
 
       <Link
         href={`?${new URLSearchParams({
@@ -35,8 +41,8 @@ export default function SortControls({
           size='sm'
           className={
             currentOrder === 'latest'
-              ? 'bg-[#DB8163] text-white border-[#DB8163] hover:bg-[#D97757]'
-              : 'border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+              ? 'bg-[var(--ai-primary)] text-white border-[var(--ai-primary)] hover:bg-[var(--ai-primary-hover)]'
+              : 'border-[#E0DFDA] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)]'
           }
         >
           <Clock className='w-4 h-4 mr-1' />
@@ -56,8 +62,8 @@ export default function SortControls({
           size='sm'
           className={
             currentOrder === 'trending'
-              ? 'bg-[#DB8163] text-white border-[#DB8163] hover:bg-[#D97757]'
-              : 'border-[#E0DFDA] text-[#141413] hover:bg-[#DB8163] hover:text-white hover:border-[#DB8163]'
+              ? 'bg-[var(--ai-primary)] text-white border-[var(--ai-primary)] hover:bg-[var(--ai-primary-hover)]'
+              : 'border-[#E0DFDA] text-[var(--ai-text)] hover:bg-[var(--ai-primary)] hover:text-white hover:border-[var(--ai-primary)]'
           }
         >
           <TrendingUp className='w-4 h-4 mr-1' />
