@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "dev:cf": "opennextjs-cloudflare build && pnpm run dev",
     "build": "next build",
+    "build:cf": "opennextjs-cloudflare build",
     "schedule": "opennextjs-cloudflare build && wrangler dev --test-scheduled",
     "start": "next start",
     "lint": "biome lint ./src",

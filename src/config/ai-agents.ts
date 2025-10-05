@@ -43,6 +43,8 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     contentFilter: ['claude', 'anthropic', 'ai-coding'],
     branding: {
       siteName: 'CC-Vault',
+      favicon: '/cc.svg',
+      ogImage: '/opengraph-image.png',
     },
   },
   'claude-code': {
@@ -65,7 +67,7 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
   codex: {
     id: 'codex',
     name: 'Codex',
-    description: 'Claude Codeに関する技術記事とリソースのキュレーション',
+    description: 'Codexに関する技術記事とリソースのキュレーション',
     colors: {
       primary: '#333333', // ベースカラー(ダークグレー)
       primaryHover: '#555555', // ホバー時の明るいグレー
@@ -78,7 +80,7 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
     branding: {
       siteName: 'Codex-Vault',
       favicon: '/cx.svg',
-      ogImage: '/cx-og.png',
+      ogImage: '/codex-opengraph-image.png',
     },
   },
 };

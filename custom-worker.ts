@@ -108,120 +108,128 @@ const worker = {
       case '0 23,0-14 * * *': {
         const allArticles: ArticleRow[] = [];
 
-        // Zennデータ取得
-        const zennTopicsUrl = `https://zenn.dev/topics/claudecode?order=latest`;
-        const zennHtml = await fetchHtmlDocument(zennTopicsUrl, {
-          cache: 'no-store',
-        });
-        const zennData = getZennTopicsData({ htmlString: zennHtml });
-
-        for (const article of zennData.articles) {
-          allArticles.push({
-            id: `zenn-${article.id}`,
-            title: article.title,
-            url: `https://zenn.dev${article.path}`,
-            author: article.author,
-            published_at: convertToJstString(article.published_at),
-            site: 'zenn',
-            ai_agent: 'claude-code',
-            likes: article.likedCount,
-            bookmarks: article.bookmarkedCount,
-          });
-        }
-
-        // Qiitaデータ取得
-        const qiitaUrl =
-          'https://qiita.com/api/v2/items?query=claudecode&per_page=20&page=1';
-        const qiitaData = await fetchExternalData<QiitaPost[]>(qiitaUrl, {
-          cache: 'no-store',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
+        const targetSearchParams = [
+          { agent: 'codex', searchWord: 'codex' },
+          {
+            agent: 'claude-code',
+            searchWord: 'claudecode',
           },
-        });
-
-        for (const article of qiitaData) {
-          allArticles.push({
-            id: `qiita-${article.id}`,
-            title: article.title,
-            url: article.url,
-            author: article.user.id,
-            published_at: convertToJstString(article.created_at),
-            site: 'qiita',
-            ai_agent: 'claude-code',
-            likes: article.likes_count,
-            bookmarks: article.stocks_count,
+        ] as const;
+        for (const target of targetSearchParams) {
+          // Zennデータ取得
+          const zennTopicsUrl = `https://zenn.dev/topics/${target.agent}?order=latest`;
+          const zennHtml = await fetchHtmlDocument(zennTopicsUrl, {
+            cache: 'no-store',
           });
-        }
+          const zennData = getZennTopicsData({ htmlString: zennHtml });
 
-        // はてなブックマーク新着順
-        const hatenaRecentUrl = `https://b.hatena.ne.jp/q/claudecode?target=tag&date_range=m&safe=on&users=3&sort=recent`;
-        const hatenaRecentHtml = await fetchHtmlDocument(hatenaRecentUrl, {
-          cache: 'no-store',
-        });
-        const hatenaRecentData = getHatenaBookmarkData({
-          htmlString: hatenaRecentHtml,
-        });
-
-        for (const article of hatenaRecentData) {
-          // ZennやQiitaのURLは個別に取得済みのため次のループへ
-          if (isZennOrQiitaUrl(article.url)) {
-            continue;
+          for (const article of zennData.articles) {
+            allArticles.push({
+              id: `zenn-${article.id}`,
+              title: article.title,
+              url: `https://zenn.dev${article.path}`,
+              author: article.author,
+              published_at: convertToJstString(article.published_at),
+              site: 'zenn',
+              ai_agent: target.agent,
+              likes: article.likedCount,
+              bookmarks: article.bookmarkedCount,
+            });
           }
 
-          allArticles.push({
-            id: article.id,
-            title: article.title,
-            url: article.url,
-            author: article.author,
-            published_at: convertToJstString(article.publishedAt),
-            site: 'hatena',
-            ai_agent: 'claude-code',
-            likes: 0, // はてなブックマークはlikesがないので0固定
-            bookmarks: article.bookmarkCount,
+          // Qiitaデータ取得
+          const qiitaUrl = `https://qiita.com/api/v2/items?query=${target.searchWord}&per_page=20&page=1`;
+          const qiitaData = await fetchExternalData<QiitaPost[]>(qiitaUrl, {
+            cache: 'no-store',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${env.QIITA_ACCESS_TOKEN}`,
+            },
           });
-        }
 
-        // はてなブックマーク人気順
-        const hatenaPopularUrl = `https://b.hatena.ne.jp/q/claudecode?users=3&target=tag&sort=popular&date_range=m&safe=on`;
-        const hatenaPopularHtml = await fetchHtmlDocument(hatenaPopularUrl, {
-          cache: 'no-store',
-        });
-        const hatenaPopularData = getHatenaBookmarkData({
-          htmlString: hatenaPopularHtml,
-        });
-
-        for (const article of hatenaPopularData) {
-          // ZennやQiitaのURLは個別に取得済みのため次のループへ
-          if (isZennOrQiitaUrl(article.url)) {
-            continue;
+          for (const article of qiitaData) {
+            allArticles.push({
+              id: `qiita-${article.id}`,
+              title: article.title,
+              url: article.url,
+              author: article.user.id,
+              published_at: convertToJstString(article.created_at),
+              site: 'qiita',
+              ai_agent: target.agent,
+              likes: article.likes_count,
+              bookmarks: article.stocks_count,
+            });
           }
-          allArticles.push({
-            id: article.id,
-            title: article.title,
-            url: article.url,
-            author: article.author,
-            published_at: convertToJstString(article.publishedAt),
-            site: 'hatena',
-            ai_agent: 'claude-code',
-            likes: 0,
-            bookmarks: article.bookmarkCount,
+
+          // はてなブックマーク新着順
+          const hatenaRecentUrl = `https://b.hatena.ne.jp/q/${target.searchWord}?target=tag&date_range=m&safe=on&users=3&sort=recent`;
+          const hatenaRecentHtml = await fetchHtmlDocument(hatenaRecentUrl, {
+            cache: 'no-store',
           });
-        }
+          const hatenaRecentData = getHatenaBookmarkData({
+            htmlString: hatenaRecentHtml,
+          });
 
-        // 登録前にURLをユニークにする
-        const uniqueArticles = allArticles.filter(
-          (article, index, self) =>
-            self.findIndex((a) => a.url === article.url) === index,
-        );
+          for (const article of hatenaRecentData) {
+            // ZennやQiitaのURLは個別に取得済みのため次のループへ
+            if (isZennOrQiitaUrl(article.url)) {
+              continue;
+            }
 
-        // D1データベースに保存
-        if (uniqueArticles.length > 0) {
-          await saveArticlesToDB({ db: env.DB, articles: uniqueArticles });
-          logger.info(
-            { count: uniqueArticles.length },
-            '記事の保存が完了しました',
+            allArticles.push({
+              id: article.id,
+              title: article.title,
+              url: article.url,
+              author: article.author,
+              published_at: convertToJstString(article.publishedAt),
+              site: 'hatena',
+              ai_agent: target.agent,
+              likes: 0, // はてなブックマークはlikesがないので0固定
+              bookmarks: article.bookmarkCount,
+            });
+          }
+
+          // はてなブックマーク人気順
+          const hatenaPopularUrl = `https://b.hatena.ne.jp/q/${target.agent}?users=3&target=tag&sort=popular&date_range=m&safe=on`;
+          const hatenaPopularHtml = await fetchHtmlDocument(hatenaPopularUrl, {
+            cache: 'no-store',
+          });
+          const hatenaPopularData = getHatenaBookmarkData({
+            htmlString: hatenaPopularHtml,
+          });
+
+          for (const article of hatenaPopularData) {
+            // ZennやQiitaのURLは個別に取得済みのため次のループへ
+            if (isZennOrQiitaUrl(article.url)) {
+              continue;
+            }
+            allArticles.push({
+              id: article.id,
+              title: article.title,
+              url: article.url,
+              author: article.author,
+              published_at: convertToJstString(article.publishedAt),
+              site: 'hatena',
+              ai_agent: target.agent,
+              likes: 0,
+              bookmarks: article.bookmarkCount,
+            });
+          }
+
+          // 登録前にURLをユニークにする
+          const uniqueArticles = allArticles.filter(
+            (article, index, self) =>
+              self.findIndex((a) => a.url === article.url) === index,
           );
+
+          // D1データベースに保存
+          if (uniqueArticles.length > 0) {
+            await saveArticlesToDB({ db: env.DB, articles: uniqueArticles });
+            logger.info(
+              { count: uniqueArticles.length },
+              '記事の保存が完了しました',
+            );
+          }
         }
         break;
       }
