@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.3...v1.0.4) (2025-10-05)
+
+
+### Bug Fixes
+
+* Codex時のボタン色変更 ([27d5e9d](https://github.com/Suntory-Y-Water/cc-vault/commit/27d5e9db5efd893536ca523d73a04fb4d389ffee))
+* Codex時のボタン色変更 ([1adbabd](https://github.com/Suntory-Y-Water/cc-vault/commit/1adbabda4a2668dbc1ae973f5209e075d45440ad))
+
 ## [1.0.3](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.2...v1.0.3) (2025-10-05)
 
 
