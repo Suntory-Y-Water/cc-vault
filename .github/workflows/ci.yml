@@ -45,7 +45,7 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm run typecheck
 
-  build:
+  opennext-build:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
@@ -55,7 +55,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - run: pnpm run build
+      - run: pnpm run build:cf
 
   test:
     timeout-minutes: 5

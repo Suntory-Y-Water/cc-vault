@@ -11,10 +11,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { BarChart3 } from 'lucide-react';
 import { buildThemeStyle } from '@/lib/utils';
+import { getLogger } from '@/lib/logger';
 
 /** 1時間で再検証 */
 export const revalidate = 3600;
 export const fetchCache = 'default-cache';
+
+const logger = getLogger('app/page.tsx');
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -65,6 +68,11 @@ export default async function HomePage({ searchParams }: Props) {
     order,
     aiAgent: aiAgent.id === 'default' ? 'all' : aiAgent.id,
   });
+
+  logger.info(
+    { agents: aiAgent.id, length: paginatedData.articles.length },
+    '記事を取得しました',
+  );
 
   return (
     <div className='max-w-[80rem] mx-auto px-4 py-8' style={themeStyles}>

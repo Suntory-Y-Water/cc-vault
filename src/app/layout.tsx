@@ -9,6 +9,7 @@ import Footer from '@/components/layout/Footer';
 import { resolveAIAgentFromHost } from '@/config/ai-agents';
 import { siteConfig } from '@/config/site';
 import { buildThemeStyle } from '@/lib/utils';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,6 +25,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = aiAgent.description;
   const favicon = aiAgent.branding.favicon ?? '/favicon.ico';
   const ogImage = aiAgent.branding.ogImage ?? siteConfig.ogImage;
+
+  // 動的にベースURLを構築（優先順位: host header > Cloudflare env > 固定値）
+  const { env } = await getCloudflareContext();
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  const baseUrl = host ? `${protocol}://${host}` : env.APP_URL;
 
   return {
     title: {
@@ -41,17 +47,18 @@ export async function generateMetadata(): Promise<Metadata> {
       'キュレーション',
       'Qiita',
       'Zenn',
+      'Codex',
     ],
     authors: [{ name: siteConfig.copyRight }],
     creator: siteConfig.copyRight,
-    metadataBase: new URL(siteConfig.url),
+    metadataBase: new URL(baseUrl),
     icons: {
       icon: favicon,
     },
     openGraph: {
       type: 'website',
       locale: 'ja_JP',
-      url: siteConfig.url,
+      url: baseUrl,
       title: siteName,
       description,
       siteName,
