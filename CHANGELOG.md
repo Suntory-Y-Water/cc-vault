@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.1...v1.0.2) (2025-10-05)
+
+
+### Bug Fixes
+
+* 週間記事のプロンプト修正 ([cda2f39](https://github.com/Suntory-Y-Water/cc-vault/commit/cda2f39488163b189601ce5fbf876dc1a22f3ede))
+
 ## [1.0.1](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.0...v1.0.1) (2025-10-05)
 
 
