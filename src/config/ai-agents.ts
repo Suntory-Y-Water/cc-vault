@@ -5,6 +5,7 @@
 
 export type AIAgent = {
   id: 'default' | 'claude-code' | 'codex';
+  prefix: 'default' | 'cc' | 'cx';
   name: string;
   description: string;
   colors: {
@@ -27,9 +28,10 @@ export type AIAgent = {
  * AIエージェント設定の静的定義
  * 現在のClaude Code色設定を基準に他エージェント色を設定
  */
-const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
+const AI_AGENT_CONFIGS: Record<AIAgent['prefix'], AIAgent> = {
   default: {
     id: 'default',
+    prefix: 'default',
     name: 'CC-Vault',
     description: '技術記事のキュレーションと分析を行うWebアプリケーション',
     colors: {
@@ -47,8 +49,9 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
       ogImage: '/opengraph-image.png',
     },
   },
-  'claude-code': {
+  cc: {
     id: 'claude-code',
+    prefix: 'cc',
     name: 'Claude Code',
     description: 'Claude Codeに関する技術記事とリソースのキュレーション',
     colors: {
@@ -64,9 +67,10 @@ const AI_AGENT_CONFIGS: Record<AIAgent['id'], AIAgent> = {
       siteName: 'CC-Vault',
     },
   },
-  codex: {
+  cx: {
     id: 'codex',
     name: 'Codex',
+    prefix: 'cx',
     description: 'Codexに関する技術記事とリソースのキュレーション',
     colors: {
       primary: '#333333', // ベースカラー(ダークグレー)
@@ -200,7 +204,7 @@ export function resolveAIAgentFromHost(args: { host: string | null }): AIAgent {
 
   // 既知のAIエージェントIDかチェック
   if (subdomain in AI_AGENT_CONFIGS) {
-    return AI_AGENT_CONFIGS[subdomain as AIAgent['id']];
+    return AI_AGENT_CONFIGS[subdomain as AIAgent['prefix']];
   }
 
   // 未知のサブドメインはデフォルトにフォールバック
@@ -212,7 +216,7 @@ export function resolveAIAgentFromHost(args: { host: string | null }): AIAgent {
  */
 export function getAIAgentConfig(args: { agentId: string }): AIAgent {
   if (args.agentId in AI_AGENT_CONFIGS) {
-    return AI_AGENT_CONFIGS[args.agentId as AIAgent['id']];
+    return AI_AGENT_CONFIGS[args.agentId as AIAgent['prefix']];
   }
 
   // 未知のIDはデフォルトを返す

@@ -18,6 +18,20 @@
   "observability": {
     "enabled": true
   },
+    "routes": [
+    {
+      "pattern": "agents-vault.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "cx.agents-vault.com",
+      "custom_domain": true
+    },
+        {
+      "pattern": "cc.agents-vault.com",
+      "custom_domain": true
+    }
+  ],
   "dev": {
     "port": 3000
   },
