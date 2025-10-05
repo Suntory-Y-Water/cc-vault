@@ -74,7 +74,9 @@ export const weeklyReports = sqliteTable(
   'weekly_reports',
   {
     weekStartDate: text('week_start_date').notNull(),
-    aiAgent: text('ai_agent').notNull().default('claude-code'),
+    aiAgent: text('ai_agent', { enum: AI_AGENT_VALUES })
+      .notNull()
+      .default('claude-code'),
     overallSummary: text('overall_summary').notNull(),
     status: text('status', {
       enum: ['processing', 'completed', 'failed'],

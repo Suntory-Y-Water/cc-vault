@@ -1,4 +1,4 @@
-import { ArticleRow, QiitaPost } from '@/types/article.js';
+import { AIAgentType, ArticleRow, QiitaPost } from '@/types/article.js';
 // @ts-ignore `.open-next/worker.ts` is generated at build time
 import { default as handler } from './.open-next/worker.js';
 import { convertToJstString, isZennOrQiitaUrl } from '@/lib/utils.js';
@@ -106,6 +106,8 @@ const worker = {
        * 定時記事更新処理
        */
       case '0 23,0-14 * * *': {
+        logger.info({ cron: controller.cron }, '定時記事更新処理を開始します');
+        // すべての記事データを格納する配列
         const allArticles: ArticleRow[] = [];
 
         const targetSearchParams = [
@@ -116,8 +118,12 @@ const worker = {
           },
         ] as const;
         for (const target of targetSearchParams) {
+          logger.info(
+            { agent: target.agent },
+            `${target.agent}の記事取得を開始します`,
+          );
           // Zennデータ取得
-          const zennTopicsUrl = `https://zenn.dev/topics/${target.agent}?order=latest`;
+          const zennTopicsUrl = `https://zenn.dev/topics/${target.searchWord}?order=latest`;
           const zennHtml = await fetchHtmlDocument(zennTopicsUrl, {
             cache: 'no-store',
           });
@@ -215,21 +221,26 @@ const worker = {
               bookmarks: article.bookmarkCount,
             });
           }
-
-          // 登録前にURLをユニークにする
-          const uniqueArticles = allArticles.filter(
-            (article, index, self) =>
-              self.findIndex((a) => a.url === article.url) === index,
+          logger.info(
+            { agent: target.agent, count: allArticles.length },
+            `${target.agent}の記事取得が完了しました`,
           );
+        }
+        // 登録前にURLとai_agentの組み合わせでユニークにする
+        const uniqueArticles = allArticles.filter(
+          (article, index, self) =>
+            self.findIndex(
+              (a) => a.url === article.url && a.ai_agent === article.ai_agent,
+            ) === index,
+        );
 
-          // D1データベースに保存
-          if (uniqueArticles.length > 0) {
-            await saveArticlesToDB({ db: env.DB, articles: uniqueArticles });
-            logger.info(
-              { count: uniqueArticles.length },
-              '記事の保存が完了しました',
-            );
-          }
+        // D1データベースに保存
+        if (uniqueArticles.length > 0) {
+          await saveArticlesToDB({ db: env.DB, articles: uniqueArticles });
+          logger.info(
+            { count: uniqueArticles.length },
+            `記事の保存が完了しました`,
+          );
         }
         break;
       }
@@ -254,43 +265,65 @@ const worker = {
           '週次レポートの対象期間を決定しました',
         );
 
-        // 3. 各サイトの上位3記事を取得
-        const topArticles = await fetchTopArticles({
-          db: env.DB,
-          weekRange,
-        });
-        logger.info(
-          { count: topArticles.length },
-          '週次対象記事の取得が完了しました',
-        );
+        // 3. AIエージェントごとにレポート生成
+        const targetAgents = ['claude-code', 'codex'] as const;
 
-        // 4. 各記事の本文取得と要約生成
-        const summaries = await generateArticleSummaries({
-          env,
-          articles: topArticles,
-        });
-        logger.info({ count: summaries.length }, '週次要約生成が完了しました');
+        for (const aiAgent of targetAgents) {
+          logger.info({ aiAgent }, `${aiAgent}の週次レポート生成を開始します`);
 
-        // 5. DBに要約データ保存
-        await saveWeeklySummaries({
-          db: env.DB,
-          summaries,
-          weekStartDate: weekRange.startDate,
-        });
+          // 3-1. 各サイトの上位3記事を取得
+          const topArticles = await fetchTopArticles({
+            db: env.DB,
+            weekRange,
+            aiAgent,
+          });
+          logger.info(
+            { aiAgent, count: topArticles.length },
+            '週次対象記事の取得が完了しました',
+          );
 
-        // 6. 全体総括文章生成
-        const overallSummary = await generateOverallSummary({ env, summaries });
+          // 3-2. 各記事の本文取得と要約生成
+          const summaries = await generateArticleSummaries({
+            env,
+            articles: topArticles,
+            aiAgent,
+          });
+          logger.info(
+            { aiAgent, count: summaries.length },
+            '週次要約生成が完了しました',
+          );
 
-        // 7. 週次レポート保存
-        await saveWeeklyReport({
-          db: env.DB,
-          weekStartDate: weekRange.startDate,
-          overallSummary,
-        });
+          // 3-3. DBに要約データ保存
+          await saveWeeklySummaries({
+            db: env.DB,
+            summaries,
+            weekStartDate: weekRange.startDate,
+          });
+
+          // 3-4. 全体総括文章生成
+          const overallSummary = await generateOverallSummary({
+            env,
+            summaries,
+            aiAgent,
+          });
+
+          // 3-5. 週次レポート保存
+          await saveWeeklyReport({
+            db: env.DB,
+            weekStartDate: weekRange.startDate,
+            aiAgent,
+            overallSummary,
+          });
+
+          logger.info(
+            { aiAgent, weekStartDate: weekRange.startDate },
+            `${aiAgent}の週次レポート生成処理が完了しました`,
+          );
+        }
 
         logger.info(
           { weekStartDate: weekRange.startDate },
-          '週次レポート生成処理が完了しました',
+          '全AIエージェントの週次レポート生成処理が完了しました',
         );
         break;
       }
@@ -307,9 +340,11 @@ export default worker;
 async function generateArticleSummaries({
   env,
   articles,
+  aiAgent,
 }: {
   env: CloudflareEnv;
   articles: ArticleRow[];
+  aiAgent: AIAgentType;
 }): Promise<
   {
     articleId: string;
@@ -332,7 +367,10 @@ async function generateArticleSummaries({
       const content = await fetchArticleContent(article.url);
 
       // AI要約生成
-      const prompt = getArticleSummaryPrompt(content);
+      const prompt = getArticleSummaryPrompt({
+        articleContent: content,
+        aiAgent: aiAgent as 'claude-code' | 'codex',
+      });
       const result = await getGeminiResponse({ ai: geminiClient, prompt });
 
       logger.info(
@@ -369,6 +407,7 @@ async function generateArticleSummaries({
 async function generateOverallSummary({
   env,
   summaries,
+  aiAgent,
 }: {
   env: CloudflareEnv;
   summaries: {
@@ -377,9 +416,13 @@ async function generateOverallSummary({
     likesSnapshot: number;
     bookmarksSnapshot: number;
   }[];
+  aiAgent: AIAgentType;
 }): Promise<string> {
   const geminiClient = createGeminiClient({ apiKey: env.GEMINI_API_KEY });
-  const prompt = getOverallSummaryPrompt(summaries);
+  const prompt = getOverallSummaryPrompt({
+    summaries,
+    aiAgent: aiAgent as 'claude-code' | 'codex',
+  });
   const result = await getGeminiResponse({ ai: geminiClient, prompt });
 
   logger.info(
