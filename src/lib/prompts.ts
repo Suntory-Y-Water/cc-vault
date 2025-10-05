@@ -13,22 +13,32 @@
  * @param articleContent - 要約する記事の内容
  * @returns コグニティブ・デザインに基づく構造化プロンプト文字列
  */
-export function getArticleSummaryPrompt(articleContent: string): string {
+export function getArticleSummaryPrompt({
+  articleContent,
+  aiAgent,
+}: {
+  articleContent: string;
+  aiAgent: 'claude-code' | 'codex';
+}): string {
   // 事前条件チェック
   if (!articleContent || articleContent.trim() === '') {
     throw new Error('記事内容が空です');
   }
 
+  const agentName = aiAgent === 'codex' ? 'Codex' : 'Claude Code';
+  const agentDescription =
+    aiAgent === 'codex' ? 'ChatGPT の CLI ツール' : 'Anthropic の CLI ツール';
+
   const prompt = `# 思考のレンズ
 
 ## 前提 (Premise):
-- あなたは Claude Code に関する技術記事の価値を正確に評価する専門家です
+- あなたは ${agentName} に関する技術記事の価値を正確に評価する専門家です
 - 技術記事の要約は読者の時間を節約し、学習効率を最大化する重要な役割を持ちます
 - 要約の質は記事の本質的価値を損なうことなく伝える正確性によって決まります
 - 日本語での技術情報伝達は、専門用語と平易な表現のバランスが重要です
 
 ## 状況 (Situation):
-- Claude Code（Anthropic の CLI ツール）に関する技術記事が与えられています
+- ${agentName}（${agentDescription}）に関する技術記事が与えられています
 - この記事は開発者コミュニティで共有され、学習リソースとして活用されます
 - 読者は限られた時間の中で、記事を読む価値があるかを判断する必要があります
 - 要約は記事の技術レベル、実用性、具体性を適切に反映する必要があります
@@ -41,7 +51,7 @@ export function getArticleSummaryPrompt(articleContent: string): string {
 ## 動機 (Motive):
 - 開発者の学習効率を最大化し、技術コミュニティの知識共有を促進する
 - 記事作成者の努力を適切に評価し、読者との橋渡しを行う
-- Claude Code エコシステムの発展に貢献し、開発者体験の向上を支援する
+- ${agentName} エコシステムの発展に貢献し、開発者体験の向上を支援する
 
 ## 制約 (Constraint):
 - 文字数は句読点・記号を除いて150-200文字厳守
@@ -57,7 +67,7 @@ export function getArticleSummaryPrompt(articleContent: string): string {
 ${articleContent}
 
 要約に含めるべき要素：
-1. Claude Code の具体的機能・トピック
+1. ${agentName} の具体的機能・トピック
 2. 読者が得られる学習価値
 3. 実装方法・コード例・手順の有無と詳細度
 4. 対象とする技術レベル
@@ -73,42 +83,47 @@ ${articleContent}
  * @param summaries - 週間記事要約データの配列
  * @returns コグニティブ・デザインに基づく構造化プロンプト文字列
  */
-export function getOverallSummaryPrompt(
+export function getOverallSummaryPrompt({
+  summaries,
+  aiAgent,
+}: {
   summaries: Array<{
     articleId: string;
     summary: string;
-  }>,
-): string {
+  }>;
+  aiAgent: 'claude-code' | 'codex';
+}): string {
   // 事前条件チェック
   if (!summaries || summaries.length === 0) {
     throw new Error('要約データが空です');
   }
 
   const summaryTexts = summaries.map((s) => `${s.summary}`).join('\n');
+  const agentName = aiAgent === 'codex' ? 'Codex' : 'Claude Code';
 
   const prompt = `# 思考のレンズ
 
 ## 前提 (Premise):
-- あなたは Claude Code エコシステムの技術動向を分析する専門アナリストです
+- あなたは ${agentName} エコシステムの技術動向を分析する専門アナリストです
 - 技術コミュニティのトレンド分析は、開発者の学習方向性と投資判断を左右する重要な情報です
 - 週間総括は個別記事の価値を統合し、全体像として提示する高次の情報処理です
 - データに基づく客観的分析が、推測や憶測よりも信頼性の高い洞察を生み出します
 
 ## 状況 (Situation):
-- 今週の Claude Code 関連記事群の要約データが与えられています
+- 今週の ${agentName} 関連記事群の要約データが与えられています
 - これらの記事は開発者コミュニティで注目され、共有された実績があります
 - 読者は週全体のトレンドを理解し、自身の技術学習戦略に活用したいと考えています
 - 個別記事では見えない、横断的なパターンや傾向の抽出が求められています
 
 ## 目的 (Purpose):
-- 今週の Claude Code 技術動向を200-300文字で総括する
+- 今週の ${agentName} 技術動向を200-300文字で総括する
 - 注目された機能・トピックとその背景を明確化する
 - 開発者コミュニティの関心の方向性を特定する
 - 実用性・活用事例の傾向から今後の展望を示唆する
 
 ## 動機 (Motive):
 - 開発者の限られた学習時間を最適配分するための道標を提供する
-- Claude Code エコシステムの成熟度と発展方向性を可視化する
+- ${agentName} エコシステムの成熟度と発展方向性を可視化する
 - 技術コミュニティの集合知を統合し、個人では見落としがちな重要トレンドを発見する
 - 技術投資の意思決定を支援し、開発者のキャリア形成に貢献する
 
@@ -127,7 +142,7 @@ export function getOverallSummaryPrompt(
 ${summaryTexts}
 
 分析に含めるべき要素：
-1. 今週の Claude Code 技術動向の全体的特徴
+1. 今週の ${agentName} 技術動向の全体的特徴
 2. 特に注目された機能・トピックとその意義
 3. 開発者コミュニティの関心領域の変化
 4. 実用的活用事例から見える応用トレンド

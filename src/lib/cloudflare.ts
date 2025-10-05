@@ -271,6 +271,7 @@ export async function saveArticlesToDB(params: {
           author: article.author,
           publishedAt: article.published_at,
           site: article.site,
+          aiAgent: article.ai_agent,
           likes: article.likes,
           bookmarks: article.bookmarks,
           createdAt: now,
@@ -282,6 +283,7 @@ export async function saveArticlesToDB(params: {
             title: article.title,
             author: article.author,
             publishedAt: article.published_at,
+            aiAgent: article.ai_agent,
             likes: article.likes,
             bookmarks: article.bookmarks,
             updatedAt: now,
@@ -289,7 +291,7 @@ export async function saveArticlesToDB(params: {
         });
     } catch (error) {
       logger.error(
-        { articleId: article.id, error },
+        { articleId: article.id, error, articleUrl: article.url },
         '記事保存でエラーが発生しました',
       );
     }
@@ -302,15 +304,27 @@ export async function saveArticlesToDB(params: {
 export async function fetchTopArticles({
   db,
   weekRange,
+  aiAgent,
 }: {
   db: D1Database;
   weekRange: WeekRange;
+  aiAgent?: AIAgentType;
 }): Promise<ArticleRow[]> {
   try {
     const drizzleDB = drizzle(db);
     const allTopArticles: ArticleRow[] = [];
 
     for (const site of SITE_VALUES) {
+      const whereConditions = [
+        eq(articles.site, site),
+        gte(articles.publishedAt, `${weekRange.startDate}T00:00:00`),
+        lte(articles.publishedAt, `${weekRange.endDate}T23:59:59`),
+      ];
+
+      if (aiAgent) {
+        whereConditions.push(eq(articles.aiAgent, aiAgent));
+      }
+
       const results = await drizzleDB
         .select({
           id: articles.id,
@@ -324,13 +338,7 @@ export async function fetchTopArticles({
           bookmarks: articles.bookmarks,
         })
         .from(articles)
-        .where(
-          and(
-            eq(articles.site, site),
-            gte(articles.publishedAt, `${weekRange.startDate}T00:00:00`),
-            lte(articles.publishedAt, `${weekRange.endDate}T23:59:59`),
-          ),
-        )
+        .where(and(...whereConditions))
         .orderBy(desc(sql`(${articles.likes} + ${articles.bookmarks})`))
         .limit(3);
 
@@ -404,10 +412,12 @@ export async function saveWeeklySummaries({
 export async function saveWeeklyReport({
   db,
   weekStartDate,
+  aiAgent = 'claude-code',
   overallSummary,
 }: {
   db: D1Database;
   weekStartDate: string;
+  aiAgent?: AIAgentType;
   overallSummary: string;
 }): Promise<void> {
   try {
@@ -417,18 +427,22 @@ export async function saveWeeklyReport({
       .insert(weeklyReports)
       .values({
         weekStartDate,
+        aiAgent,
         overallSummary,
         status: 'completed',
       })
       .onConflictDoUpdate({
-        target: weeklyReports.weekStartDate,
+        target: [weeklyReports.weekStartDate, weeklyReports.aiAgent],
         set: {
           overallSummary,
           status: 'completed',
         },
       });
   } catch (error) {
-    logger.error({ weekStartDate, error }, '週次レポートの保存に失敗しました');
+    logger.error(
+      { weekStartDate, aiAgent, error },
+      '週次レポートの保存に失敗しました',
+    );
     throw new Error(`週次レポートの保存に失敗しました: ${error}`);
   }
 }
