@@ -1,14 +1,60 @@
-import pino, { type LoggerOptions, stdTimeFunctions } from 'pino';
-
 const loggerName = 'cc-vault';
-const coreLogger = createCoreLogger();
 
-type AppLogger = pino.Logger;
+/**
+ * Log function that accepts either a message or an object with optional message
+ */
+type LogFn = {
+  (msg: string): void;
+  (obj: Record<string, unknown>, msg?: string): void;
+};
+
+/**
+ * Logger interface compatible with Pino API
+ */
+type AppLogger = {
+  info: LogFn;
+  error: LogFn;
+  warn: LogFn;
+  debug: LogFn;
+  trace: LogFn;
+  fatal: LogFn;
+  child: (bindings: Record<string, unknown>) => AppLogger;
+};
+
+/**
+ * Log level type
+ */
+type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+/**
+ * Log level ordering for filtering
+ */
+const logLevelOrder: Record<LogLevel, number> = {
+  trace: 0,
+  debug: 1,
+  info: 2,
+  warn: 3,
+  error: 4,
+  fatal: 5,
+};
+
+/**
+ * Returns order value for log level comparison
+ */
+function getLevelOrder(level: string): number {
+  return logLevelOrder[level as LogLevel] ?? 2;
+}
+
+let coreLogger: AppLogger | undefined;
 
 /**
  * Returns the shared application logger instance for emitting structured logs.
  */
 export function getLogger(context?: string): AppLogger {
+  if (!coreLogger) {
+    coreLogger = createCoreLogger();
+  }
+
   if (!context) {
     return coreLogger;
   }
@@ -17,26 +63,114 @@ export function getLogger(context?: string): AppLogger {
 }
 
 /**
- * Derives the core pino logger configured for the runtime environment.
+ * Creates a logger instance with specified configuration
  */
-function createCoreLogger(): pino.Logger {
-  const options: LoggerOptions = {
-    name: loggerName,
-    level: resolveLogLevel(),
-    base: undefined,
-    timestamp: stdTimeFunctions.isoTime,
-  };
+function createLogger(config: {
+  name: string;
+  level: string;
+  bindings?: Record<string, unknown>;
+}): AppLogger {
+  const levelOrder = getLevelOrder(config.level);
 
-  const processLike = getNodeProcess();
+  function log(
+    level: LogLevel,
+    first: string | Record<string, unknown>,
+    second?: string,
+  ): void {
+    if (getLevelOrder(level) < levelOrder) {
+      return;
+    }
 
-  if (shouldUsePretty(processLike)) {
-    const prettyDestination = createPrettyDestination(processLike);
-    if (prettyDestination) {
-      return pino(options, prettyDestination);
+    const obj = typeof first === 'object' && first !== null ? first : {};
+    const msg = typeof first === 'string' ? first : second;
+
+    const processLike = getNodeProcess();
+    if (shouldUsePretty(processLike)) {
+      const output = formatPretty(level, msg, {
+        ...config.bindings,
+        ...obj,
+      });
+      const consoleFn =
+        level === 'error' || level === 'fatal' ? console.error : console.log;
+      consoleFn(output);
+    } else {
+      const logData = {
+        level: level.toUpperCase(),
+        time: new Date().toISOString(),
+        name: config.name,
+        msg,
+        ...config.bindings,
+        ...obj,
+      };
+      console.log(JSON.stringify(logData));
     }
   }
 
-  return pino(options);
+  const info = ((first, second) => log('info', first, second)) as LogFn;
+  const error = ((first, second) => log('error', first, second)) as LogFn;
+  const warn = ((first, second) => log('warn', first, second)) as LogFn;
+  const debug = ((first, second) => log('debug', first, second)) as LogFn;
+  const trace = ((first, second) => log('trace', first, second)) as LogFn;
+  const fatal = ((first, second) => log('fatal', first, second)) as LogFn;
+
+  return {
+    info,
+    error,
+    warn,
+    debug,
+    trace,
+    fatal,
+    child: (bindings: Record<string, unknown>) =>
+      createLogger({
+        ...config,
+        bindings: { ...config.bindings, ...bindings },
+      }),
+  };
+}
+
+/**
+ * Formats log output in pretty format for human readability
+ */
+function formatPretty(
+  level: LogLevel,
+  msg: unknown,
+  metadata: Record<string, unknown>,
+): string {
+  const { loggerContext, ...rest } = metadata;
+
+  const processLike = getNodeProcess();
+  const useColors = Boolean(processLike?.stdout?.isTTY);
+
+  const formattedLevel = formatLevel(level, useColors);
+  const contextValue = formatContextValue(loggerContext);
+  const timestamp = formatTimestamp(new Date().toISOString());
+  const message =
+    typeof msg === 'string'
+      ? msg
+      : msg !== undefined
+        ? JSON.stringify(msg)
+        : '';
+
+  const segments = [formattedLevel];
+  if (contextValue) {
+    segments.push(contextValue);
+  }
+  segments.push(timestamp);
+  if (message) {
+    segments.push(message);
+  }
+
+  const metadataStr =
+    Object.keys(rest).length > 0 ? ` ${JSON.stringify(rest)}` : '';
+
+  return `${segments.join(', ')}${metadataStr}`;
+}
+
+function createCoreLogger(): AppLogger {
+  return createLogger({
+    name: loggerName,
+    level: resolveLogLevel(),
+  });
 }
 
 /**
@@ -67,74 +201,6 @@ function shouldUsePretty(processLike?: NodeProcessLike): boolean {
   }
 
   return Boolean(processLike.stdout?.isTTY);
-}
-
-function createPrettyDestination(processLike?: NodeProcessLike) {
-  const stdout = processLike?.stdout;
-  const write =
-    typeof stdout?.write === 'function' ? stdout.write.bind(stdout) : undefined;
-  if (!write) {
-    return undefined;
-  }
-
-  const useColors = Boolean(stdout?.isTTY);
-
-  return {
-    write(chunk: string | Uint8Array) {
-      try {
-        const input = typeof chunk === 'string' ? chunk : chunk.toString();
-        const log = JSON.parse(input);
-        const { level, time, msg, ...rest } = log as {
-          level: number | string;
-          time?: string | number;
-          msg?: unknown;
-        } & Record<string, unknown>;
-
-        const { loggerContext, ...metadata } = rest as {
-          loggerContext?: unknown;
-        } & Record<string, unknown>;
-
-        const levelLabel =
-          typeof level === 'number'
-            ? (pino.levels.labels[level] ?? String(level))
-            : String(level);
-        const formattedLevel = formatLevel(levelLabel, useColors);
-
-        const isoTime =
-          typeof time === 'string'
-            ? time
-            : typeof time === 'number'
-              ? new Date(time).toISOString()
-              : new Date().toISOString();
-        const timestamp = formatTimestamp(isoTime);
-
-        const message =
-          typeof msg === 'string'
-            ? msg
-            : msg !== undefined
-              ? JSON.stringify(msg)
-              : '';
-
-        const contextValue = formatContextValue(loggerContext);
-        const metadataKeys = Object.keys(metadata);
-        const metadataSegment =
-          metadataKeys.length > 0 ? ` ${JSON.stringify(metadata)}` : '';
-
-        const segments = [formattedLevel];
-        if (contextValue) {
-          segments.push(contextValue);
-        }
-        segments.push(timestamp);
-        if (message) {
-          segments.push(message);
-        }
-
-        write(`${segments.join(', ')}${metadataSegment}\n`);
-      } catch {
-        write(chunk);
-      }
-    },
-  };
 }
 
 function formatContextValue(value: unknown): string | undefined {
