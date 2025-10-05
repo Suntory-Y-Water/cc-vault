@@ -6,8 +6,7 @@ import ArticleList from '@/components/article/ArticleList';
 import SiteFilter from '@/components/layout/SiteFilter';
 import MainTabs from '@/components/layout/MainTabs';
 import Pagination from '@/components/article/Pagination';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
-import { headers } from 'next/headers';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 
 type Props = {
   searchParams: Promise<{
@@ -35,9 +34,7 @@ export default async function SearchPage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
 
   // AIエージェント情報の取得（テナント識別）
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
 
   // URLパラメータの取得と正規化
   const {

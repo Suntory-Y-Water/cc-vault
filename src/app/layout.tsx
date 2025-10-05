@@ -6,7 +6,7 @@ import './globals.css';
 import StructuredData from '@/components/common/StructuredData';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 import { siteConfig } from '@/config/site';
 import { buildThemeStyle } from '@/lib/utils';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
@@ -17,9 +17,7 @@ const inter = Inter({ subsets: ['latin'] });
  * サブドメインごとの動的メタデータ生成
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
 
   const siteName = aiAgent.branding.siteName;
   const description = aiAgent.description;
@@ -27,9 +25,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogImage = aiAgent.branding.ogImage ?? siteConfig.ogImage;
 
   // 動的にベースURLを構築（優先順位: host header > Cloudflare env > 固定値）
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
   const { env } = await getCloudflareContext();
   const protocol = host?.includes('localhost') ? 'http' : 'https';
   const baseUrl = host ? `${protocol}://${host}` : env.APP_URL;
+
+  // canonical URLはメインドメインを正規URLとして設定
+  const canonicalUrl = siteConfig.url;
 
   return {
     title: {
@@ -52,6 +55,9 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: siteConfig.copyRight }],
     creator: siteConfig.copyRight,
     metadataBase: new URL(baseUrl),
+    alternates: {
+      canonical: canonicalUrl,
+    },
     icons: {
       icon: favicon,
     },
@@ -107,9 +113,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
   const themeStyle = buildThemeStyle(aiAgent.colors);
 
   return (

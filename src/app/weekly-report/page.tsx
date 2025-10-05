@@ -16,8 +16,7 @@ import {
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
 import { getLatestCompletedWeek, hasWeeklyReportData } from '@/lib/cloudflare';
-import { headers } from 'next/headers';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 
 /**
  * ウィークリーレポートページのprops
@@ -37,9 +36,7 @@ export async function generateMetadata({
   const { week } = await searchParams;
 
   // AIエージェント識別
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
 
   // 無効な日付の場合は404にリダイレクト
   if (week && !isValidDateString(week)) {
@@ -85,9 +82,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
   const { week } = await searchParams;
 
   // AIエージェント識別
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
 
   // 無効な日付の場合は404にリダイレクト
   if (week && !isValidDateString(week)) {

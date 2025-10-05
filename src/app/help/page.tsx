@@ -1,23 +1,23 @@
-import { headers } from 'next/headers';
 import { Card, CardContent } from '@/components/ui/card';
 import { HelpCircle, Filter, TrendingUp, Clock } from 'lucide-react';
 import type { Metadata } from 'next';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 import { buildThemeStyle } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'ヘルプセンター - CC-Vault',
-  description:
-    'CC-Vaultの使い方や機能について、よくある質問と回答をまとめました。',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const aiAgent = await getAIAgentFromHeaders();
+
+  return {
+    title: 'ヘルプセンター',
+    description: `${aiAgent.branding.siteName}の使い方や機能について、よくある質問と回答をまとめました。`,
+  };
+}
 
 /**
  * ヘルプセンターページコンポーネント
  */
 export default async function HelpPage() {
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
   const themeStyles = buildThemeStyle(aiAgent.colors);
 
   const faqs = [

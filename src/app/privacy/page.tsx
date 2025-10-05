@@ -1,20 +1,21 @@
-import { headers } from 'next/headers';
 import type { Metadata } from 'next';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 import { buildThemeStyle } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: 'プライバシーポリシー - CC-Vault',
-  description: 'CC-Vaultサービスにおける個人情報の取り扱いについて説明します。',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const aiAgent = await getAIAgentFromHeaders();
+
+  return {
+    title: 'プライバシーポリシー',
+    description: `${aiAgent.branding.siteName}サービスにおける個人情報の取り扱いについて説明します。`,
+  };
+}
 
 /**
  * プライバシーポリシーページコンポーネント
  */
 export default async function PrivacyPage() {
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
   const themeStyles = buildThemeStyle(aiAgent.colors);
 
   return (

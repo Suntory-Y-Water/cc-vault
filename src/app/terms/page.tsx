@@ -1,20 +1,21 @@
-import { headers } from 'next/headers';
 import type { Metadata } from 'next';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 import { buildThemeStyle } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: '利用規約 - CC-Vault',
-  description: 'CC-Vaultサービスの利用規約です。ご利用前に必ずお読みください。',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const aiAgent = await getAIAgentFromHeaders();
+
+  return {
+    title: '利用規約',
+    description: `${aiAgent.branding.siteName}サービスの利用規約です。ご利用前に必ずお読みください。`,
+  };
+}
 
 /**
  * 利用規約ページコンポーネント
  */
 export default async function TermsPage() {
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
   const themeStyles = buildThemeStyle(aiAgent.colors);
 
   return (
