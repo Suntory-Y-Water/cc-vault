@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.0...v1.0.1) (2025-10-05)
+
+
+### Bug Fixes
+
+* Logger改善 ([0f9eddb](https://github.com/Suntory-Y-Water/cc-vault/commit/0f9eddb8f8021081ccf0cdd7e68ba1549ba348f3))
+* Logger改善 ([7b80c04](https://github.com/Suntory-Y-Water/cc-vault/commit/7b80c04a7adc7774a26d6dd7276b574e0ba21fb7))
+
 ## 1.0.0 (2025-10-04)
 
 
