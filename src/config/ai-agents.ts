@@ -3,6 +3,8 @@
  * 静的設定によるマルチテナント・サブドメインルーティング機能
  */
 
+import { headers } from 'next/headers';
+
 export type AIAgent = {
   id: 'default' | 'claude-code' | 'codex';
   prefix: 'default' | 'cc' | 'cx';
@@ -82,7 +84,7 @@ const AI_AGENT_CONFIGS: Record<AIAgent['prefix'], AIAgent> = {
     },
     contentFilter: ['codex', 'openai', 'code-generation'],
     branding: {
-      siteName: 'Codex-Vault',
+      siteName: 'CX-Vault',
       favicon: '/cx.svg',
       ogImage: '/codex-opengraph-image.png',
     },
@@ -209,6 +211,15 @@ export function resolveAIAgentFromHost(args: { host: string | null }): AIAgent {
 
   // 未知のサブドメインはデフォルトにフォールバック
   return AI_AGENT_CONFIGS.default;
+}
+
+/**
+ * リクエストヘッダーからAIエージェント情報を取得するヘルパー関数
+ */
+export async function getAIAgentFromHeaders(): Promise<AIAgent> {
+  const requestHeaders = await headers();
+  const host = requestHeaders?.get('host') ?? null;
+  return resolveAIAgentFromHost({ host });
 }
 
 /**

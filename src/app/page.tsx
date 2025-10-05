@@ -1,8 +1,8 @@
-import { headers } from 'next/headers';
+
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getArticlesWithPagination } from '@/lib/cloudflare';
 import { SiteType, SortOrder, SITE_NAMES, SORT_ORDERS } from '@/types';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 import SiteFilter from '@/components/layout/SiteFilter';
 import MainTabs from '@/components/layout/MainTabs';
 import ArticleList from '@/components/article/ArticleList';
@@ -30,9 +30,7 @@ export default async function HomePage({ searchParams }: Props) {
   const { env } = await getCloudflareContext({ async: true });
 
   // AIエージェント識別
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
   const themeStyles = buildThemeStyle(aiAgent.colors);
 
   // 公式推奨: 分割代入とデフォルト値を使用

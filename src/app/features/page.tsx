@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { headers } from 'next/headers';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Search,
@@ -10,22 +9,23 @@ import {
   Clock,
 } from 'lucide-react';
 import type { Metadata } from 'next';
-import { resolveAIAgentFromHost } from '@/config/ai-agents';
+import { getAIAgentFromHeaders } from '@/config/ai-agents';
 import { buildThemeStyle } from '@/lib/utils';
 
-export const metadata: Metadata = {
-  title: '機能紹介 - CC-Vault',
-  description:
-    'CC-VaultのClaudeCode関連記事を効率的に収集・キュレーションする機能をご紹介します。',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const aiAgent = await getAIAgentFromHeaders();
+
+  return {
+    title: '機能紹介',
+    description: `${aiAgent.name}関連記事を効率的に収集・キュレーションする機能をご紹介します。`,
+  };
+}
 
 /**
  * 機能紹介ページコンポーネント
  */
 export default async function FeaturesPage() {
-  const requestHeaders = await headers();
-  const host = requestHeaders?.get('host') ?? null;
-  const aiAgent = resolveAIAgentFromHost({ host });
+  const aiAgent = await getAIAgentFromHeaders();
   const themeStyles = buildThemeStyle(aiAgent.colors);
 
   const features = [
