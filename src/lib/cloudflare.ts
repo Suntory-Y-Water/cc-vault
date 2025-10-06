@@ -290,7 +290,18 @@ export async function saveArticlesToDB(params: {
         });
     } catch (error) {
       logger.error(
-        { articleId: article.id, error, articleUrl: article.url },
+        {
+          articleId: article.id,
+          articleUrl: article.url,
+          error:
+            error instanceof Error
+              ? {
+                  message: error.message,
+                  name: error.name,
+                  stack: error.stack,
+                }
+              : error,
+        },
         '記事保存でエラーが発生しました',
       );
     }
