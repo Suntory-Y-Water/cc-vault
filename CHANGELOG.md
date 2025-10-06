@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.4...v1.0.5) (2025-10-06)
+
+
+### Bug Fixes
+
+* エラーログ追加、スキーマ定義一部修正 ([450cb90](https://github.com/Suntory-Y-Water/cc-vault/commit/450cb905ea264bb5d1927e38006fe89c6035c2fe))
+
 ## [1.0.4](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.3...v1.0.4) (2025-10-05)
 
 
