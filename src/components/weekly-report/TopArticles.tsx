@@ -11,6 +11,7 @@ import {
 import type { WeeklyArticle, SiteRanking } from '@/types';
 import { SITE_CONFIGS } from '@/lib/constants';
 import { getCurrentJSTDate } from '@/lib/weekly-report';
+import type { CSSProperties } from 'react';
 
 type TopArticlesProps = {
   /** サイト別ランキングデータ */
@@ -19,6 +20,8 @@ type TopArticlesProps = {
   weekLabel: string;
   /** AI生成全体要約 */
   overallSummary: string | null;
+  /** AIエージェントテーマスタイル */
+  themeStyles?: CSSProperties;
 };
 
 /**
@@ -29,6 +32,7 @@ export default function TopArticles({
   siteRankings,
   weekLabel,
   overallSummary,
+  themeStyles,
 }: TopArticlesProps) {
   /**
    * サイトバッジの色を取得
@@ -74,7 +78,7 @@ export default function TopArticles({
     return (
       <Card
         key={article.id}
-        className='border-[#E0DFDA] hover:border-[#DB8163] transition-colors'
+        className='border-[#E0DFDA] hover:border-[var(--ai-primary)] transition-colors'
       >
         <CardContent className='p-4'>
           <div className='flex items-start gap-4'>
@@ -90,7 +94,7 @@ export default function TopArticles({
             {/* 記事情報 */}
             <div className='flex-1 min-w-0'>
               <div className='flex items-start justify-between gap-2 mb-2'>
-                <h3 className='font-semibold text-[#141413] line-clamp-4 hover:text-[#DB8163] transition-colors'>
+                <h3 className='font-semibold text-[var(--ai-text)] line-clamp-4 hover:text-[var(--ai-primary)] transition-colors'>
                   <a
                     href={article.url}
                     target='_blank'
@@ -100,10 +104,10 @@ export default function TopArticles({
                     {article.title}
                   </a>
                 </h3>
-                <ExternalLink className='w-4 h-4 text-[#141413] opacity-50 flex-shrink-0' />
+                <ExternalLink className='w-4 h-4 text-[var(--ai-text)] opacity-50 flex-shrink-0' />
               </div>
 
-              <div className='flex items-center gap-2 text-sm text-[#141413] opacity-70 mb-2'>
+              <div className='flex items-center gap-2 text-sm text-[var(--ai-text)] opacity-70 mb-2'>
                 <span>著者 {article.author}</span>
                 <div className='flex items-center gap-1'>
                   <Clock className='w-3 h-3' />
@@ -121,7 +125,7 @@ export default function TopArticles({
                   >
                     {SITE_CONFIGS[article.site]?.displayName || article.site}
                   </Badge>
-                  <div className='flex items-center gap-3 text-sm text-[#141413] opacity-70'>
+                  <div className='flex items-center gap-3 text-sm text-[var(--ai-text)] opacity-70'>
                     {article.engagement.likes > 0 && (
                       <div className='flex items-center gap-1'>
                         <Heart className='w-4 h-4' />
@@ -139,12 +143,12 @@ export default function TopArticles({
               {/* AI生成要約 */}
               <div className='bg-[#FAF9F5] rounded-lg p-3 border border-[#E0DFDA]'>
                 <div className='flex items-center gap-2 mb-2'>
-                  <Bot className='w-4 h-4 text-[#DB8163]' />
-                  <span className='text-sm font-medium text-[#141413]'>
+                  <Bot className='w-4 h-4 text-[var(--ai-primary)]' />
+                  <span className='text-sm font-medium text-[var(--ai-text)]'>
                     AI要約
                   </span>
                 </div>
-                <p className='text-sm text-[#141413] opacity-80 leading-relaxed'>
+                <p className='text-sm text-[var(--ai-text)] opacity-80 leading-relaxed'>
                   {article.summary}
                 </p>
               </div>
@@ -156,12 +160,12 @@ export default function TopArticles({
   }
 
   return (
-    <div className='space-y-8'>
+    <div className='space-y-8' style={themeStyles}>
       <div className='flex items-center justify-between'>
-        <h2 className='text-2xl font-bold text-[#141413]'>
+        <h2 className='text-2xl font-bold text-[var(--ai-text)]'>
           週間人気記事サイト別ランキング
         </h2>
-        <div className='flex items-center gap-2 text-sm text-[#141413] opacity-70'>
+        <div className='flex items-center gap-2 text-sm text-[var(--ai-text)] opacity-70'>
           <TrendingUp className='w-4 h-4' />
           <span>{weekLabel}</span>
         </div>
@@ -172,13 +176,13 @@ export default function TopArticles({
         <Card className='border-[#E0DFDA] bg-gradient-to-r from-[#FAF9F5] to-[#F7F6F1]'>
           <CardContent className='p-6'>
             <div className='flex items-center gap-3 mb-4'>
-              <Bot className='w-6 h-6 text-[#DB8163]' />
-              <h3 className='text-xl font-bold text-[#141413]'>
+              <Bot className='w-6 h-6 text-[var(--ai-primary)]' />
+              <h3 className='text-xl font-bold text-[var(--ai-text)]'>
                 今週のトレンド要約
               </h3>
             </div>
             <div className='prose prose-slate max-w-none'>
-              <p className='text-[#141413] leading-relaxed text-base'>
+              <p className='text-[var(--ai-text)] leading-relaxed text-base'>
                 {overallSummary}
               </p>
             </div>
@@ -200,11 +204,11 @@ export default function TopArticles({
                     backgroundColor: SITE_CONFIGS[siteRanking.site]?.color,
                   }}
                 />
-                <h3 className='text-xl font-bold text-[#141413]'>
+                <h3 className='text-xl font-bold text-[var(--ai-text)]'>
                   {SITE_CONFIGS[siteRanking.site]?.displayName ||
                     siteRanking.site}
                 </h3>
-                <span className='text-sm text-[#141413] opacity-60'>
+                <span className='text-sm text-[var(--ai-text)] opacity-60'>
                   TOP {siteRanking.articles.length}
                 </span>
               </div>

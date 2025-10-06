@@ -1,6 +1,6 @@
 {
   "name": "cc-vault",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
@@ -75,6 +75,5 @@
   "lint-staged": {
     "*.{ts,tsx}": "",
     "*.{js,jsx,ts,tsx,json,css,md}": ""
-  },
-  "packageManager": "pnpm@10.0.0"
+  }
 }
