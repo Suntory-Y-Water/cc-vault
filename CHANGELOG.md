@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.5...v1.0.6) (2025-10-06)
+
+
+### Bug Fixes
+
+* オートマージ時の待機を追加 ([84f55ed](https://github.com/Suntory-Y-Water/cc-vault/commit/84f55ed3ec462ac10ef1fa8ec4d806977d129654))
+
 ## [1.0.5](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.4...v1.0.5) (2025-10-06)
 
 
