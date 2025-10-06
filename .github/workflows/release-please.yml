@@ -30,6 +30,14 @@ jobs:
         with:
           release-type: node
           token: ${{ github.token }}
+      - name: Wait for checks to complete
+        if: ${{ steps.release-please.outputs.pr }}
+        run: |
+          PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+          gh pr checks "$PR_NUMBER" --watch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_JSON: ${{ steps.release-please.outputs.pr }}
       - name: Enable auto-merge for release PR
         if: ${{ steps.release-please.outputs.pr }}
         run: |
