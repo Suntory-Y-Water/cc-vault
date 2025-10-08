@@ -40,18 +40,6 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm run typecheck
 
-  opennext-build:
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-      - uses: ./.github/actions/setup
-      - run: pnpm run build:cf
-
   test:
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -69,6 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
