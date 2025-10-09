@@ -1,3 +1,7 @@
+1. Serena MCP: use for file editing and loading.
+2. context7 MCP: use when library type definitions or API specifications are unknown.
+3. DeepWiki MCP: use when an exception occurs in the library.
+
 ## 開発手法
 
 ### 契約による設計の実装指針
