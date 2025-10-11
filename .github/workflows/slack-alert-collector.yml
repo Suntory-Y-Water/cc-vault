@@ -8,7 +8,7 @@ on:
     branches:
       - mod-check-cron-job
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 1 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
