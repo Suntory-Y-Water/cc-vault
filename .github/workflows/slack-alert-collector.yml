@@ -15,11 +15,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  collect-messages:
+  setup:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      channels: ${{ steps.get-channels.outputs.channels }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+
+      - name: Get channels from config
+        id: get-channels
+        run: |
+          REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
+          CHANNELS=$(yq ".repositories[] | select(.name == \"$REPO_NAME\") | .channels[]" .github/config/slack-config.yml -o json -I=0 | jq -s -c '.')
+          echo "channels=$CHANNELS" >> "$GITHUB_OUTPUT"
+
+  collect-messages:
+    needs: setup
+    if: needs.setup.outputs.channels != '[]'
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        channel: ${{ fromJson(needs.setup.outputs.channels) }}
 
     steps:
       - name: Checkout
@@ -27,27 +52,34 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Fetch Slack messages
+      - name: Fetch Slack messages for ${{ matrix.channel.name }}
         id: fetch
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: conversations.history
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
-            channel: C09L8LZJHA4
+            channel: ${{ matrix.channel.id }}
             limit: 100
 
       - name: Filter alert messages
         env:
           SLACK_RESPONSE: ${{ steps.fetch.outputs.response }}
+          CHANNEL_NAME: ${{ matrix.channel.name }}
+          CHANNEL_DESC: ${{ matrix.channel.description }}
         run: |
+          echo "=========================================="
+          echo "Channel: $CHANNEL_NAME ($CHANNEL_DESC)"
+          echo "=========================================="
+          echo ""
+
           echo "Fetched messages:"
           echo "$SLACK_RESPONSE" | jq '.'
-
           echo ""
-          echo "Filtering for [ERROR] and <!channel> messages..."
+
+          echo "Filtering alert messages..."
           echo "$SLACK_RESPONSE" | jq -r '
             .messages[]?
-            | select(.text? | contains("[ERROR]") or contains("<!channel>"))
+            | select(.text? | contains("[ERROR]") or contains("<!channel>") or contains("[WARNING]"))
             | "\(.ts): \(.text)"
           '
