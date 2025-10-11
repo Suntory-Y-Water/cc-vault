@@ -1,0 +1,18 @@
+# Slack アラート監視設定
+# 複数リポジトリ対応のための設定ファイル
+
+repositories:
+  - name: cc-vault
+    channels:
+      - id: C09L8LZJHA4
+        name: cron-job-alerts
+        description: CronJob用
+
+# アラートとして検知するパターン
+alert_patterns:
+  - pattern: "\\[ERROR\\]"
+    severity: error
+  - pattern: "<!channel>"
+    severity: critical
+  - pattern: "\\[WARNING\\]"
+    severity: warning
