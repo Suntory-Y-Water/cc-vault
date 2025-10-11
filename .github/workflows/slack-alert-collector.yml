@@ -4,6 +4,9 @@ permissions: {}
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - mod-check-cron-job
   schedule:
     - cron: "0 0 * * *"
 
