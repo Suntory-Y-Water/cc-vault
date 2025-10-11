@@ -25,6 +25,8 @@ ENV PATH=$PATH:/usr/local/share/npm-global/bin
 RUN mkdir -p /home/node/.claude && \
     mkdir -p /home/node/.local/bin && \
     mkdir -p /home/node/.bun/bin && \
+    mkdir -p /home/node/.codex && \
     chown -R node:node /home/node/.claude && \
     chown -R node:node /home/node/.local && \
-    chown -R node:node /home/node/.bun
+    chown -R node:node /home/node/.bun && \
+    chown -R node:node /home/node/.codex

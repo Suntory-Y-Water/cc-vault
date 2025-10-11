@@ -1,12 +1,13 @@
 ---
 description: 実装要件から「漏れなく・ダブりなく・直感的に理解できる」具体的計画を作成し、@docs/ai 配下にMarkdownで出力するコマンド
 argument-hint: [要件ファイルパス] [参照コード/模範例ファイルパス] [出力スラッグ]
-allowed-tools: Read, Grep, Write, Bash(mkdir -p:*), Bash(ls:*), Bash(cat:*), Bash(uuidgen:*), Bash(date:+%Y%m%d)
+allowed-tools: Read, Grep, Write, Bash(mkdir -p:*), Bash(ls:*), Bash(cat:*), Bash(date:+%Y%m%d)
 ---
 
 ## コンテキスト
 
-- 目的は「正常系の具体的計画」に限る。例外処理（try-catch）は書かせない。異常は**契約（事前条件・不変条件・事後条件）**で防御・検出する。
+- 目的は「正常系の具体的計画」に限る。例外処理（try-catch）は書かせない。
+- 異常は**契約（事前条件・不変条件・事後条件）**で防御・検出する。
 - Claude Codeが見切り発車しないよう、まずMECEで構造化した計画を固定する。実装は計画合意後。
 - ファイル/情報の取得順序は厳守する。  
   1. serena mcp があるときは**メモリから取得** →  
@@ -23,8 +24,7 @@ allowed-tools: Read, Grep, Write, Bash(mkdir -p:*), Bash(ls:*), Bash(cat:*), Bas
 
 - ディレクトリ作成: !`mkdir -p docs/ai`
 - 日付取得: !`date '+%Y-%m-%d'`
-- UUID生成: !`uuidgen`
-- 出力パス: `@docs/ai/$(date +%Y%m%d)-$3-$(uuidgen).md`
+- 出力パス: `@docs/ai/$(date +%Y%m%d)-$3.md`
 - Write ツールで作成する。
 
 ## 計画書テンプレート（この形でWrite出力）
@@ -51,7 +51,7 @@ allowed-tools: Read, Grep, Write, Bash(mkdir -p:*), Bash(ls:*), Bash(cat:*), Bas
 ### 契約による設計
 - 入力（型・必須/任意・バリデーション・TZ扱い）
 - 不変条件（常に保つ整合性）
-- 出力（型・例・形式。JST例: `YYYY-MM-DDTHH:mm:ss+09:00`）
+- 出力（型・例・形式。JST例: `YYYY-MM-DDTHH:mm:ss`）
 - 事前条件（満たさない場合は**契約違反**として即時失敗）
 - 事後条件（出力が満たすべき検査）
 - エラー表現方針（**try-catchを使わず**契約違反として失敗させる／戻り値で表す等、統一ルールを一文で）

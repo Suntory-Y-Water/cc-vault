@@ -77,11 +77,12 @@
   // ユーザーを非rootユーザーにする
   "remoteUser": "node",
 
-  // Claude Code設定の永続化
+  // ボリュームマウントの設定
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume",
     "source=tools-cache-${devcontainerId},target=/home/node/.local,type=volume",
-    "source=bun-cache-${devcontainerId},target=/home/node/.bun,type=volume"
+    "source=bun-cache-${devcontainerId},target=/home/node/.bun,type=volume",
+    "source=codex-cache-${devcontainerId},target=/home/node/.codex,type=volume"
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/node/.claude"
