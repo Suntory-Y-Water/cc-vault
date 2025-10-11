@@ -23,12 +23,15 @@ import {
   getArticleSummaryPrompt,
   getOverallSummaryPrompt,
 } from '@/lib/prompts.js';
+import { SlackClient } from '@/lib/slack.js';
 
 /**
  * カスタムWorker設定
  * OpenNext.jsのfetch handlerにscheduled handlerを追加
  */
 import { getLogger } from '@/lib/logger';
+import { TZDate } from '@date-fns/tz';
+import { format } from 'date-fns';
 
 const logger = getLogger('custom-worker');
 const worker = {
@@ -101,14 +104,20 @@ const worker = {
       { cron: controller.cron },
       'スケジュールタスクが実行されました',
     );
+
+    const slackClient = new SlackClient(env.SLACK_BOT_TOKEN);
+
     switch (controller.cron) {
       /**
        * 定時記事更新処理
        */
       case '0 23,0-14 * * *': {
+        const scheduledTime = new Date(controller.scheduledTime);
+        const jstNow = new TZDate(scheduledTime, 'Asia/Tokyo');
+        const formatDate = format(jstNow, "yyyy-MM-dd'T'HH:mm:ss");
         try {
           logger.info(
-            { cron: controller.cron },
+            { cron: controller.cron, scheduledTime: formatDate },
             '定時記事更新処理を開始します',
           );
           // すべての記事データを格納する配列
@@ -249,6 +258,12 @@ const worker = {
               `記事の保存が完了しました`,
             );
           }
+
+          await slackClient.postMessage({
+            channelId: env.SLACK_CHANNEL_ID,
+            level: 'INFO',
+            message: `記事取得処理完了 ${uniqueArticles.length}件`,
+          });
         } catch (error) {
           logger.error(
             {
@@ -263,6 +278,15 @@ const worker = {
             },
             '定時記事更新処理中にエラーが発生しました',
           );
+
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          await slackClient.postMessage({
+            channelId: env.SLACK_CHANNEL_ID,
+            level: 'ERROR',
+            message: `記事取得処理エラー ${errorMessage}`,
+            channelMention: true,
+          });
         }
         break;
       }
@@ -351,6 +375,12 @@ const worker = {
             { weekStartDate: weekRange.startDate },
             '全AIエージェントの週次レポート生成処理が完了しました',
           );
+
+          await slackClient.postMessage({
+            channelId: env.SLACK_CHANNEL_ID,
+            level: 'INFO',
+            message: `週次レポート生成完了 ${weekRange.startDate}`,
+          });
           break;
         } catch (error) {
           logger.error(
@@ -366,6 +396,15 @@ const worker = {
             },
             '週次レポート生成処理中にエラーが発生しました',
           );
+
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          await slackClient.postMessage({
+            channelId: env.SLACK_CHANNEL_ID,
+            level: 'ERROR',
+            message: `週次レポート生成エラー ${errorMessage}`,
+            channelMention: true,
+          });
         }
       }
     }
