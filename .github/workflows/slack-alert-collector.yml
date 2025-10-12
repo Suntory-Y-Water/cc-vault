@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
     strategy:
       matrix:
         channel: ${{ fromJson(needs.setup.outputs.channels) }}
@@ -62,24 +63,12 @@ jobs:
             channel: ${{ matrix.channel.id }}
             limit: 100
 
-      - name: Filter alert messages
+      - name: Create alert issue
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
           SLACK_RESPONSE: ${{ steps.fetch.outputs.response }}
           CHANNEL_NAME: ${{ matrix.channel.name }}
-          CHANNEL_DESC: ${{ matrix.channel.description }}
-        run: |
-          echo "=========================================="
-          echo "Channel: $CHANNEL_NAME ($CHANNEL_DESC)"
-          echo "=========================================="
-          echo ""
-
-          echo "Fetched messages:"
-          echo "$SLACK_RESPONSE" | jq '.'
-          echo ""
-
-          echo "Filtering alert messages..."
-          echo "$SLACK_RESPONSE" | jq -r '
-            .messages[]?
-            | select(.text? | contains("[ERROR]") or contains("<!channel>") or contains("[WARNING]"))
-            | "\(.ts): \(.text)"
-          '
+        with:
+          script: |
+            const scriptFunction = require('./.github/scripts/create-alert-issue.cjs');
+            await scriptFunction({ github, context, core });

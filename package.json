@@ -50,6 +50,8 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
     "@biomejs/biome": "1.9.4",
     "@cloudflare/workers-types": "^4.20251008.0",
     "@testing-library/jest-dom": "^6.9.1",
