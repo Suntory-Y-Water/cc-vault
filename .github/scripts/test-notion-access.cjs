@@ -11,24 +11,24 @@ const { Client } = require('@notionhq/client');
 module.exports = async ({ core }) => {
   try {
     const notionToken = process.env.NOTION_TOKEN;
-    const databaseId = process.env.NOTION_DATABASE_ID;
+    const dataSourceId = process.env.NOTION_DATA_SOURCE_ID;
 
     if (!notionToken) {
       core.setFailed('NOTION_TOKEN環境変数が設定されていません');
       return;
     }
 
-    if (!databaseId) {
-      core.setFailed('NOTION_DATABASE_ID環境変数が設定されていません');
+    if (!dataSourceId) {
+      core.setFailed('NOTION_DATA_SOURCE_ID環境変数が設定されていません');
       return;
     }
 
     core.info('Notionクライアントを初期化しています...');
     const notion = new Client({ auth: notionToken });
 
-    core.info(`データソースをクエリしています: ${databaseId}`);
+    core.info(`データソースをクエリしています: ${dataSourceId}`);
     const response = await notion.dataSources.query({
-      data_source_id: databaseId,
+      data_source_id: dataSourceId,
       page_size: 5,
     });
 
