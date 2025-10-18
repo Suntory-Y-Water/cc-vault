@@ -4,19 +4,48 @@ permissions: {}
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - mod-check-cron-job
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 1 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  collect-messages:
+  setup:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      channels: ${{ steps.get-channels.outputs.channels }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+
+      - name: Get channels from config
+        id: get-channels
+        run: |
+          REPO_NAME="$(basename "$(git rev-parse --show-toplevel)")"
+          CHANNELS=$(yq ".repositories[] | select(.name == \"$REPO_NAME\") | .channels[]" .github/config/slack-config.yml -o json -I=0 | jq -s -c '.')
+          echo "channels=$CHANNELS" >> "$GITHUB_OUTPUT"
+
+  collect-messages:
+    needs: setup
+    if: needs.setup.outputs.channels != '[]'
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    strategy:
+      matrix:
+        channel: ${{ fromJson(needs.setup.outputs.channels) }}
 
     steps:
       - name: Checkout
@@ -24,27 +53,43 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Fetch Slack messages
+      - uses: ./.github/actions/setup
+
+      - name: Fetch Slack messages for ${{ matrix.channel.name }}
         id: fetch
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
         with:
           method: conversations.history
           token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
-            channel: C09L8LZJHA4
+            channel: ${{ matrix.channel.id }}
             limit: 100
 
-      - name: Filter alert messages
+      - name: Create alert issue
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
           SLACK_RESPONSE: ${{ steps.fetch.outputs.response }}
-        run: |
-          echo "Fetched messages:"
-          echo "$SLACK_RESPONSE" | jq '.'
+          CHANNEL_NAME: ${{ matrix.channel.name }}
+        with:
+          script: |
+            const scriptFunction = require('./.github/scripts/create-alert-issue.cjs');
+            await scriptFunction({ github, context, core });
 
-          echo ""
-          echo "Filtering for [ERROR] and <!channel> messages..."
-          echo "$SLACK_RESPONSE" | jq -r '
-            .messages[]?
-            | select(.text? | contains("[ERROR]") or contains("<!channel>"))
-            | "\(.ts): \(.text)"
-          '
+      - name: Test Notion access
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+        with:
+          script: |
+            const scriptFunction = require('./.github/scripts/test-notion-access.cjs');
+            await scriptFunction({ github, context, core });
+
+      - name: Test unauthorized Notion access (Security check)
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        with:
+          script: |
+            const scriptFunction = require('./.github/scripts/test-unauthorized-notion-access.cjs');
+            await scriptFunction({ github, context, core });
