@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.7](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.6...v1.0.7) (2025-10-21)
+
+
+### Bug Fixes
+
+* デフォルトAIエージェントをClaude Codeに統一 ([#68](https://github.com/Suntory-Y-Water/cc-vault/issues/68)) ([8118b08](https://github.com/Suntory-Y-Water/cc-vault/commit/8118b08e19c16afdc08c36da7dd88afebe0c3a23))
+
 ## [1.0.6](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.5...v1.0.6) (2025-10-06)
 
 
