@@ -55,7 +55,7 @@ export async function generateMetadata({
   const weeklyReport = await generateWeeklyReportGrouped({
     weekStartDate: selectedWeek,
     db: env.DB,
-    aiAgent: aiAgent.id === 'default' ? undefined : aiAgent.id,
+    aiAgent: aiAgent.id,
   });
   const title = `ウィークリーレポート - ${weeklyReport.weekRange.label}`;
   const description = `${weeklyReport.weekRange.startDate}週の週間人気記事サイト別ランキングをご覧ください。`;
@@ -103,7 +103,7 @@ export default async function WeeklyReportPage({ searchParams }: Props) {
   const weeklyReport = await generateWeeklyReportGrouped({
     weekStartDate: selectedWeek,
     db: env.DB,
-    aiAgent: aiAgent.id === 'default' ? undefined : aiAgent.id,
+    aiAgent: aiAgent.id,
   });
   const adjacentWeeks = getAdjacentWeeks(selectedWeek);
 
