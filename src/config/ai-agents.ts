@@ -6,7 +6,7 @@
 import { headers } from 'next/headers';
 
 export type AIAgent = {
-  id: 'default' | 'claude-code' | 'codex';
+  id: 'claude-code' | 'codex';
   prefix: 'default' | 'cc' | 'cx';
   name: string;
   description: string;
@@ -32,10 +32,10 @@ export type AIAgent = {
  */
 const AI_AGENT_CONFIGS: Record<AIAgent['prefix'], AIAgent> = {
   default: {
-    id: 'default',
+    id: 'claude-code',
     prefix: 'default',
-    name: 'CC-Vault',
-    description: '技術記事のキュレーションと分析を行うWebアプリケーション',
+    name: 'Claude Code',
+    description: 'Claude Codeに関する技術記事とリソースのキュレーション',
     colors: {
       primary: '#DB8163', // 現在のClaude Code メインカラー
       primaryHover: '#C2754E', // 現在のClaude Code ホバー色

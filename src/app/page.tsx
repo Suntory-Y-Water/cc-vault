@@ -63,7 +63,7 @@ export default async function HomePage({ searchParams }: Props) {
     limit,
     site,
     order,
-    aiAgent: aiAgent.id === 'default' ? 'all' : aiAgent.id,
+    aiAgent: aiAgent.id,
   });
 
   logger.info(

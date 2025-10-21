@@ -14,7 +14,6 @@ export const AI_AGENT_VALUES = [
   'claude-code',
   'codex',
   'all',
-  'default',
 ] as const;
 export const SITE_NAMES = {
   all: 'all',
