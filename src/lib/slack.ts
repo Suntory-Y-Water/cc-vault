@@ -1,10 +1,22 @@
 import { WebClient, ChatPostMessageResponse } from '@slack/web-api';
 
-export type PostMessageParams = {
-  /** 送信先チャンネルID（例: C0123456789） */
+/**
+ * メッセージレベル定義
+ */
+type MessageLevel = 'INFO' | 'ERROR';
+
+/**
+ * Slackメッセージパラメータ
+ */
+type SlackMessageParams = {
+  /** 送信先チャンネルID(例: C0123456789) */
   channelId: string;
-  /** 投稿テキスト */
-  text: string;
+  /** メッセージレベル */
+  level: MessageLevel;
+  /** メッセージ本文 */
+  message: string;
+  /** @channel メンションするかのフラグ */
+  channelMention?: boolean;
 };
 
 /**
@@ -22,20 +34,22 @@ export class SlackClient {
   }
 
   /**
-   * Slackへプレーンテキストメッセージを送信する
-   * @param {PostMessageParams} params - 投稿パラメータ
-   * @returns {Promise<string>} SlackのメッセージTS（投稿識別子）
+   * Slackへメッセージを送信する
+   * @param {SlackMessageParams} params - 投稿パラメータ
+   * @returns {Promise<string>} SlackのメッセージTS(投稿識別子)
    */
-  async postMessage(params: PostMessageParams): Promise<string> {
-    const { channelId, text } = params;
+  async postMessage(params: SlackMessageParams): Promise<string> {
+    const { channelId, level, message, channelMention = false } = params;
 
     if (!channelId) throw new Error('channelId is required');
-    if (!text) throw new Error('text is required');
+    if (!message) throw new Error('message is required');
+
+    const formattedMessage = this.formatMessage(level, message, channelMention);
 
     const response: ChatPostMessageResponse =
       await this.client.chat.postMessage({
         channel: channelId,
-        text,
+        text: formattedMessage,
       });
 
     if (!response.ok || !response.ts) {
@@ -43,5 +57,17 @@ export class SlackClient {
     }
 
     return response.ts;
+  }
+
+  /**
+   * メッセージをフォーマットする
+   */
+  private formatMessage(
+    level: MessageLevel,
+    message: string,
+    channelMention: boolean,
+  ): string {
+    const mention = channelMention ? '<!channel>\n' : '';
+    return `${mention}[${level}] ${message}`;
   }
 }

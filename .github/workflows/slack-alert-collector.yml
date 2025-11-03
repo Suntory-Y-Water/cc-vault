@@ -1,0 +1,50 @@
+name: Slack Alert Collector
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect-messages:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+
+      - name: Fetch Slack messages
+        id: fetch
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          method: conversations.history
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: C09L8LZJHA4
+            limit: 100
+
+      - name: Filter alert messages
+        env:
+          SLACK_RESPONSE: ${{ steps.fetch.outputs.response }}
+        run: |
+          echo "Fetched messages:"
+          echo "$SLACK_RESPONSE" | jq '.'
+
+          echo ""
+          echo "Filtering for [ERROR] and <!channel> messages..."
+          echo "$SLACK_RESPONSE" | jq -r '
+            .messages[]?
+            | select(.text? | contains("[ERROR]") or contains("<!channel>"))
+            | "\(.ts): \(.text)"
+          '
