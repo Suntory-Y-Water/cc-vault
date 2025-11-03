@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.7...v1.0.8) (2025-11-03)
+
+
+### Bug Fixes
+
+* CronJobにSlackのアラートを追加 ([#61](https://github.com/Suntory-Y-Water/cc-vault/issues/61)) ([c5b184a](https://github.com/Suntory-Y-Water/cc-vault/commit/c5b184a04e805b0702754a0714d20414d8ea6d2a))
+
 ## [1.0.7](https://github.com/Suntory-Y-Water/cc-vault/compare/v1.0.6...v1.0.7) (2025-10-21)
 
 
